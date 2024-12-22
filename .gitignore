@@ -1,0 +1,26 @@
+# Byte-compiled files
+__pycache__/
+hailo_apps_infra/__pycache__/
+*.pyc
+*.pyo
+
+# Resources
+resources/*.so
+resources/*.hef
+resources/*.mp4
+
+# Logs and temp files
+*.log
+*.tmp
+
+# Packages and dependencies
+*.egg-info/
+
+# Build, cache, and coverage files
+build/
+build.release/
+dist/
+*.egg
+*.egg-info/
+.cache/
+coverage/
