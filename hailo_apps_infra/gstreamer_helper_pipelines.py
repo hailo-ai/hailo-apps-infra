@@ -49,6 +49,7 @@ def SOURCE_PIPELINE(video_source, video_width=640, video_height=640, video_forma
 
     if source_type == 'usb':
         if no_webcam_compression:
+            # When using uncomressed format, only low resolution is supported
             source_element = (
                 f'v4l2src device={video_source} name={name} ! '
                 'video/x-raw, format=RGB, width=640, height=480 ! '
@@ -56,7 +57,7 @@ def SOURCE_PIPELINE(video_source, video_width=640, video_height=640, video_forma
         else:
             # Use compressed format for webcam
             source_element = (
-                f'v4l2src device={video_source} name={name} ! image/jpeg, framerate=30/1 ! '
+                f'v4l2src device={video_source} name={name} ! image/jpeg, framerate=30/1, width={video_width}, height={video_height} ! '
                 f'{QUEUE(name=f"{name}_queue_decode")} ! '
                 f'decodebin name={name}_decodebin ! '
             )

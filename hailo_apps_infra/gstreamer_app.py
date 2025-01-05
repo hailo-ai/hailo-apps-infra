@@ -70,7 +70,7 @@ class GStreamerApp:
         # Set the process title
         setproctitle.setproctitle("Hailo Python App")
 
-        # Create an empty options menu
+        # Create options menu
         self.options_menu = args
 
         # Set up signal handler for SIGINT (Ctrl-C)
@@ -235,7 +235,7 @@ class GStreamerApp:
             display_process.join()
         for t in self.threads:
             t.join()
-    
+
 def picamera_thread(pipeline, video_width, video_height, video_format, picamera_config=None):
     appsrc = pipeline.get_by_name("app_source")
     appsrc.set_property("is-live", True)
