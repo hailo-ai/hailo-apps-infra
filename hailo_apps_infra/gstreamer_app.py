@@ -214,7 +214,7 @@ class GStreamerApp:
             display_process.start()
 
         if self.source_type == "rpi":
-            picam_thread = threading.Thread(target=self.picamera_thread)
+            picam_thread = threading.Thread(target=picamera_thread, args=(self.pipeline, self.video_width, self.video_height, self.video_format))
             self.threads.append(picam_thread)
             picam_thread.start()
         # Set pipeline to PLAYING state
@@ -236,60 +236,60 @@ class GStreamerApp:
         for t in self.threads:
             t.join()
     
-    def picamera_thread(self, picamera_config=None):
-        appsrc = self.pipeline.get_by_name("app_source")
-        appsrc.set_property("is-live", True)
-        appsrc.set_property("format", Gst.Format.TIME)
-        print("appsrc properties: ", appsrc)
-        # Initialize Picamera2
-        with Picamera2() as picam2:
-            if picamera_config is None:
-                # Default configuration
-                main = {'size': (1280, 720), 'format': 'RGB888'}
-                lores = {'size': (self.video_width, self.video_height), 'format': 'RGB888'}
-                controls = {'FrameRate': 30}
-                config = picam2.create_preview_configuration(main=main, lores=lores, controls=controls)
-            else:
-                config = picamera_config
-            # Configure the camera with the created configuration
-            picam2.configure(config)
-            # Update GStreamer caps based on 'lores' stream
-            lores_stream = config['lores']
-            format_str = 'RGB' if lores_stream['format'] == 'RGB888' else self.video_format
-            width, height = lores_stream['size']
-            print(f"Picamera2 configuration: width={width}, height={height}, format={format_str}")
-            appsrc.set_property(
-                "caps",
-                Gst.Caps.from_string(
-                    f"video/x-raw, format={format_str}, width={width}, height={height}, "
-                    f"framerate=30/1, pixel-aspect-ratio=1/1"
-                )
+def picamera_thread(pipeline, video_width, video_height, video_format, picamera_config=None):
+    appsrc = pipeline.get_by_name("app_source")
+    appsrc.set_property("is-live", True)
+    appsrc.set_property("format", Gst.Format.TIME)
+    print("appsrc properties: ", appsrc)
+    # Initialize Picamera2
+    with Picamera2() as picam2:
+        if picamera_config is None:
+            # Default configuration
+            main = {'size': (1280, 720), 'format': 'RGB888'}
+            lores = {'size': (video_width, video_height), 'format': 'RGB888'}
+            controls = {'FrameRate': 30}
+            config = picam2.create_preview_configuration(main=main, lores=lores, controls=controls)
+        else:
+            config = picamera_config
+        # Configure the camera with the created configuration
+        picam2.configure(config)
+        # Update GStreamer caps based on 'lores' stream
+        lores_stream = config['lores']
+        format_str = 'RGB' if lores_stream['format'] == 'RGB888' else video_format
+        width, height = lores_stream['size']
+        print(f"Picamera2 configuration: width={width}, height={height}, format={format_str}")
+        appsrc.set_property(
+            "caps",
+            Gst.Caps.from_string(
+                f"video/x-raw, format={format_str}, width={width}, height={height}, "
+                f"framerate=30/1, pixel-aspect-ratio=1/1"
             )
-            picam2.start()
-            frame_count = 0
-            start_time = time.time()
-            print("picamera_process started")
-            while True:
-                frame_data = picam2.capture_array('lores')
-                # frame_data = np.random.randint(0, 255, (height, width, 3), dtype=np.uint8)
-                if frame_data is None:
-                    print("Failed to capture frame.")
-                    break
-                # Convert framontigue data if necessary
-                frame = cv2.cvtColor(frame_data, cv2.COLOR_BGR2RGB)
-                frame = np.asarray(frame)
-                # Create Gst.Buffer by wrapping the frame data
-                buffer = Gst.Buffer.new_wrapped(frame.tobytes())
-                # Set buffer PTS and duration
-                buffer_duration = Gst.util_uint64_scale_int(1, Gst.SECOND, 30)
-                buffer.pts = frame_count * buffer_duration
-                buffer.duration = buffer_duration
-                # Push the buffer to appsrc
-                ret = appsrc.emit('push-buffer', buffer)
-                if ret != Gst.FlowReturn.OK:
-                    print("Failed to push buffer:", ret)
-                    break
-                frame_count += 1
+        )
+        picam2.start()
+        frame_count = 0
+        start_time = time.time()
+        print("picamera_process started")
+        while True:
+            frame_data = picam2.capture_array('lores')
+            # frame_data = np.random.randint(0, 255, (height, width, 3), dtype=np.uint8)
+            if frame_data is None:
+                print("Failed to capture frame.")
+                break
+            # Convert framontigue data if necessary
+            frame = cv2.cvtColor(frame_data, cv2.COLOR_BGR2RGB)
+            frame = np.asarray(frame)
+            # Create Gst.Buffer by wrapping the frame data
+            buffer = Gst.Buffer.new_wrapped(frame.tobytes())
+            # Set buffer PTS and duration
+            buffer_duration = Gst.util_uint64_scale_int(1, Gst.SECOND, 30)
+            buffer.pts = frame_count * buffer_duration
+            buffer.duration = buffer_duration
+            # Push the buffer to appsrc
+            ret = appsrc.emit('push-buffer', buffer)
+            if ret != Gst.FlowReturn.OK:
+                print("Failed to push buffer:", ret)
+                break
+            frame_count += 1
 
 def disable_qos(pipeline):
     """
