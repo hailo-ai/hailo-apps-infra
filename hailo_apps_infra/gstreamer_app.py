@@ -86,7 +86,7 @@ class GStreamerApp:
         self.video_source = self.options_menu.input
         self.source_type = get_source_type(self.video_source)
         self.user_data = user_data
-        self.video_sink = "xvimagesink"
+        self.video_sink = "autovideosink"
         self.pipeline = None
         self.loop = None
         self.threads = []
@@ -103,7 +103,7 @@ class GStreamerApp:
         user_data.use_frame = self.options_menu.use_frame
 
         self.sync = "false" if (self.options_menu.disable_sync or self.source_type != "file") else "true"
-        self.show_fps = "true" if self.options_menu.show_fps else "false"
+        self.show_fps = self.options_menu.show_fps
 
         if self.options_menu.dump_dot:
             os.environ["GST_DEBUG_DUMP_DOT_DIR"] = self.current_path
@@ -200,10 +200,6 @@ class GStreamerApp:
         hailo_display = self.pipeline.get_by_name("hailo_display")
         if hailo_display is None:
             print("Warning: hailo_display element not found, add <fpsdisplaysink name=hailo_display> to your pipeline to support fps display.")
-        else:
-            xvimagesink = hailo_display.get_by_name("xvimagesink0")
-            if xvimagesink is not None:
-                xvimagesink.set_property("qos", False)
 
         # Disable QoS to prevent frame drops
         disable_qos(self.pipeline)

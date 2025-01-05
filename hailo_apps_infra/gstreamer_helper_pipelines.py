@@ -52,7 +52,8 @@ def SOURCE_PIPELINE(video_source, video_width=640, video_height=640, video_forma
             # When using uncomressed format, only low resolution is supported
             source_element = (
                 f'v4l2src device={video_source} name={name} ! '
-                'video/x-raw, format=RGB, width=640, height=480 ! '
+                f'video/x-raw, format=RGB, width=640, height=480 ! '
+                'videoflip name=videoflip video-direction=horiz ! '
             )
         else:
             # Use compressed format for webcam
@@ -60,6 +61,7 @@ def SOURCE_PIPELINE(video_source, video_width=640, video_height=640, video_forma
                 f'v4l2src device={video_source} name={name} ! image/jpeg, framerate=30/1, width={video_width}, height={video_height} ! '
                 f'{QUEUE(name=f"{name}_queue_decode")} ! '
                 f'decodebin name={name}_decodebin ! '
+                f'videoflip name=videoflip video-direction=horiz ! '
             )
     elif source_type == 'rpi':
         source_element = (
@@ -203,13 +205,13 @@ def INFERENCE_PIPELINE_WRAPPER(inner_pipeline, bypass_max_size_buffers=20, name=
 
     return inference_wrapper_pipeline
 
-def DISPLAY_PIPELINE(video_sink='xvimagesink', sync='true', show_fps='false', name='hailo_display'):
+def DISPLAY_PIPELINE(video_sink='autovideosink', sync='true', show_fps='false', name='hailo_display'):
     """
     Creates a GStreamer pipeline string for displaying the video.
     It includes the hailooverlay plugin to draw bounding boxes and labels on the video.
 
     Args:
-        video_sink (str, optional): The video sink element to use. Defaults to 'xvimagesink'.
+        video_sink (str, optional): The video sink element to use. Defaults to 'autovideosink'.
         sync (str, optional): The sync property for the video sink. Defaults to 'true'.
         show_fps (str, optional): Whether to show the FPS on the video sink. Should be 'true' or 'false'. Defaults to 'false'.
         name (str, optional): The prefix name for the pipeline elements. Defaults to 'hailo_display'.
