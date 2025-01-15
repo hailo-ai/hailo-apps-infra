@@ -353,7 +353,7 @@ def CROPPER_PIPELINE(
         str: A pipeline string representing hailocropper + aggregator around the inner_pipeline.
     """
     return (
-        f'queue name={name}_input_q ! '
+        f'{QUEUE(name=f"{name}_input_q")} ! '
         f'hailocropper name={name}_cropper '
         f'so-path={so_path} '
         f'function-name={function_name} '
@@ -363,9 +363,10 @@ def CROPPER_PIPELINE(
         f'resize-method={resize_method} '
         f'hailoaggregator name={name}_agg '
         # bypass
-        f'{name}_cropper. ! queue name={name}_bypass_q max-size-buffers={bypass_max_size_buffers} ! {name}_agg.sink_0 '
+        f'{name}_cropper. ! '
+        f'{QUEUE(name=f"{name}_bypass_q", max_size_buffers=bypass_max_size_buffers)} ! {name}_agg.sink_0 '
         # pipeline for the actual inference
         f'{name}_cropper. ! {inner_pipeline} ! {name}_agg.sink_1 '
         # aggregator output
-        f'{name}_agg. ! queue name={name}_output_q '
+        f'{name}_agg. ! {QUEUE(name=f"{name}_output_q")} '
     )
