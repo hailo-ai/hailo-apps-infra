@@ -16,7 +16,7 @@ For more general information and support visit the [Hailo Official Website](http
 
 ## Hailo examples code structure
 `hailo-app-infra` is used as a dependency in other Hailo examples repositories. The following diagram shows the code structure of the Hailo examples repositories:
-![alt text](../hailo-rpi5-examples/doc/images/hailo_examples_code_structure.svg)
+![hailo_examples_code_structure](doc/images/hailo_examples_code_structure.svg)
 
 ## Hailo Requirements
 This repo requires Hailo's tools to be installed.
