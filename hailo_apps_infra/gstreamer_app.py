@@ -91,6 +91,7 @@ class GStreamerApp:
         self.loop = None
         self.threads = []
         self.error_occurred = False
+        self.pipeline_latency = 300  # milliseconds
 
         # Set Hailo parameters; these parameters should be set based on the model used
         self.batch_size = 1
@@ -214,6 +215,13 @@ class GStreamerApp:
             picam_thread = threading.Thread(target=picamera_thread, args=(self.pipeline, self.video_width, self.video_height, self.video_format))
             self.threads.append(picam_thread)
             picam_thread.start()
+
+        # Set the pipeline to PAUSED to ensure elements are initialized
+        self.pipeline.set_state(Gst.State.PAUSED)
+
+        # Set pipeline latency
+        new_latency = self.pipeline_latency * Gst.MSECOND  # Convert milliseconds to nanoseconds
+        self.pipeline.set_latency(new_latency)
 
         # Set pipeline to PLAYING state
         self.pipeline.set_state(Gst.State.PLAYING)
