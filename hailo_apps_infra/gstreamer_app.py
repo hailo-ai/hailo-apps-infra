@@ -108,7 +108,7 @@ class GStreamerApp:
         self.show_fps = self.options_menu.show_fps
 
         if self.options_menu.dump_dot:
-            os.environ["GST_DEBUG_DUMP_DOT_DIR"] = self.current_path
+            os.environ["GST_DEBUG_DUMP_DOT_DIR"] = os.getcwd()
 
     def on_fps_measurement(self, sink, fps, droprate, avgfps):
         print(f"FPS: {fps:.2f}, Droprate: {droprate:.2f}, Avg FPS: {avgfps:.2f}")

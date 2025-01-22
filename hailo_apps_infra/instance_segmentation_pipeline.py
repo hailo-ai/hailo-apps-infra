@@ -44,8 +44,8 @@ class GStreamerInstanceSegmentationApp(GStreamerApp):
         # Additional initialization code can be added here
         # Set Hailo parameters these parameters should be set based on the model used
         self.batch_size = 2
-        self.video_width = 1280
-        self.video_height = 720
+        self.video_width = 640
+        self.video_height = 640
 
         # Determine the architecture if not specified
         if args.arch is None:
