@@ -31,6 +31,20 @@ def QUEUE(name, max_size_buffers=3, max_size_bytes=0, max_size_time=0, leaky='no
     q_string = f'queue name={name} leaky={leaky} max-size-buffers={max_size_buffers} max-size-bytes={max_size_bytes} max-size-time={max_size_time} '
     return q_string
 
+def get_camera_resulotion(video_width=640, video_height=640):
+    # This function will return a standard camera resolution based on the video resolution required
+    # Standard resolutions are 640x480, 1280x720, 1920x1080, 3840x2160
+    # If the required resolution is not standard, it will return the closest standard resolution
+    if video_width <= 640 and video_height <= 480:
+        return 640, 480
+    elif video_width <= 1280 and video_height <= 720:
+        return 1280, 720
+    elif video_width <= 1920 and video_height <= 1080:
+        return 1920, 1080
+    else:
+        return 3840, 2160
+
+
 def SOURCE_PIPELINE(video_source, video_width=640, video_height=640, video_format='RGB', name='source', no_webcam_compression=False):
     """
     Creates a GStreamer pipeline string for the video source.
@@ -57,8 +71,9 @@ def SOURCE_PIPELINE(video_source, video_width=640, video_height=640, video_forma
             )
         else:
             # Use compressed format for webcam
+            width, height = get_camera_resulotion(video_width, video_height)
             source_element = (
-                f'v4l2src device={video_source} name={name} ! image/jpeg, framerate=30/1, width={video_width}, height={video_height} ! '
+                f'v4l2src device={video_source} name={name} ! image/jpeg, framerate=30/1, width={width}, height={height} ! '
                 f'{QUEUE(name=f"{name}_queue_decode")} ! '
                 f'decodebin name={name}_decodebin ! '
                 f'videoflip name=videoflip video-direction=horiz ! '

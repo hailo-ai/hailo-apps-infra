@@ -191,13 +191,15 @@ class GStreamerApp:
         bus.add_signal_watch()
         bus.connect("message", self.bus_call, self.loop)
 
+
         # Connect pad probe to the identity element
-        identity = self.pipeline.get_by_name("identity_callback")
-        if identity is None:
-            print("Warning: identity_callback element not found, add <identity name=identity_callback> in your pipeline where you want the callback to be called.")
-        else:
-            identity_pad = identity.get_static_pad("src")
-            identity_pad.add_probe(Gst.PadProbeType.BUFFER, self.app_callback, self.user_data)
+        if not self.options_menu.disable_callback:
+            identity = self.pipeline.get_by_name("identity_callback")
+            if identity is None:
+                print("Warning: identity_callback element not found, add <identity name=identity_callback> in your pipeline where you want the callback to be called.")
+            else:
+                identity_pad = identity.get_static_pad("src")
+                identity_pad.add_probe(Gst.PadProbeType.BUFFER, self.app_callback, self.user_data)
 
         hailo_display = self.pipeline.get_by_name("hailo_display")
         if hailo_display is None:
