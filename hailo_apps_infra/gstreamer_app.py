@@ -71,7 +71,7 @@ class GStreamerApp:
         setproctitle.setproctitle("Hailo Python App")
 
         # Create options menu
-        self.options_menu = args
+        self.options_menu = args.parse_args()
 
         # Set up signal handler for SIGINT (Ctrl-C)
         signal.signal(signal.SIGINT, self.shutdown)

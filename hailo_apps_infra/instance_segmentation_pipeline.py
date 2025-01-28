@@ -36,11 +36,11 @@ from hailo_apps_infra.gstreamer_app import (
 # This class inherits from the hailo_rpi_common.GStreamerApp class
 
 class GStreamerInstanceSegmentationApp(GStreamerApp):
-    def __init__(self, app_callback, user_data):
-        parser = get_default_parser()
-        args = parser.parse_args()
+    def __init__(self, app_callback, user_data, parser=None):
+        if parser == None:
+            parser = get_default_parser()
         # Call the parent class constructor
-        super().__init__(args, user_data)
+        super().__init__(parser, user_data)
         # Additional initialization code can be added here
         # Set Hailo parameters these parameters should be set based on the model used
         self.batch_size = 2
