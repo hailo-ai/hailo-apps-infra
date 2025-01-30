@@ -214,7 +214,7 @@ class GStreamerApp:
             display_process.start()
 
         if self.source_type == "rpi":
-            picam_thread = threading.Thread(target=picamera_thread, args=(self.pipeline, self.video_width, self.video_height, self.video_format))
+            picam_thread = threading.Thread(target=picamera_thread, args=(self,))
             self.threads.append(picam_thread)
             picam_thread.start()
 
@@ -254,8 +254,8 @@ class GStreamerApp:
                 print("Exiting...")
                 sys.exit(0)
 
-def picamera_thread(pipeline, video_width, video_height, video_format, picamera_config=None):
-    appsrc = pipeline.get_by_name("app_source")
+def picamera_thread(app, picamera_config=None):
+    appsrc = app.pipeline.get_by_name("app_source")
     appsrc.set_property("is-live", True)
     appsrc.set_property("format", Gst.Format.TIME)
     print("appsrc properties: ", appsrc)
@@ -264,7 +264,7 @@ def picamera_thread(pipeline, video_width, video_height, video_format, picamera_
         if picamera_config is None:
             # Default configuration
             main = {'size': (1280, 720), 'format': 'RGB888'}
-            lores = {'size': (video_width, video_height), 'format': 'RGB888'}
+            lores = {'size': (app.video_width, app.video_height), 'format': 'RGB888'}
             controls = {'FrameRate': 30}
             config = picam2.create_preview_configuration(main=main, lores=lores, controls=controls)
         else:
@@ -273,7 +273,7 @@ def picamera_thread(pipeline, video_width, video_height, video_format, picamera_
         picam2.configure(config)
         # Update GStreamer caps based on 'lores' stream
         lores_stream = config['lores']
-        format_str = 'RGB' if lores_stream['format'] == 'RGB888' else video_format
+        format_str = 'RGB' if lores_stream['format'] == 'RGB888' else app.video_format
         width, height = lores_stream['size']
         print(f"Picamera2 configuration: width={width}, height={height}, format={format_str}")
         appsrc.set_property(
@@ -285,9 +285,12 @@ def picamera_thread(pipeline, video_width, video_height, video_format, picamera_
         )
         picam2.start()
         frame_count = 0
-        start_time = time.time()
         print("picamera_process started")
         while True:
+            if not app.user_data.running:
+                time.sleep(1)
+                continue
+
             frame_data = picam2.capture_array('lores')
             # frame_data = np.random.randint(0, 255, (height, width, 3), dtype=np.uint8)
             if frame_data is None:
