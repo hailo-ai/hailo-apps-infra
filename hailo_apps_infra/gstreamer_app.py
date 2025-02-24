@@ -11,6 +11,7 @@ import time
 gi.require_version('Gst', '1.0')
 from gi.repository import Gst, GLib, GObject
 from hailo_apps_infra.gstreamer_helper_pipelines import get_source_type
+from hailo_apps_infra.get_usb_camera import get_usb_video_devices
 
 try:
     from picamera2 import Picamera2
@@ -71,7 +72,7 @@ class GStreamerApp:
         setproctitle.setproctitle("Hailo Python App")
 
         # Create options menu
-        self.options_menu = args.parse_args()
+        self.options_menu = args
 
         # Set up signal handler for SIGINT (Ctrl-C)
         signal.signal(signal.SIGINT, self.shutdown)
@@ -84,7 +85,17 @@ class GStreamerApp:
         self.current_path = os.path.dirname(os.path.abspath(__file__))
         self.postprocess_dir = tappas_post_process_dir
         self.video_source = self.options_menu.input
-        self.source_type = get_source_type(self.video_source)
+        if self.video_source == 'usb':
+            self.video_source = get_usb_video_devices()
+            if not self.video_source:
+                print('Provided argument "--input" is set to "usb", however no available USB cameras found. Please connect a camera or specifiy different input method.')
+                exit(1)
+            elif len(self.video_source) > 1:
+                print('Provided argument "--input" is set to "usb", however multiple available USB cameras found. Please connect only a single camera or specifiy camera path (e.g., /dev/video...) or select different input method.')
+                exit(1)
+            self.source_type = get_source_type(self.video_source[0])
+        else:
+            self.source_type = get_source_type(self.video_source)
         self.user_data = user_data
         self.video_sink = "autovideosink"
         self.pipeline = None

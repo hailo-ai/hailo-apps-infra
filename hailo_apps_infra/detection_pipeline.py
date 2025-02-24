@@ -44,8 +44,9 @@ class GStreamerDetectionApp(GStreamerApp):
             default=None,
             help="Path to costume labels JSON file",
         )
+        args = parser.parse_args()
         # Call the parent class constructor
-        super().__init__(parser, user_data)
+        super().__init__(args, user_data)
         # Additional initialization code can be added here
         # Set Hailo parameters these parameters should be set based on the model used
         self.batch_size = 2
