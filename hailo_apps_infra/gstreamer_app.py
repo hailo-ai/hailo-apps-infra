@@ -90,9 +90,6 @@ class GStreamerApp:
             if not self.video_source:
                 print('Provided argument "--input" is set to "usb", however no available USB cameras found. Please connect a camera or specifiy different input method.')
                 exit(1)
-            elif len(self.video_source) > 1:
-                print('Provided argument "--input" is set to "usb", however multiple available USB cameras found. Please connect only a single camera or specifiy camera path (e.g., /dev/video...) or select different input method.')
-                exit(1)
             self.source_type = get_source_type(self.video_source[0])
         else:
             self.source_type = get_source_type(self.video_source)

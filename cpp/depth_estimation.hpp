@@ -8,6 +8,6 @@
 #include "hailo_common.hpp"
 
 __BEGIN_DECLS
-void filter_fast_depth(HailoROIPtr roi);
+void filter(HailoROIPtr roi);
 void filter_scdepth(HailoROIPtr roi);
 __END_DECLS
