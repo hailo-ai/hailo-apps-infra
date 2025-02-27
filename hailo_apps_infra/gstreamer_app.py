@@ -90,9 +90,9 @@ class GStreamerApp:
             if not self.video_source:
                 print('Provided argument "--input" is set to "usb", however no available USB cameras found. Please connect a camera or specifiy different input method.')
                 exit(1)
-            self.source_type = get_source_type(self.video_source[0])
-        else:
-            self.source_type = get_source_type(self.video_source)
+            else:
+                self.video_source = self.video_source[0]
+        self.source_type = get_source_type(self.video_source)
         self.user_data = user_data
         self.video_sink = "autovideosink"
         self.pipeline = None
