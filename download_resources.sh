@@ -6,10 +6,17 @@ mkdir -p "$RESOURCE_DIR"
 
 # Define download function with file existence check and retries
 download_model() {
-  file_name=$(basename "$1")
-  if [ ! -f "$RESOURCE_DIR/$file_name" ]; then
+  local url=$1
+  local file_name=$(basename "$url")
+
+  # Check if the file is scdepthv3.hef and part of H8L_HEFS
+  if [[ "$url" == *"scdepthv3.hef" && "$url" == *"hailo8l"* ]]; then
+    file_name="scdepthv3_h8l.hef"
+  fi
+
+  if [ ! -f "$file_name" ]; then
     echo "Downloading $file_name..."
-    wget --tries=3 --retry-connrefused --quiet --show-progress "$1" -P "$RESOURCE_DIR" || {
+    wget -q --show-progress "$url" -O "$file_name" || {
       echo "Failed to download $file_name after multiple attempts."
       exit 1
     }
@@ -23,12 +30,14 @@ H8_HEFS=(
   "https://hailo-model-zoo.s3.eu-west-2.amazonaws.com/ModelZoo/Compiled/v2.13.0/hailo8/yolov8m_pose.hef"
   "https://hailo-model-zoo.s3.eu-west-2.amazonaws.com/ModelZoo/Compiled/v2.13.0/hailo8/yolov5m_seg.hef"
   "https://hailo-model-zoo.s3.eu-west-2.amazonaws.com/ModelZoo/Compiled/v2.13.0/hailo8/yolov8m.hef"
+  "https://hailo-model-zoo.s3.eu-west-2.amazonaws.com/ModelZoo/Compiled/v2.14.0/hailo8/scdepthv3.hef"
 )
 
 H8L_HEFS=(
   "https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/hefs/h8l_rpi/yolov8s_h8l.hef"
   "https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/hefs/h8l_rpi/yolov5n_seg_h8l_mz.hef"
   "https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/hefs/h8l_rpi/yolov8s_pose_h8l.hef"
+  "https://hailo-model-zoo.s3.eu-west-2.amazonaws.com/ModelZoo/Compiled/v2.14.0/hailo8l/scdepthv3.hef"
 )
 
 VIDEOS=(
