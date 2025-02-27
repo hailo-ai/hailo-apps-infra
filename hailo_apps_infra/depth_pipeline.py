@@ -8,21 +8,22 @@ from hailo_apps_infra.hailo_rpi_common import detect_hailo_arch, get_default_par
 
 # User Gstreamer Application: This class inherits from the hailo_rpi_common.GStreamerApp class
 class GStreamerDepthApp(GStreamerApp):
-    def __init__(self, app_callback, user_data):
+    def __init__(self, app_callback, user_data, parser=None):
         
-        parser = get_default_parser()
-        args = parser.parse_args()
+        if parser == None:
+            parser = get_default_parser()
+
+        super().__init__(parser, user_data)  # Call the parent class constructor
 
         # Determine the architecture if not specified
-        if args.arch is None:
+        if self.options_menu.arch is None:
             detected_arch = detect_hailo_arch()
             if detected_arch is None:
                 raise ValueError('Could not auto-detect Hailo architecture. Please specify --arch manually.')
             self.arch = detected_arch
         else:
-            self.arch = args.arch
+            self.arch = self.options_menu.arch
 
-        super().__init__(args, user_data)  # Call the parent class constructor
         self.app_callback = app_callback
         setproctitle.setproctitle("Hailo Depth App")  # Set the process title
 
