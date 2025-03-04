@@ -68,13 +68,13 @@ class GStreamerDetectionApp(GStreamerApp):
             self.hef_path = self.options_menu.hef_path
         # Set the HEF file path based on the arch
         elif self.arch == "hailo8":
-            self.hef_path = os.path.join(self.current_path, '../resources/yolov11m.hef')
+            self.hef_path = os.path.join(self.current_path, '../resources/yolov6n.hef')
         else:  # hailo8l
-            self.hef_path = os.path.join(self.current_path, '../resources/yolov11s_h8l.hef')
+            self.hef_path = os.path.join(self.current_path, '../resources/yolov6n_h8l.hef')
 
         # Set the post-processing shared object file
         self.post_process_so = os.path.join(self.current_path, '../resources/libyolo_hailortpp_postprocess.so')
-        self.post_function_name = "filter_letterbox"
+        self.post_function_name = "filter"
         # User-defined label JSON file
         self.labels_json = self.options_menu.labels_json
 
@@ -87,7 +87,7 @@ class GStreamerDetectionApp(GStreamerApp):
         )
 
         # Set the process title
-        setproctitle.setproctitle("Hailo Detection Yolo 11 App")
+        setproctitle.setproctitle("Hailo Detection Simple App")
 
         self.create_pipeline()
 
@@ -100,15 +100,12 @@ class GStreamerDetectionApp(GStreamerApp):
             batch_size=self.batch_size,
             config_json=self.labels_json,
             additional_params=self.thresholds_str)
-        detection_pipeline_wrapper = INFERENCE_PIPELINE_WRAPPER(detection_pipeline)
-        tracker_pipeline = TRACKER_PIPELINE(class_id=1)
         user_callback_pipeline = USER_CALLBACK_PIPELINE()
         display_pipeline = DISPLAY_PIPELINE(video_sink=self.video_sink, sync=self.sync, show_fps=self.show_fps)
 
         pipeline_string = (
             f'{source_pipeline} ! '
-            f'{detection_pipeline_wrapper} ! '
-            f'{tracker_pipeline} ! '
+            f'{detection_pipeline} ! '
             f'{user_callback_pipeline} ! '
             f'{display_pipeline}'
         )
