@@ -10,7 +10,7 @@ download_model() {
   local file_name=$(basename "$url")
 
   # Check if the file is for H8L and rename it accordingly
-  if [[ "$url" == *"hailo8l"* ]]; then
+  if [[ "$url" == *"hailo8l"* && "$url" != *"_h8l.hef" ]]; then
     file_name="${file_name%.hef}_h8l.hef"
   fi
 
