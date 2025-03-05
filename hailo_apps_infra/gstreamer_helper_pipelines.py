@@ -7,6 +7,8 @@ def get_source_type(input_source):
         return 'usb'
     elif input_source.startswith("rpi"):
         return 'rpi'
+    elif input_source.startswith("udp://"):
+        return 'udp'
     elif input_source.startswith("libcamera"): # Use libcamerasrc element, not suggested
         return 'libcamera'
     elif input_source.startswith('0x'):
@@ -83,6 +85,15 @@ def SOURCE_PIPELINE(video_source, video_width=640, video_height=640, video_forma
             f'appsrc name=app_source is-live=true leaky-type=downstream max-buffers=3 ! '
             'videoflip name=videoflip video-direction=horiz ! '
             f'video/x-raw, format={video_format}, width={video_width}, height={video_height} ! '
+        )
+    elif source_type == 'udp':
+        parsed = urllib.parse.urlparse(video_source)
+        port = parsed.port
+        source_element = (
+            f'udpsrc port={port} caps="application/x-rtp, media=(string)video, clock-rate=(int)90000, '
+            f'encoding-name=(string)H264, payload=(int)96" ! '
+            'rtph264depay ! avdec_h264 ! videoconvert ! '
+            f'{QUEUE(name=f"{name}_queue_decode")} ! '
         )
     elif source_type == 'libcamera':
         source_element = (
