@@ -72,6 +72,8 @@ def get_default_parser():
         "--input", "-i", type=str, default=default_video_source,
         help="Input source. Can be a file, USB (webcam), RPi camera (CSI camera module) or ximage. \
         For RPi camera use '-i rpi' \
+        For automatically detect a connected usb camera, use '-i usb' \
+        For manually specifying a connected usb camera, use '-i /dev/video<X>' \
         Defaults to example video resources/example.mp4"
     )
     parser.add_argument("--use-frame", "-u", action="store_true", help="Use frame from the callback function")
