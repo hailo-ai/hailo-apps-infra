@@ -44,15 +44,20 @@ class GStreamerDetectionApp(GStreamerApp):
             default=None,
             help="Path to costume labels JSON file",
         )
+
         # Call the parent class constructor
         super().__init__(parser, user_data)
+
         # Additional initialization code can be added here
-        # Set Hailo parameters these parameters should be set based on the model used
+        self.video_width = 640
+        self.video_height = 640
+        
+        # Set Hailo parameters - these parameters should be set based on the model used
         self.batch_size = 2
         nms_score_threshold = 0.3
         nms_iou_threshold = 0.45
-
-
+        if self.options_menu.input is None:  # Setting up a new application-specific default video (overrides the default video set in the GStreamerApp constructor)
+            self.video_source = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../resources/example_640.mp4')
         # Determine the architecture if not specified
         if self.options_menu.arch is None:
             detected_arch = detect_hailo_arch()
@@ -62,7 +67,6 @@ class GStreamerDetectionApp(GStreamerApp):
             print(f"Auto-detected Hailo architecture: {self.arch}")
         else:
             self.arch = self.options_menu.arch
-
 
         if self.options_menu.hef_path is not None:
             self.hef_path = self.options_menu.hef_path
@@ -75,6 +79,7 @@ class GStreamerDetectionApp(GStreamerApp):
         # Set the post-processing shared object file
         self.post_process_so = os.path.join(self.current_path, '../resources/libyolo_hailortpp_postprocess.so')
         self.post_function_name = "filter"
+
         # User-defined label JSON file
         self.labels_json = self.options_menu.labels_json
 
@@ -92,7 +97,7 @@ class GStreamerDetectionApp(GStreamerApp):
         self.create_pipeline()
 
     def get_pipeline_string(self):
-        source_pipeline = SOURCE_PIPELINE(self.video_source, self.video_width, self.video_height)
+        source_pipeline = SOURCE_PIPELINE(self.video_source, self.video_width, self.video_height, no_webcam_compression=True)
         detection_pipeline = INFERENCE_PIPELINE(
             hef_path=self.hef_path,
             post_process_so=self.post_process_so,

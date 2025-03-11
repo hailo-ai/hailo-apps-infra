@@ -85,6 +85,8 @@ class GStreamerApp:
         self.current_path = os.path.dirname(os.path.abspath(__file__))
         self.postprocess_dir = tappas_post_process_dir
         self.video_source = self.options_menu.input
+        if self.video_source is None:
+            self.video_source = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../resources/example.mp4')
         if self.video_source == 'usb':
             self.video_source = get_usb_video_devices()
             if not self.video_source:
