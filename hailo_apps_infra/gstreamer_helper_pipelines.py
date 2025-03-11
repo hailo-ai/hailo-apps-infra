@@ -66,7 +66,7 @@ def SOURCE_PIPELINE(video_source, video_width=640, video_height=640, video_forma
             # When using uncomressed format, only low resolution is supported
             source_element = (
                 f'v4l2src device={video_source} name={name} ! '
-                f'video/x-raw, format=RGB, width=640, height=480 ! '
+                f'video/x-raw, width=640, height=480 ! '
                 'videoflip name=videoflip video-direction=horiz ! '
             )
         else:
