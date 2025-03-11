@@ -63,7 +63,7 @@ class GStreamerInstanceSegmentationApp(GStreamerApp):
         elif self.arch == "hailo8":
             self.hef_path = os.path.join(self.current_path, '../resources/yolov5m_seg.hef')
         else:  # hailo8l
-            self.hef_path = os.path.join(self.current_path, '../resources/yolov5n_seg_h8l_mz.hef')
+            self.hef_path = os.path.join(self.current_path, '../resources/yolov5n_seg_h8l.hef')
 
         # self.default_post_process_so = os.path.join(self.postprocess_dir, 'libyolov5seg_post.so')
         if 'yolov5m_seg' in self.hef_path:
