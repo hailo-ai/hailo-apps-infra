@@ -92,6 +92,10 @@ def get_default_parser():
         help="Disables display sink sync, will run as fast as possible. Relevant when using file source."
     )
     parser.add_argument("--dump-dot", action="store_true", help="Dump the pipeline graph to a dot file pipeline.dot")
+    parser.add_argument(
+        "--frame-rate", "-r", type=int, default=30,
+        help="Frame rate of the video source. Default is 30."
+    )
     return parser
 
 
