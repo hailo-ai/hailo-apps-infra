@@ -96,6 +96,10 @@ def get_default_parser():
         help="Disables the user's custom callback function in the pipeline. Use this option to run the pipeline without invoking the callback logic."
     )
     parser.add_argument("--dump-dot", action="store_true", help="Dump the pipeline graph to a dot file pipeline.dot")
+    parser.add_argument(
+        "--frame-rate", "-r", type=int, default=30,
+        help="Frame rate of the video source. Default is 30."
+    )
     return parser
 
 

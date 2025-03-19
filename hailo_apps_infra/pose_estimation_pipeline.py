@@ -80,7 +80,9 @@ class GStreamerPoseEstimationApp(GStreamerApp):
         self.create_pipeline()
 
     def get_pipeline_string(self):
-        source_pipeline = SOURCE_PIPELINE(video_source=self.video_source, video_width=self.video_width, video_height=self.video_height)
+        source_pipeline = SOURCE_PIPELINE(video_source=self.video_source,
+                                          video_width=self.video_width, video_height=self.video_height,
+                                          frame_rate=self.frame_rate, sync=self.sync)
         infer_pipeline = INFERENCE_PIPELINE(
             hef_path=self.hef_path,
             post_process_so=self.post_process_so,
