@@ -28,25 +28,36 @@ from hailo_apps_infra.gstreamer_app import (
     dummy_callback
 )
 
-#-----------------------------------------------------------------------------------------------
+
+
+# -----------------------------------------------------------------------------------------------
 # User Gstreamer Application
 # -----------------------------------------------------------------------------------------------
 
 # This class inherits from the hailo_rpi_common.GStreamerApp class
-
-class GStreamerPoseEstimationApp(GStreamerApp):
+class GStreamerDetectionApp(GStreamerApp):
     def __init__(self, app_callback, user_data, parser=None):
         if parser == None:
             parser = get_default_parser()
+        parser.add_argument(
+            "--labels-json",
+            default=None,
+            help="Path to costume labels JSON file",
+        )
+
         # Call the parent class constructor
         super().__init__(parser, user_data)
+
         # Additional initialization code can be added here
-        # Set Hailo parameters these parameters should be set based on the model used
+        self.video_width = 640
+        self.video_height = 640
+        
+        # Set Hailo parameters - these parameters should be set based on the model used
         self.batch_size = 2
-        self.video_width = 1280
-        self.video_height = 720
-
-
+        nms_score_threshold = 0.3
+        nms_iou_threshold = 0.45
+        if self.options_menu.input is None:  # Setting up a new application-specific default video (overrides the default video set in the GStreamerApp constructor)
+            self.video_source = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../resources/example_640.mp4')
         # Determine the architecture if not specified
         if self.options_menu.arch is None:
             detected_arch = detect_hailo_arch()
@@ -57,47 +68,53 @@ class GStreamerPoseEstimationApp(GStreamerApp):
         else:
             self.arch = self.options_menu.arch
 
-
-
-        # Set the HEF file path based on the architecture
-        if self.options_menu.hef_path:
+        if self.options_menu.hef_path is not None:
             self.hef_path = self.options_menu.hef_path
+        # Set the HEF file path based on the arch
         elif self.arch == "hailo8":
-            self.hef_path = os.path.join(self.current_path, '../resources/yolov8m_pose.hef')
+            self.hef_path = os.path.join(self.current_path, '../resources/yolov6n.hef')
         else:  # hailo8l
-            self.hef_path = os.path.join(self.current_path, '../resources/yolov8s_pose_h8l.hef')
+            self.hef_path = os.path.join(self.current_path, '../resources/yolov6n_h8l.hef')
+
+        # Set the post-processing shared object file
+        self.post_process_so = os.path.join(self.current_path, '../resources/libyolo_hailortpp_postprocess.so')
+        self.post_function_name = "filter"
+
+        # User-defined label JSON file
+        self.labels_json = self.options_menu.labels_json
 
         self.app_callback = app_callback
 
-        # Set the post-processing shared object file
-        self.post_process_so = os.path.join(self.current_path, '../resources/libyolov8pose_postprocess.so')
-        self.post_process_function = "filter_letterbox"
-
+        self.thresholds_str = (
+            f"nms-score-threshold={nms_score_threshold} "
+            f"nms-iou-threshold={nms_iou_threshold} "
+            f"output-format-type=HAILO_FORMAT_TYPE_FLOAT32"
+        )
 
         # Set the process title
-        setproctitle.setproctitle("Hailo Pose Estimation App")
+        setproctitle.setproctitle("Hailo Detection Simple App")
 
         self.create_pipeline()
 
     def get_pipeline_string(self):
         source_pipeline = SOURCE_PIPELINE(video_source=self.video_source,
                                           video_width=self.video_width, video_height=self.video_height,
-                                          frame_rate=self.frame_rate, sync=self.sync)
-        infer_pipeline = INFERENCE_PIPELINE(
+                                          frame_rate=self.frame_rate, sync=self.sync,
+                                          no_webcam_compression=True)
+        
+        detection_pipeline = INFERENCE_PIPELINE(
             hef_path=self.hef_path,
             post_process_so=self.post_process_so,
-            post_function_name=self.post_process_function,
-            batch_size=self.batch_size
-        )
-        infer_pipeline_wrapper = INFERENCE_PIPELINE_WRAPPER(infer_pipeline)
-        tracker_pipeline = TRACKER_PIPELINE(class_id=0)
+            post_function_name=self.post_function_name,
+            batch_size=self.batch_size,
+            config_json=self.labels_json,
+            additional_params=self.thresholds_str)
         user_callback_pipeline = USER_CALLBACK_PIPELINE()
-
         display_pipeline = DISPLAY_PIPELINE(video_sink=self.video_sink, sync=self.sync, show_fps=self.show_fps)
+
         pipeline_string = (
-            f'{source_pipeline} !'
-            f'{infer_pipeline_wrapper} ! '
-            f'{tracker_pipeline} ! '
+            f'{source_pipeline} ! '
+            f'{detection_pipeline} ! '
             f'{user_callback_pipeline} ! '
             f'{display_pipeline}'
         )
@@ -107,5 +124,6 @@ class GStreamerPoseEstimationApp(GStreamerApp):
 if __name__ == "__main__":
     # Create an instance of the user app callback class
     user_data = app_callback_class()
-    app = GStreamerPoseEstimationApp(dummy_callback, user_data)
+    app_callback = dummy_callback
+    app = GStreamerDetectionApp(app_callback, user_data)
     app.run()

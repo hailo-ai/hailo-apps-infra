@@ -36,34 +36,34 @@ from hailo_apps_infra.gstreamer_app import (
 # This class inherits from the hailo_rpi_common.GStreamerApp class
 
 class GStreamerInstanceSegmentationApp(GStreamerApp):
-    def __init__(self, app_callback, user_data):
-        parser = get_default_parser()
-        args = parser.parse_args()
+    def __init__(self, app_callback, user_data, parser=None):
+        if parser == None:
+            parser = get_default_parser()
         # Call the parent class constructor
-        super().__init__(args, user_data)
+        super().__init__(parser, user_data)
         # Additional initialization code can be added here
         # Set Hailo parameters these parameters should be set based on the model used
         self.batch_size = 2
-        self.video_width = 1280
-        self.video_height = 720
+        self.video_width = 640
+        self.video_height = 640
 
         # Determine the architecture if not specified
-        if args.arch is None:
+        if self.options_menu.arch is None:
             detected_arch = detect_hailo_arch()
             if detected_arch is None:
                 raise ValueError("Could not auto-detect Hailo architecture. Please specify --arch manually.")
             self.arch = detected_arch
             print(f"Auto-detected Hailo architecture: {self.arch}")
         else:
-            self.arch = args.arch
+            self.arch = self.options_menu.arch
 
         # Set the HEF file path based on the architecture
-        if args.hef_path:
-            self.hef_path = args.hef_path
+        if self.options_menu.hef_path:
+            self.hef_path = self.options_menu.hef_path
         elif self.arch == "hailo8":
             self.hef_path = os.path.join(self.current_path, '../resources/yolov5m_seg.hef')
         else:  # hailo8l
-            self.hef_path = os.path.join(self.current_path, '../resources/yolov5n_seg_h8l_mz.hef')
+            self.hef_path = os.path.join(self.current_path, '../resources/yolov5n_seg_h8l.hef')
 
         # self.default_post_process_so = os.path.join(self.postprocess_dir, 'libyolov5seg_post.so')
         if 'yolov5m_seg' in self.hef_path:

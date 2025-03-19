@@ -11,6 +11,7 @@ import time
 gi.require_version('Gst', '1.0')
 from gi.repository import Gst, GLib, GObject
 from hailo_apps_infra.gstreamer_helper_pipelines import get_source_type
+from hailo_apps_infra.get_usb_camera import get_usb_video_devices
 
 try:
     from picamera2 import Picamera2
@@ -71,7 +72,7 @@ class GStreamerApp:
         setproctitle.setproctitle("Hailo Python App")
 
         # Create options menu
-        self.options_menu = args
+        self.options_menu = args.parse_args()
 
         # Set up signal handler for SIGINT (Ctrl-C)
         signal.signal(signal.SIGINT, self.shutdown)
@@ -84,6 +85,15 @@ class GStreamerApp:
         self.current_path = os.path.dirname(os.path.abspath(__file__))
         self.postprocess_dir = tappas_post_process_dir
         self.video_source = self.options_menu.input
+        if self.video_source is None:
+            self.video_source = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../resources/example.mp4')
+        if self.video_source == 'usb':
+            self.video_source = get_usb_video_devices()
+            if not self.video_source:
+                print('Provided argument "--input" is set to "usb", however no available USB cameras found. Please connect a camera or specifiy different input method.')
+                exit(1)
+            else:
+                self.video_source = self.video_source[0]
         self.source_type = get_source_type(self.video_source)
         self.frame_rate = self.options_menu.frame_rate
         self.user_data = user_data
@@ -109,7 +119,7 @@ class GStreamerApp:
         self.show_fps = self.options_menu.show_fps
 
         if self.options_menu.dump_dot:
-            os.environ["GST_DEBUG_DUMP_DOT_DIR"] = self.current_path
+            os.environ["GST_DEBUG_DUMP_DOT_DIR"] = os.getcwd()
 
     def on_fps_measurement(self, sink, fps, droprate, avgfps):
         print(f"FPS: {fps:.2f}, Droprate: {droprate:.2f}, Avg FPS: {avgfps:.2f}")
@@ -147,8 +157,18 @@ class GStreamerApp:
         # QOS
         elif t == Gst.MessageType.QOS:
             # Handle QoS message here
-            qos_element = message.src.get_name()
-            print(f"QoS message received from {qos_element}")
+            # If lots of QoS messages are received, it may indicate that the pipeline is not able to keep up
+            if not hasattr(self, 'qos_count'):
+                self.qos_count = 0
+            self.qos_count += 1
+            if self.qos_count > 50 and self.qos_count % 10 == 0:
+                qos_element = message.src.get_name()
+                print(f"\033[91mQoS message received from {qos_element}\033[0m")
+                print(f"\033[91mLots of QoS messages received: {self.qos_count}, consider optimizing the pipeline or reducing the pipeline frame rate see '--frame-rate' flag.\033[0m")
+
+        return True
+
+
 
 
     def on_eos(self):
@@ -234,13 +254,15 @@ class GStreamerApp:
         bus.add_signal_watch()
         bus.connect("message", self.bus_call, self.loop)
 
+
         # Connect pad probe to the identity element
-        identity = self.pipeline.get_by_name("identity_callback")
-        if identity is None:
-            print("Warning: identity_callback element not found, add <identity name=identity_callback> in your pipeline where you want the callback to be called.")
-        else:
-            identity_pad = identity.get_static_pad("src")
-            identity_pad.add_probe(Gst.PadProbeType.BUFFER, self.app_callback, self.user_data)
+        if not self.options_menu.disable_callback:
+            identity = self.pipeline.get_by_name("identity_callback")
+            if identity is None:
+                print("Warning: identity_callback element not found, add <identity name=identity_callback> in your pipeline where you want the callback to be called.")
+            else:
+                identity_pad = identity.get_static_pad("src")
+                identity_pad.add_probe(Gst.PadProbeType.BUFFER, self.app_callback, self.user_data)
 
         hailo_display = self.pipeline.get_by_name("hailo_display")
         if hailo_display is None:

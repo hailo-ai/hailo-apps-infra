@@ -31,6 +31,20 @@ def QUEUE(name, max_size_buffers=3, max_size_bytes=0, max_size_time=0, leaky='no
     q_string = f'queue name={name} leaky={leaky} max-size-buffers={max_size_buffers} max-size-bytes={max_size_bytes} max-size-time={max_size_time} '
     return q_string
 
+def get_camera_resulotion(video_width=640, video_height=640):
+    # This function will return a standard camera resolution based on the video resolution required
+    # Standard resolutions are 640x480, 1280x720, 1920x1080, 3840x2160
+    # If the required resolution is not standard, it will return the closest standard resolution
+    if video_width <= 640 and video_height <= 480:
+        return 640, 480
+    elif video_width <= 1280 and video_height <= 720:
+        return 1280, 720
+    elif video_width <= 1920 and video_height <= 1080:
+        return 1920, 1080
+    else:
+        return 3840, 2160
+
+
 def SOURCE_PIPELINE(video_source, video_width=640, video_height=640,
                     name='source', no_webcam_compression=False, 
                     frame_rate=30, sync=True, 
@@ -45,11 +59,6 @@ def SOURCE_PIPELINE(video_source, video_width=640, video_height=640,
         video_height (int, optional): The height of the video. Defaults to 640.
         video_format (str, optional): The video format. Defaults to 'RGB'.
         name (str, optional): The prefix name for the pipeline elements. Defaults to 'source'.
-        no_webcam_compression (bool, optional): Use uncompressed format for USB. Defaults to False.
-        frame_rate (int, optional): Requested frame rate (frames per second). Defaults to 30.
-        sync (bool, optional): When False, run as fast as possible (disable sync).
-                               In this mode, the videorate caps act as passthrough.
-                               Defaults to True.
 
     Returns:
         str: A string representing the GStreamer pipeline for the video source.
@@ -61,21 +70,21 @@ def SOURCE_PIPELINE(video_source, video_width=640, video_height=640,
             # When using uncompressed format, only low resolution is supported
             source_element = (
                 f'v4l2src device={video_source} name={name} ! '
-                'video/x-raw, width=640, height=480 ! '
+                f'video/x-raw, width=640, height=480 ! '
                 'videoflip name=videoflip video-direction=horiz ! '
             )
         else:
             # Use compressed format for webcam
+            width, height = get_camera_resulotion(video_width, video_height)
             source_element = (
-                f'v4l2src device={video_source} name={name} ! image/jpeg, framerate=30/1, '
-                f'width={video_width}, height={video_height} ! '
+                f'v4l2src device={video_source} name={name} ! image/jpeg, framerate=30/1, width={width}, height={height} ! '
                 f'{QUEUE(name=f"{name}_queue_decode")} ! '
                 f'decodebin name={name}_decodebin ! '
-                'videoflip name=videoflip video-direction=horiz ! '
+                f'videoflip name=videoflip video-direction=horiz ! '
             )
     elif source_type == 'rpi':
         source_element = (
-            'appsrc name=app_source is-live=true leaky-type=downstream max-buffers=3 ! '
+            f'appsrc name=app_source is-live=true leaky-type=downstream max-buffers=3 ! '
             'videoflip name=videoflip video-direction=horiz ! '
             f'video/x-raw, format={video_format}, width={video_width}, height={video_height} ! '
         )
@@ -88,11 +97,13 @@ def SOURCE_PIPELINE(video_source, video_width=640, video_height=640,
         source_element = (
             f'ximagesrc xid={video_source} ! '
             f'{QUEUE(name=f"{name}queue_scale_")} ! '
-            'videoscale ! '
+            f'videoscale ! '
         )
     else:
         source_element = (
-            f'uridecodebin uri=file://{video_source} name={name} ! '
+            f'filesrc location="{video_source}" name={name} ! '
+            f'{QUEUE(name=f"{name}_queue_decode")} ! '
+            f'decodebin name={name}_decodebin ! '
         )
 
     # Set up the fps caps.
@@ -103,7 +114,7 @@ def SOURCE_PIPELINE(video_source, video_width=640, video_height=640,
     else:
         fps_caps = "video/x-raw"
 
-    base_pipeline = (
+    source_pipeline = (
         f'{source_element} '
         f'{QUEUE(name=f"{name}_scale_q")} ! '
         f'videoscale name={name}_videoscale n-threads=2 ! '
@@ -114,8 +125,7 @@ def SOURCE_PIPELINE(video_source, video_width=640, video_height=640,
         f'videorate name={name}_videorate ! capsfilter name={name}_fps_caps caps="{fps_caps}" '
     )
 
-    return base_pipeline
-
+    return source_pipeline
 
 def INFERENCE_PIPELINE(
     hef_path,
