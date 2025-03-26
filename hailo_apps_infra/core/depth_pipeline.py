@@ -2,9 +2,9 @@ import gi
 gi.require_version('Gst', '1.0')
 import os
 import setproctitle
-from hailo_apps_infra.gstreamer_app import app_callback_class, dummy_callback, GStreamerApp
-from hailo_apps_infra.gstreamer_helper_pipelines import DISPLAY_PIPELINE, INFERENCE_PIPELINE, INFERENCE_PIPELINE_WRAPPER, SOURCE_PIPELINE, USER_CALLBACK_PIPELINE
-from hailo_apps_infra.hailo_rpi_common import detect_hailo_arch, get_default_parser
+from hailo_apps_infra.gstreamer.gstreamer_app import app_callback_class, dummy_callback, GStreamerApp
+from hailo_apps_infra.gstreamer.gstreamer_helper_pipelines import DISPLAY_PIPELINE, INFERENCE_PIPELINE, INFERENCE_PIPELINE_WRAPPER, SOURCE_PIPELINE, USER_CALLBACK_PIPELINE
+from hailo_apps_infra.common.hailo_rpi_common import detect_hailo_arch, get_default_parser
 
 # User Gstreamer Application: This class inherits from the hailo_rpi_common.GStreamerApp class
 class GStreamerDepthApp(GStreamerApp):

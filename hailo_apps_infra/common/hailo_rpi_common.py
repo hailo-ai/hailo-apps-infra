@@ -13,7 +13,7 @@ import signal
 import threading
 import subprocess
 import platform
-from hailo_apps_infra.gstreamer_app import (
+from hailo_apps_infra.gstreamer.gstreamer_app import (
     app_callback_class
 )
 

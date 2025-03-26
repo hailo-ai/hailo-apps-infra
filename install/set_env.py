@@ -1,7 +1,7 @@
 import os
 import logging
 from pathlib import Path
-from hailo_apps_infra.hailo_rpi_common import detect_device_arch, detect_hailo_arch
+from hailo_apps_infra.common.hailo_rpi_common import detect_device_arch, detect_hailo_arch
 
 logger = logging.getLogger("env-setup")
 
