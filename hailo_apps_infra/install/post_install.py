@@ -1,7 +1,7 @@
 import os
 import pathlib
 import logging
-from install.set_env import set_environment_vars
+from hailo_apps_infra.install.set_env import set_environment_vars
 
 logger = logging.getLogger("post-install")
 

@@ -2,9 +2,9 @@ import os
 import subprocess
 import pathlib
 import logging
-from install.validate_config import load_config, validate_config
-from install.post_install import run_post_install
-from install.compile_cpp import compile_postprocess
+from hailo_apps_infra.install.validate_config import load_config, validate_config
+from hailo_apps_infra.install.post_install import run_post_install
+from hailo_apps_infra.install.compile_cpp import compile_postprocess
 
 
 logging.basicConfig(level=logging.INFO)

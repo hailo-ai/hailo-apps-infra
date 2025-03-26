@@ -24,3 +24,5 @@ dist/
 *.egg-info/
 .cache/
 coverage/
+
+.venv/
