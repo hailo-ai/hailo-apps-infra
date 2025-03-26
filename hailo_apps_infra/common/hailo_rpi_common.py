@@ -12,6 +12,7 @@ import time
 import signal
 import threading
 import subprocess
+import platform
 from hailo_apps_infra.gstreamer_app import (
     app_callback_class
 )
@@ -22,9 +23,41 @@ try:
 except ImportError:
     sys.exit("Failed to import hailo python module. Make sure you are in hailo virtual environment.")
 
+from dotenv import load_dotenv
+from pathlib import Path
+
+# Load .env from repo root if it exists
+env_path = Path(__file__).resolve().parents[1] / ".env"
+if env_path.exists():
+    load_dotenv(dotenv_path=env_path)
+
+
 # -----------------------------------------------------------------------------------------------
 # Common functions
 # -----------------------------------------------------------------------------------------------
+def detect_device_arch():
+    """
+    Detect the host architecture: rpi, arm, or x86.
+    Returns:
+        str: One of "rpi", "arm", "x86", or "unknown"
+    """
+    machine = platform.machine().lower()
+    system = platform.system().lower()
+
+    if "arm" in machine or "aarch64" in machine:
+        # Detect Raspberry Pi based on OS and CPU
+        if system == "linux" and (
+            "raspberrypi" in platform.uname().node or
+            "pi" in platform.uname().node
+        ):
+            return "rpi"
+        else:
+            return "arm"
+    elif "x86" in machine or "amd64" in machine:
+        return "x86"
+    else:
+        return "unknown"
+
 def detect_hailo_arch():
     try:
         # Run the hailortcli command to get device information

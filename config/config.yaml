@@ -2,7 +2,8 @@ hailort_version: "4.20.0"
 tappas_version: "3.31.0"
 apps_infra_version: "25.3.1"
 model_zoo_version: "2.14.0"
-device_arch: "rpi5"
-resource_path: "/usr/local/hailo/resources"
+device_arch: "rpi" # Options: "rpi" (Raspberry Pi), "x86" (desktop/server), "arm" (generic ARM board)
+hailo_arch: "auto" # Options: "hailo8", "hailo8l", or "auto" (detect from device)
+resources_path: "/usr/local/hailo/resources" # If set to "auto" or empty, defaults to /usr/local/hailo/resources
 python_version: "3.11"
 auto_symlink: true
