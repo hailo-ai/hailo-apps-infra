@@ -35,6 +35,33 @@ if env_path.exists():
 # -----------------------------------------------------------------------------------------------
 # Common functions
 # -----------------------------------------------------------------------------------------------
+def create_standard_resource_dirs(base_path: Path):
+    """
+    Create the default folder layout under a given resource path.
+    - /models/hailo8
+    - /models/hailo8l
+    - /models/hailo10
+    - /videos
+    - /photos
+    - /gifs
+    """
+    for sub in ["models/hailo8", "models/hailo8l", "models/hailo10", "videos", "photos", "gifs"]:
+        (base_path / sub).mkdir(parents=True, exist_ok=True)
+
+def detect_pkg_installed(pkg_name: str) -> bool:
+    """
+    Check if a package is installed on the system.
+    Args:
+        pkg_name (str): The name of the package to check.
+    Returns:
+        bool: True if the package is installed, False otherwise.
+    """
+    try:
+        subprocess.check_output(["dpkg", "-s", pkg_name])
+        return True
+    except subprocess.CalledProcessError:
+        return False
+    
 def detect_device_arch():
     """
     Detect the host architecture: rpi, arm, or x86.

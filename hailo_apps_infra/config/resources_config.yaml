@@ -1,0 +1,120 @@
+groups:
+  default:
+    - yolov8m_pose
+    - yolov5m_seg
+    - yolov8m
+    - yolov6n_h8
+    - scdepthv3_h8
+    - yolov8s_h8l
+    - yolov8s_pose_h8l
+    - yolov5n_seg_h8l
+    - yolov6n_h8l
+    - scdepthv3_h8l
+    - example
+    - example_640
+  all:
+    - yolov8m
+    - yolov5m_wo_spp_h8
+    - yolov8s_h8
+    - yolov8m_pose
+    - yolov8s_pose
+    - yolov5m_seg
+    - yolov5n_seg_h8
+    - yolov6n_h8
+    - yolov11n_h8
+    - yolov11s_h8
+    - scdepthv3_h8
+    - yolov5m_wo_spp_h8l
+    - yolov8m_h8l
+    - yolov11n_h8l
+    - yolov11s_h8l
+    - yolov8s_h8l
+    - yolov6n_h8l
+    - scdepthv3_h8l
+    - yolov8s_pose_h8l
+    - yolov5n_seg_h8l
+    - yolov8s_barcode_h8l
+    - example
+    - barcode
+    - example_640
+  test: []
+  custom: []
+
+models:
+  # Hailo8 models
+  yolov8m:
+    url: https://hailo-model-zoo.s3.eu-west-2.amazonaws.com/ModelZoo/Compiled/v2.14.0/hailo8/yolov8m.hef
+    arch: hailo8
+  yolov8m_pose:
+    url: https://hailo-model-zoo.s3.eu-west-2.amazonaws.com/ModelZoo/Compiled/v2.14.0/hailo8/yolov8m_pose.hef
+    arch: hailo8
+  yolov8s_h8:
+    url: https://hailo-model-zoo.s3.eu-west-2.amazonaws.com/ModelZoo/Compiled/v2.14.0/hailo8/yolov8s.hef
+    arch: hailo8
+  yolov8s_pose:
+    url: https://hailo-model-zoo.s3.eu-west-2.amazonaws.com/ModelZoo/Compiled/v2.14.0/hailo8/yolov8s_pose.hef
+    arch: hailo8
+  yolov5m_seg:
+    url: https://hailo-model-zoo.s3.eu-west-2.amazonaws.com/ModelZoo/Compiled/v2.14.0/hailo8/yolov5m_seg.hef
+    arch: hailo8
+  yolov5n_seg_h8:
+    url: https://hailo-model-zoo.s3.eu-west-2.amazonaws.com/ModelZoo/Compiled/v2.14.0/hailo8/yolov5n_seg.hef
+    arch: hailo8
+  yolov6n_h8:
+    url: https://hailo-model-zoo.s3.eu-west-2.amazonaws.com/ModelZoo/Compiled/v2.14.0/hailo8/yolov6n.hef
+    arch: hailo8
+  yolov11n_h8:
+    url: https://hailo-model-zoo.s3.eu-west-2.amazonaws.com/ModelZoo/Compiled/v2.14.0/hailo8/yolov11n.hef
+    arch: hailo8
+  yolov11s_h8:
+    url: https://hailo-model-zoo.s3.eu-west-2.amazonaws.com/ModelZoo/Compiled/v2.14.0/hailo8/yolov11s.hef
+    arch: hailo8
+  scdepthv3_h8:
+    url: https://hailo-model-zoo.s3.eu-west-2.amazonaws.com/ModelZoo/Compiled/v2.14.0/hailo8/scdepthv3.hef
+    arch: hailo8
+  yolov5m_wo_spp_h8:
+    url: https://hailo-model-zoo.s3.eu-west-2.amazonaws.com/ModelZoo/Compiled/v2.14.0/hailo8/yolov5m_wo_spp.hef
+    arch: hailo8
+    
+  # Hailo8L models
+  yolov5m_wo_spp_h8l:
+    url: https://hailo-model-zoo.s3.eu-west-2.amazonaws.com/ModelZoo/Compiled/v2.14.0/hailo8l/yolov5m_wo_spp.hef
+    arch: hailo8l
+  yolov8m_h8l:
+    url: https://hailo-model-zoo.s3.eu-west-2.amazonaws.com/ModelZoo/Compiled/v2.14.0/hailo8l/yolov8m.hef
+    arch: hailo8l
+  yolov8s_h8l:
+    url: https://hailo-model-zoo.s3.eu-west-2.amazonaws.com/ModelZoo/Compiled/v2.14.0/hailo8l/yolov8s.hef
+    arch: hailo8l
+  yolov11n_h8l:
+    url: https://hailo-model-zoo.s3.eu-west-2.amazonaws.com/ModelZoo/Compiled/v2.14.0/hailo8l/yolov11n.hef
+    arch: hailo8l
+  yolov11s_h8l:
+    url: https://hailo-model-zoo.s3.eu-west-2.amazonaws.com/ModelZoo/Compiled/v2.14.0/hailo8l/yolov11s.hef
+    arch: hailo8l
+  yolov6n_h8l:
+    url: https://hailo-model-zoo.s3.eu-west-2.amazonaws.com/ModelZoo/Compiled/v2.14.0/hailo8l/yolov6n.hef
+    arch: hailo8l
+  scdepthv3_h8l:
+    url: https://hailo-model-zoo.s3.eu-west-2.amazonaws.com/ModelZoo/Compiled/v2.14.0/hailo8l/scdepthv3.hef
+    arch: hailo8l
+  yolov8s_pose_h8l:
+    url: https://hailo-model-zoo.s3.eu-west-2.amazonaws.com/ModelZoo/Compiled/v2.14.0/hailo8l/yolov8s_pose.hef
+    arch: hailo8l
+  yolov5n_seg_h8l:
+    url: https://hailo-model-zoo.s3.eu-west-2.amazonaws.com/ModelZoo/Compiled/v2.14.0/hailo8l/yolov5n_seg.hef
+    arch: hailo8l
+  yolov8s_barcode_h8l:
+    url: https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/hefs/h8l_rpi/yolov8s-hailo8l-barcode.hef
+    arch: hailo8l
+
+videos:
+  example:
+    url: https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/video/example.mp4
+  barcode:
+    url: https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/video/barcode.mp4
+  example_640:
+    url: https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/video/example_640.mp4
+
+photos: {}
+gifs: {}

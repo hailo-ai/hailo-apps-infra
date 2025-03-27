@@ -27,7 +27,8 @@ from hailo_apps_infra.gstreamer.gstreamer_app import (
     app_callback_class,
     dummy_callback
 )
-
+from pathlib import Path
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 #-----------------------------------------------------------------------------------------------
 # User Gstreamer Application
 # -----------------------------------------------------------------------------------------------
@@ -63,16 +64,15 @@ class GStreamerPoseEstimationApp(GStreamerApp):
         if self.options_menu.hef_path:
             self.hef_path = self.options_menu.hef_path
         elif self.arch == "hailo8":
-            self.hef_path = os.path.join(self.current_path, '../resources/yolov8m_pose.hef')
+            self.hef_path = str(PROJECT_ROOT / "resources" / "yolov8m_pose.hef")
         else:  # hailo8l
-            self.hef_path = os.path.join(self.current_path, '../resources/yolov8s_pose_h8l.hef')
+            self.hef_path = str(PROJECT_ROOT / "resources" / "yolov8s_pose_h8l.hef")
 
         self.app_callback = app_callback
 
         # Set the post-processing shared object file
-        self.post_process_so = os.path.join(self.current_path, '../resources/libyolov8pose_postprocess.so')
+        self.post_process_so = str(PROJECT_ROOT / "resources" / "libyolov8pose_postprocess.so")
         self.post_process_function = "filter_letterbox"
-
 
         # Set the process title
         setproctitle.setproctitle("Hailo Pose Estimation App")

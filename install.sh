@@ -1,11 +1,17 @@
 #!/bin/bash
 set -e
 
-echo "🔧 Creating virtual environment in .venv (if not exists)..."
-python3 -m venv .venv
+VENV_NAME="infra-venv"
+
+if [ ! -d "$VENV_NAME" ]; then
+    echo "🔧 Creating virtual environment in $VENV_NAME..."
+    python3 -m venv "$VENV_NAME" --system-site-packages
+else
+    echo "✅ Virtual environment already exists: $VENV_NAME"
+fi
 
 echo "✅ Activating virtual environment..."
-source .venv/bin/activate
+source "$VENV_NAME/bin/activate"
 
 echo "📦 Installing hailo-apps-infra in editable mode..."
 pip install --upgrade pip setuptools wheel
@@ -18,4 +24,4 @@ echo "🚀 Running hailo-apps-infra install script..."
 python3 -m hailo_apps_infra.install.install
 
 echo "✅ All done! Use this to activate later:"
-echo "    source .venv/bin/activate"
+echo "    source $VENV_NAME/bin/activate"

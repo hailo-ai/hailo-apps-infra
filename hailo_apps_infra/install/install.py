@@ -10,7 +10,7 @@ from hailo_apps_infra.install.compile_cpp import compile_postprocess
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("hailo-installer")
 
-PROJECT_ROOT = pathlib.Path(__file__).resolve().parents[1]
+PROJECT_ROOT = pathlib.Path(__file__).resolve().parents[2]
 
 
 def run_command(command, error_msg):
@@ -23,7 +23,7 @@ def run_command(command, error_msg):
 
 def install():
     logger.info("Loading and validating configuration...")
-    config = load_config(PROJECT_ROOT / "config" / "config.yaml")
+    config = load_config(PROJECT_ROOT / "hailo_apps_infra" / "config" / "config.yaml")
     validate_config(config)
 
     logger.info("Running post-install setup...")
@@ -32,8 +32,8 @@ def install():
     logger.info("Compiling post-process code...")
     compile_postprocess()
 
-    logger.info("Downloading resources...")
-    run_command("./scripts/download_resources.sh --all", "Failed to download models/resources")
+    #logger.info("Downloading resources...")
+    #run_command("./scripts/download_resources.sh --all", "Failed to download models/resources")
 
     logger.info("Hailo Infra installation completed successfully!")
 

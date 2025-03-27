@@ -9,6 +9,8 @@ import setproctitle
 import cv2
 import time
 import hailo
+from pathlib import Path
+
 from hailo_apps_infra.common.hailo_rpi_common import (
     get_default_parser,
     detect_hailo_arch,
@@ -28,6 +30,7 @@ from hailo_apps_infra.gstreamer.gstreamer_app import (
     dummy_callback
 )
 
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
 # -----------------------------------------------------------------------------------------------
@@ -57,7 +60,7 @@ class GStreamerDetectionApp(GStreamerApp):
         nms_score_threshold = 0.3
         nms_iou_threshold = 0.45
         if self.options_menu.input is None:  # Setting up a new application-specific default video (overrides the default video set in the GStreamerApp constructor)
-            self.video_source = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../resources/example_640.mp4')
+            self.video_source = str(PROJECT_ROOT / "resources" / "example_640.mp4")
         # Determine the architecture if not specified
         if self.options_menu.arch is None:
             detected_arch = detect_hailo_arch()
@@ -72,12 +75,12 @@ class GStreamerDetectionApp(GStreamerApp):
             self.hef_path = self.options_menu.hef_path
         # Set the HEF file path based on the arch
         elif self.arch == "hailo8":
-            self.hef_path = os.path.join(self.current_path, '../resources/yolov6n.hef')
+            self.hef_path = str(PROJECT_ROOT / "resources" / "yolov6n.hef")
         else:  # hailo8l
-            self.hef_path = os.path.join(self.current_path, '../resources/yolov6n_h8l.hef')
+            self.hef_path = str(PROJECT_ROOT / "resources" / "yolov6n_h8l.hef")
 
         # Set the post-processing shared object file
-        self.post_process_so = os.path.join(self.current_path, '../resources/libyolo_hailortpp_postprocess.so')
+        self.post_process_so = str(PROJECT_ROOT / "resources" / "libyolo_hailortpp_postprocess.so")
         self.post_function_name = "filter"
 
         # User-defined label JSON file

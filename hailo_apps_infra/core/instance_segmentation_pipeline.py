@@ -28,6 +28,8 @@ from hailo_apps_infra.gstreamer.gstreamer_app import (
     dummy_callback
 )
 
+from pathlib import Path
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 #-----------------------------------------------------------------------------------------------
 # User Gstreamer Application
@@ -61,18 +63,20 @@ class GStreamerInstanceSegmentationApp(GStreamerApp):
         if self.options_menu.hef_path:
             self.hef_path = self.options_menu.hef_path
         elif self.arch == "hailo8":
-            self.hef_path = os.path.join(self.current_path, '../resources/yolov5m_seg.hef')
+            self.hef_path = str(PROJECT_ROOT / "resources" / "yolov5m_seg.hef")
         else:  # hailo8l
-            self.hef_path = os.path.join(self.current_path, '../resources/yolov5n_seg_h8l.hef')
+            self.hef_path = str(PROJECT_ROOT / "resources" / "yolov5n_seg_h8l.hef")
 
-        # self.default_post_process_so = os.path.join(self.postprocess_dir, 'libyolov5seg_post.so')
+        # Determine config file based on selected HEF
         if 'yolov5m_seg' in self.hef_path:
-            self.config_file = os.path.join(self.current_path, '../resources/yolov5m_seg.json')
+            self.config_file = str(PROJECT_ROOT / "resources" / "yolov5m_seg.json")
         elif 'yolov5n_seg' in self.hef_path:
-            self.config_file = os.path.join(self.current_path, '../resources/yolov5n_seg.json')
+            self.config_file = str(PROJECT_ROOT / "resources" / "yolov5n_seg.json")
         else:
             raise ValueError("HEF version not supported, you will need to provide a config file")
-        self.default_post_process_so = os.path.join(self.current_path, '../resources/libyolov5seg_postprocess.so')
+
+        # Set post-process .so path
+        self.default_post_process_so = str(PROJECT_ROOT / "resources" / "libyolov5seg_postprocess.so")
         self.post_function_name = "filter_letterbox"
         self.app_callback = app_callback
 

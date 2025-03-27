@@ -2,10 +2,12 @@ import os
 import pathlib
 import logging
 from hailo_apps_infra.install.set_env import set_environment_vars
+from hailo_apps_infra.install.download_resources import download_resources
+
 
 logger = logging.getLogger("post-install")
 
-PROJECT_ROOT = pathlib.Path(__file__).resolve().parents[1]
+PROJECT_ROOT = pathlib.Path(__file__).resolve().parents[2]
 
 
 def create_symlink(resource_path):
@@ -22,7 +24,7 @@ def create_symlink(resource_path):
     resources_link.symlink_to(resources_target, target_is_directory=True)
 
 
-def run_post_install(config):
+def run_post_install(config, resource_group="default"):
     resource_path = config.get("resource_path")
     if not resource_path or resource_path == "auto":
         resource_path = "/usr/local/hailo/resources"
@@ -30,4 +32,8 @@ def run_post_install(config):
 
     set_environment_vars(config)
     create_symlink(resource_path)
+
+    logger.info("📦 Ensuring default resources are downloaded...")
+    download_resources(group=resource_group)
+
     logger.info("Post-install setup completed.")

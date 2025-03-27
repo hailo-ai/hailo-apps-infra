@@ -12,7 +12,8 @@ gi.require_version('Gst', '1.0')
 from gi.repository import Gst, GLib, GObject
 from hailo_apps_infra.gstreamer.gstreamer_helper_pipelines import get_source_type
 from hailo_apps_infra.common.get_usb_camera import get_usb_video_devices
-
+from pathlib import Path
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 try:
     from picamera2 import Picamera2
 except ImportError:
@@ -86,7 +87,7 @@ class GStreamerApp:
         self.postprocess_dir = tappas_post_process_dir
         self.video_source = self.options_menu.input
         if self.video_source is None:
-            self.video_source = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../resources/example.mp4')
+            self.video_source = str(PROJECT_ROOT / "resources" / "example.mp4")
         if self.video_source == 'usb':
             self.video_source = get_usb_video_devices()
             if not self.video_source:
