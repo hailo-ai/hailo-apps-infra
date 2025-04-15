@@ -22,15 +22,15 @@ logger = logging.getLogger("test_run_everything")
 pipelines = [
     {
         "name": "detection",
-        "module": "hailo_apps_infra.pipelines.hailo_pipelines.detection_pipeline_simple",
-        "script": "hailo_apps_infra/pipelines/hailo_pipelines/detection_pipeline_simple.py",
-        "cli": "hailo-simple-detect"
+        "module": "hailo_apps_infra.pipelines.hailo_pipelines.detection_pipeline",
+        "script": "hailo_apps_infra/pipelines/hailo_pipelines/detection_pipeline.py",
+        "cli": "hailo-detect"
     },
     {
         "name": "pose_estimation",
         "module": "hailo_apps_infra.pipelines.hailo_pipelines.pose_estimation_pipeline",
         "script": "hailo_apps_infra/pipelines/hailo_pipelines/pose_estimation_pipeline.py",
-        "cli": "hailo-pose-estimation"
+        "cli": "hailo-pose"
     },
     {
         "name": "depth",
