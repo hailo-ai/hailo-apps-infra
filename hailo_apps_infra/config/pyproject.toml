@@ -1,0 +1,10 @@
+[project]
+name = "hailo-config"
+version = "0.1.0"
+description = "Configuration package"
+authors = [{ name = "Omriz" }]
+dependencies = []
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"

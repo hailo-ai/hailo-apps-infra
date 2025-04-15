@@ -1,0 +1,21 @@
+[project]
+name = "hailo-apps-infra"
+version = "1.0.0"
+description = "Infra package to install all modular Hailo apps"
+authors = [{ name = "Hailo", email = "support@hailo.ai" }]
+dependencies = [
+    "hailo-common @ file://./common",
+    "hailo-config @ file://./config",
+    "hailo-installation @ file://./installation",
+    "hailo-gstreamer @ file://./gstreamer",
+    "hailo-pipeline @ file://./pipeline",
+    "numpy<2.0.0",
+    "setproctitle",
+    "opencv-python",
+    "python-dotenv",
+    "pyyaml"
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"

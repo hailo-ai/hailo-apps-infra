@@ -1,0 +1,44 @@
+defaults:
+  model_zoo_url: https://hailo-model-zoo.s3.eu-west-2.amazonaws.com/ModelZoo/Compiled
+
+groups:
+  combined:
+    - yolov6n
+    - scdepthv3
+
+  hailo8:
+    - yolov8m
+    - yolov5m_seg
+    - yolov8m_pose
+
+  hailo8l:
+    - yolov8s
+    - yolov5n_seg
+    - yolov8s_pose
+  
+  all:
+    - yolov8s_pose
+    - yolov8s
+    - yolov8m_pose
+    - yolov8m
+    - yolov6n
+    - yolov5n_seg
+    - yolov5m_wo_spp
+    - yolov5m_seg
+    - yolov11s
+    - yolov11n
+    - scdepthv3
+  
+  retrain:
+    - yolov8s_barcode: https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/hefs/h8l_rpi/yolov8s-hailo8l-barcode.hef
+
+
+videos:
+  example:
+    url: https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/video/example.mp4
+  barcode:
+    url: https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/video/barcode.mp4
+  example_640:
+    url: https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/video/example_640.mp4
+
+

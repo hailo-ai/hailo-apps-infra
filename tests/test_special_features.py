@@ -194,7 +194,7 @@ def test_pipeline_termination_handling():
 def test_resource_downloader():
     """Test the resource downloader module."""
     try:
-        from hailo_apps_infra.install.download_resources import load_config
+        from hailo_apps_infra.installation.download_resources import load_config
         
         # Test that we can load the configuration
         config = load_config()

@@ -1,0 +1,34 @@
+import logging
+from pathlib import Path
+from hailo_common.utils import run_command, create_symlink , load_config
+from hailo_installation.validate_config import validate_config
+from hailo_installation.set_env import set_environment_vars
+from hailo_installation.download_resources import download_resources
+from hailo_installation.compile_cpp import compile_postprocess
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("hailo-installer")
+
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+
+def install():
+    logger.info("🔧 Validating configuration...")
+    config = load_config(PROJECT_ROOT / "hailo_apps_infra" /"config" / "hailo_config" / "config.yaml")
+    validate_config(config)
+
+    logger.info("🔧 Setting environment...")
+    set_environment_vars(config)
+
+    logger.info("🔗 Linking resources directory...")
+    create_symlink(config.get("resource_path", "/usr/local/hailo/resources"), PROJECT_ROOT / "resources")
+
+    logger.info("⬇️ Downloading resources...")
+    download_resources(group="default")
+
+    logger.info("⚙️ Compiling post-process...")
+    compile_postprocess()
+
+    logger.info("✅ Hailo Infra installation complete.")
+
+if __name__ == "__main__":
+    install()

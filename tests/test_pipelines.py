@@ -88,7 +88,6 @@ def get_compatible_hefs(hailo_arch, model_type):
     models = {
         'detection': {
             'hailo8': [
-                "yolov5m_wo_spp.hef",
                 "yolov6n.hef",
                 "yolov8s.hef",
                 "yolov8m.hef",
