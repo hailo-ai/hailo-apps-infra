@@ -65,7 +65,11 @@ class GStreamerDetectionApp(GStreamerApp):
         nms_score_threshold = 0.3
         nms_iou_threshold = 0.45
         if self.options_menu.input is None:  # Setting up a new application-specific default video (overrides the default video set in the GStreamerApp constructor)
-            self.video_source = str(PROJECT_ROOT / "resources" / "example_640.mp4")
+            self.video_source = get_resource_path(
+                pipeline_name="simple_detection",
+                resource_type="videos",
+                model="example_640.mp4"
+            )
         # Determine the architecture if not specified
         if self.options_menu.arch is None:
             detected_arch = detect_hailo_arch()
@@ -83,6 +87,8 @@ class GStreamerDetectionApp(GStreamerApp):
                 pipeline_name="simple_detection",
                 resource_type="models",
             )
+        
+        print(f"Using HEF path: {self.hef_path}")
         self.post_process_so = get_resource_path(
             pipeline_name="simple_detection",
             resource_type="so",
@@ -136,5 +142,5 @@ def main():
 
 if __name__ == "__main__":
     print("Starting Hailo Detection App...")
-    load_environment()
+    #load_environment()
     main()

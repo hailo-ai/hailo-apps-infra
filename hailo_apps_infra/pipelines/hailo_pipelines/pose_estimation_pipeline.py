@@ -28,6 +28,7 @@ from hailo_gstreamer.gstreamer_app import (
 )
 from hailo_common.utils import (
     load_environment,
+    get_resource_path,
 )
 
 
@@ -69,11 +70,11 @@ class GStreamerPoseEstimationApp(GStreamerApp):
         # Set the HEF file path based on the architecture
         if self.options_menu.hef_path:
             self.hef_path = self.options_menu.hef_path
-        elif self.arch == "hailo8":
-            self.hef_path = str(RESOURCES_DIR / "models" / "hailo8" / "yolov8m_pose.hef")
-        else:  # hailo8l
-            self.hef_path = str(RESOURCES_DIR / "models" / "hailo8l" / "yolov8s_pose_h8l.hef")
-
+        else: # Set models based on hailo8 or hailo8l
+            self.hef_path = get_resource_path( 
+                pipeline_name="pose",
+                resource_type="models",
+            )
         self.app_callback = app_callback
 
         # Set the post-processing shared object file

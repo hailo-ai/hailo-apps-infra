@@ -32,6 +32,24 @@ if env_path.exists():
 # -----------------------------------------------------------------------------------------------
 # Common functions
 # -----------------------------------------------------------------------------------------------
+def is_rpi_camera_available():
+    """Returns True if the RPi camera is connected."""
+    try:
+        process = subprocess.Popen(
+            ['rpicam-hello', '-t', '0'],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        time.sleep(5)
+        process.send_signal(signal.SIGTERM)
+        process.wait(timeout=2)
+        stdout, stderr = process.communicate()
+        # Check for a known error message.
+        stderr_str = stderr.decode().lower()
+        if "no cameras available" in stderr_str:
+            return False
+        return True
+    except Exception:
+        return False
+    
 def run_command(command, error_msg, logger=None):
     """
     Run a shell command and log the output.

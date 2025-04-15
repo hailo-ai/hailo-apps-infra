@@ -24,7 +24,7 @@ sudo chown -R $SUDO_USER:$SUDO_USER /usr/local/hailo/resources
 sudo chmod -R 755 /usr/local/hailo/resources
 
 # check where the x86 goes (should be fixed in brnach CSG-temp)
-VENV_NAME= python3 -m hailo_common.get_config_values virtual_env_name
+VENV_NAME=$(python3 hailo_apps_infra/common/hailo_common/get_config_values.py virtual_env_name)
 if [ -z "$VENV_NAME" ]; then
     echo "❌ Failed to get virtual environment name from config."
     ECHO "Using default name: 'hailo_infra_venv'"
@@ -54,6 +54,27 @@ fi
 
 echo "✅ Activating virtual environment..."
 source "$VENV_NAME/bin/activate"
+
+ENV_FILE=".env"
+ENV_PATH="$(pwd)/$ENV_FILE"
+
+# Step 1: Create the .env file if it doesn't exist
+if [[ ! -f "$ENV_PATH" ]]; then
+    echo "🔧 Creating .env file at $ENV_PATH"
+    touch "$ENV_PATH"
+    chmod 666 "$ENV_PATH"  # rw-rw-r-- for user/group
+else
+    echo "✅ .env already exists at $ENV_PATH"
+fi
+
+# Step 2: Ensure it is writable
+if [[ ! -w "$ENV_PATH" ]]; then
+    echo "⚠️  .env exists but is not writable. Trying to fix permissions..."
+    chmod u+w "$ENV_PATH" || {
+        echo "❌ Failed to fix permissions for $ENV_PATH. Please run with sudo or fix manually."
+        exit 1
+    }
+fi
 
 echo "📦 Installing base tooling..."
 pip install --upgrade pip setuptools wheel

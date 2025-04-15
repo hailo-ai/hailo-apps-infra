@@ -3,6 +3,7 @@ import os
 def get_source_type(input_source):
     # This function will return the source type based on the input source
     # return values can be "file", "mipi" or "usb"
+    input_source = str(input_source)
     if input_source.startswith("/dev/video"):
         return 'usb'
     elif input_source.startswith("rpi"):

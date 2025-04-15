@@ -64,9 +64,6 @@ def load_environment(env_file=PROJECT_ROOT / ".env", required_vars=None):
     if not os.access(env_file, os.W_OK):
         logger.error(f"⚠️ .env file not writable: {env_file}")
         return
-    if not os.access(env_file, os.X_OK):
-        logger.error(f"⚠️ .env file not executable: {env_file}")
-        return
     if not os.access(env_file, os.F_OK):
         logger.error(f"⚠️ .env file not found: {env_file}")
         return
@@ -125,12 +122,12 @@ def get_resource_path(pipeline_name, resource_type, model = None):
     Returns the resource path based on the environment variable or default.
     """
     hailo_arch = os.getenv("HAILO_ARCH")
-    if (resource_type == "so" or resource_type == "video") and model is not None:
+    if (resource_type == "so" or resource_type == "videos") and model is not None:
         return RESOURCE_PATH / resource_type / model
     if (resource_type == "models") and model is not None:
-        return RESOURCE_PATH / resource_type / hailo_arch / model
+        return (RESOURCE_PATH / resource_type / hailo_arch / model).with_suffix(".hef") 
     elif (resource_type == "models") and pipeline_name is not None and model is None:
-        return RESOURCE_PATH / resource_type / hailo_arch / get_model_name(pipeline_name, hailo_arch)
+        return (RESOURCE_PATH / resource_type / hailo_arch / get_model_name(pipeline_name, hailo_arch)).with_suffix(".hef")    
     else:
         logger.error(f"Unknown pipeline name or arch: {pipeline_name}, {hailo_arch}")
         return None
