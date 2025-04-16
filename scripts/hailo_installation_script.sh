@@ -129,15 +129,13 @@ if [[ "$KERNEL_VERSION" != "$OFFICIAL_KERNEL_PREFIX"* ]]; then
     echo "Warning: Kernel version $KERNEL_VERSION may not be officially supported."
 fi
 
-# Install build-essential package
+# Install build-essential package# ...
 sudo apt-get update && sudo apt-get install -y build-essential 
-
-print("Installing build-essential package...")
+echo "Installing build-essential package..."
 
 # --- Install Dependencies for hailo-tappas-core ---
 echo "Installing additional dependencies for hailo-tappas-core..."
 sudo apt-get update && sudo apt-get install -y ffmpeg python3-virtualenv gcc-12 g++-12 python-gi-dev pkg-config libcairo2-dev libgirepository1.0-dev libgstreamer1.0-dev cmake libgstreamer-plugins-base1.0-dev libzmq3-dev libgstreamer-plugins-bad1.0-dev gstreamer1.0-plugins-bad gstreamer1.0-libav libopencv-dev python3-opencv rapidjson-dev
-
 
 # --- Determine Package Files Based on Architecture & Python Version ---
 
