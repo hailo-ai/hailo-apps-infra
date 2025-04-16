@@ -65,6 +65,7 @@ if [[ ! -f "$ENV_PATH" ]]; then
     chmod 666 "$ENV_PATH"  # rw-rw-r-- for user/group
 else
     echo "✅ .env already exists at $ENV_PATH"
+    chmod 666 "$ENV_PATH" 
 fi
 
 # Step 2: Ensure it is writable

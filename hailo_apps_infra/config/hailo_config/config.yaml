@@ -5,6 +5,5 @@ model_zoo_version: "v2.14.0"
 device_arch: "auto" # Options: "rpi" (Raspberry Pi), "x86" (desktop/server), "arm" (generic ARM board) or "auto" (detect from device)
 hailo_arch: "auto" # Options: "hailo8", "hailo8l", or "auto" (detect from device)
 resources_path: "/usr/local/hailo/resources" # If set to "auto" or empty, defaults to /usr/local/hailo/resources
-python_version: "3.11"
 auto_symlink: true
 virtual_env_name: "hailo_infra_venv" # Name of the virtual environment to be created
