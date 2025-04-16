@@ -31,15 +31,20 @@ BASE_URL="http://dev-public.hailo.ai/2025_01"
 HAILORT_VERSION="4.20.0"
 TAPPAS_CORE_VERSION="3.31.0"
 
+# Default architecture (can be overridden by command-line argument)
+VENV_NAME="hailo_venv"
+
+
 # Parse optional command-line flag to override version numbers (e.g., --version=4.20.0)
 # For a more complex versioning scheme, you might also separate HailoRT and TAPPAS versions.
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         --version=*)
             HAILORT_VERSION="${1#*=}"
-            # For this example, we assume TAPPAS_CORE_VERSION tracks HAILORT_VERSION.
-            # Adjust accordingly if the versions differ.
             TAPPAS_CORE_VERSION="${1#*=}"
+            ;;
+        --venv-name=*)
+            VENV_NAME="${1#*=}"
             ;;
         *)
             echo "Unknown parameter passed: $1"
@@ -48,6 +53,7 @@ while [[ "$#" -gt 0 ]]; do
     esac
     shift
 done
+
 
 # Download directory for temporary resources
 DOWNLOAD_DIR="hailo_temp_resources"
@@ -205,7 +211,24 @@ install_file "${ARCH_FILES[0]}"
 # 3. Install Hailo Tappas Core deb (architecture-specific file, index 1)
 install_file "${ARCH_FILES[1]}"
 
-# 4. Install Python bindings (common file)
-install_file "${common_files[1]}"
+if [ -d "$VENV_NAME" ]; then
+    echo "Virtual environment '$VENV_NAME' already exists. Using it."
+else
+    echo "Creating virtual environment: $VENV_NAME"
+    python3 -m virtualenv "$VENV_NAME"
+fi
 
+source "$VENV_NAME/bin/activate"
+pip install --upgrade pip
+
+echo "Installing Python bindings into virtual environment..."
+install_file "${ARCH_FILES[2]}"  # hailort Python wheel
+install_file "${common_files[1]}"  # tappas core Python binding wheel
+
+deactivate
+
+echo "Python bindings installed into virtual environment: $VENV_NAME"
 echo "Installation completed successfully."
+
+echo "To activate it later, run: source $VENV_NAME/bin/activate"
+
