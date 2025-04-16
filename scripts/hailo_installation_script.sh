@@ -124,10 +124,20 @@ fi
 KERNEL_VERSION=$(uname -r)
 echo "Kernel version: $KERNEL_VERSION"
 # Placeholder: change the condition to suit your officially supported kernel(s)
-OFFICIAL_KERNEL_PREFIX="5.4.0"
+OFFICIAL_KERNEL_PREFIX="6.5.0"
 if [[ "$KERNEL_VERSION" != "$OFFICIAL_KERNEL_PREFIX"* ]]; then
     echo "Warning: Kernel version $KERNEL_VERSION may not be officially supported."
 fi
+
+# Install build-essential package
+sudo apt-get update && sudo apt-get install -y build-essential 
+
+print("Installing build-essential package...")
+
+# --- Install Dependencies for hailo-tappas-core ---
+echo "Installing additional dependencies for hailo-tappas-core..."
+sudo apt-get update && sudo apt-get install -y ffmpeg python3-virtualenv gcc-12 g++-12 python-gi-dev pkg-config libcairo2-dev libgirepository1.0-dev libgstreamer1.0-dev cmake libgstreamer-plugins-base1.0-dev libzmq3-dev libgstreamer-plugins-bad1.0-dev gstreamer1.0-plugins-bad gstreamer1.0-libav libopencv-dev python3-opencv rapidjson-dev
+
 
 # --- Determine Package Files Based on Architecture & Python Version ---
 
@@ -188,14 +198,16 @@ echo "All selected files downloaded successfully."
 
 echo "Starting installation process..."
 
-# Install common packages.
-for file in "${common_files[@]}"; do
-    install_file "$file"
-done
+# 1. Install PCIe driver (common file)
+install_file "${common_files[0]}"
 
-# Install architecture-specific packages.
-for file in "${ARCH_FILES[@]}"; do
-    install_file "$file"
-done
+# 2. Install HailoRT deb (architecture-specific file, index 0)
+install_file "${ARCH_FILES[0]}"
+
+# 3. Install Hailo Tappas Core deb (architecture-specific file, index 1)
+install_file "${ARCH_FILES[1]}"
+
+# 4. Install Python bindings (common file)
+install_file "${common_files[1]}"
 
 echo "Installation completed successfully."
