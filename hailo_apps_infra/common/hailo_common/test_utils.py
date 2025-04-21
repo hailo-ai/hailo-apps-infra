@@ -99,8 +99,7 @@ def get_pipeline_args(suite="default",hef_path=None, override_usb_camera=None , 
             if override_usb_camera:
                 device = override_usb_camera
             else:
-                devices = get_usb_video_devices()
-                device = devices[0] if devices else "/dev/video0"
+                device = "usb"
             # Append or override --input (here we simply add the argument)
             args += ["--input", device]
         elif s == "rpi_camera":

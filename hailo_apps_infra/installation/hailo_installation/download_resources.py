@@ -100,8 +100,12 @@ def download_resources(group=None, names=None):
     # 8) Download all videos
     for vid_name, vid_cfg in config.get("videos", {}).items():
         url = vid_cfg["url"]
-        dest = resource_path / "videos" / f"{vid_name}.mp4"
-        download_file(url, dest)
+        # Get extension from URL or config, defaulting to .mp4 if not specified
+        extension = os.path.splitext(url)[1] if os.path.splitext(url)[1] else vid_cfg.get("extension", ".mp4")
+        # Use original filename if provided
+        filename = vid_cfg.get("filename", f"{vid_name}{extension}")
+        dest = resource_path / "videos" / filename
+        download_file(url, dest
 
 def main():
     p = argparse.ArgumentParser(

@@ -211,14 +211,42 @@ install_file "${ARCH_FILES[0]}"
 # 3. Install Hailo Tappas Core deb (architecture-specific file, index 1)
 install_file "${ARCH_FILES[1]}"
 
-if [ -d "$VENV_NAME" ]; then
-    echo "Virtual environment '$VENV_NAME' already exists. Using it."
+# Variable VENV_NAME should be set to your virtual environment folder name
+VENV_NAME=${VENV_NAME:-hailo_venv}
+
+# Get the actual user (even when run with sudo)
+if [ -n "$SUDO_USER" ]; then
+    ACTUAL_USER=$SUDO_USER
+    ACTUAL_HOME=$(getent passwd $SUDO_USER | cut -d: -f6)
 else
-    echo "Creating virtual environment: $VENV_NAME"
-    python3 -m virtualenv "$VENV_NAME"
+    ACTUAL_USER=$USER
+    ACTUAL_HOME=$HOME
 fi
 
-source "$VENV_NAME/bin/activate"
+echo "Creating virtual environment for user: $ACTUAL_USER"
+
+# Create or reuse virtual environment using an absolute path
+if [ ! -d "$PROJECT_ROOT/$VENV_NAME" ]; then
+    echo "Creating virtual environment: $VENV_NAME"
+    python3 -m venv "$PROJECT_ROOT/$VENV_NAME"
+    
+    # Change ownership to the actual user if running as sudo
+    if [ -n "$SUDO_USER" ]; then
+        chown -R $ACTUAL_USER:$ACTUAL_USER "$PROJECT_ROOT/$VENV_NAME"
+    fi
+else
+    echo "Using existing virtual environment: $VENV_NAME"
+fi
+
+# Check that the activation script exists before sourcing it
+if [ -f "$PROJECT_ROOT/$VENV_NAME/bin/activate" ]; then
+    source "$PROJECT_ROOT/$VENV_NAME/bin/activate"
+    pip install --upgrade pip
+else
+    echo "Error: Could not find virtual environment activation script at $PROJECT_ROOT/$VENV_NAME/bin/activate"
+    exit 1
+fi
+
 pip install --upgrade pip
 
 echo "Installing Python bindings into virtual environment..."
