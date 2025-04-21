@@ -3,7 +3,7 @@ import logging
 import subprocess
 from pathlib import Path
 import sys
-from hailo_common.hailo_rpi_common import detect_device_arch, detect_hailo_arch , detect_pkg_installed
+from hailo_common.hailo_rpi_common import detect_device_arch, detect_hailo_arch, detect_pkg_installed
 from hailo_common.utils import run_command_with_output, load_config
 
 logger = logging.getLogger("env-setup")
@@ -16,19 +16,58 @@ def set_environment_vars(config, refresh=False):
     #     logger.info("Using existing .env (set refresh=True to regenerate)")
     #     return
 
+    # Get configuration values with fallbacks to "auto"
     device_arch = config.get("device_arch") or "auto"
     hailo_arch = config.get("hailo_arch") or "auto"
-    resource_path = config.get("resource_path") or "auto"
-    mz_version = config.get("model_zoo_version") or "auto"
+    resources_path = config.get("resources_path") or "auto"
+    model_zoo_version = config.get("model_zoo_version") or "auto"
+    
+    # Get additional configuration parameters matching config.yaml
+    hailort_version = config.get("hailort_version") or "auto"
+    tappas_version = config.get("tappas_version") or "auto"
+    apps_infra_version = config.get("apps_infra_version") or "auto"
+    auto_symlink = config.get("auto_symlink") or "auto"
+    virtual_env_name = config.get("virtual_env_name") or "auto"
+    server_url = config.get("server_url") or "auto"
+    deb_whl_dir = config.get("deb_whl_dir") or "auto"
 
-    if mz_version == "auto":
-        mz_version = "v2.14.0"
+    # Process auto values with defaults
+    if model_zoo_version == "auto":
+        model_zoo_version = "v2.14.0"
     if device_arch == "auto":
         device_arch = detect_device_arch()
     if hailo_arch == "auto":
         hailo_arch = detect_hailo_arch()
-    if resource_path == "auto":
-        resource_path = "/usr/local/hailo/resources"
+    if resources_path == "auto":
+        resources_path = "/usr/local/hailo/resources"
+    if hailort_version == "auto":
+        hailort_version = "4.20.0"
+    if tappas_version == "auto":
+        tappas_version = "3.31.0"
+    if apps_infra_version == "auto":
+        apps_infra_version = "25.3.1"
+    if auto_symlink == "auto":
+        auto_symlink = True
+    if virtual_env_name == "auto":
+        virtual_env_name = "hailo_infra_venv"
+    if server_url == "auto":
+        server_url = "http://dev-public.hailo.ai/2025_01"
+    if deb_whl_dir == "auto":
+        deb_whl_dir = "hailo_temp_resources"
+        
+    # Log all configuration values
+    logger.info("Using configuration values:")
+    logger.info(f"  Device Architecture: {device_arch}")
+    logger.info(f"  Hailo Architecture: {hailo_arch}")
+    logger.info(f"  Resources Path: {resources_path}")
+    logger.info(f"  Model Zoo Version: {model_zoo_version}")
+    logger.info(f"  HailoRT Version: {hailort_version}")
+    logger.info(f"  TAPPAS Version: {tappas_version}")
+    logger.info(f"  Apps Infra Version: {apps_infra_version}")
+    logger.info(f"  Auto Symlink: {auto_symlink}")
+    logger.info(f"  Virtual Environment Name: {virtual_env_name}")
+    logger.info(f"  Server URL: {server_url}")
+    logger.info(f"  Deb/Wheel Directory: {deb_whl_dir}")
 
     # TAPPAS dir detection
     if detect_pkg_installed("hailo-tappas"):
@@ -40,24 +79,50 @@ def set_environment_vars(config, refresh=False):
         logger.warning("⚠ Could not detect TAPPAS variant.")
 
     tappas_postproc_dir = run_command_with_output("pkg-config --variable=tappas_postproc_lib_dir hailo-tappas-core")
-    model_dir = os.path.join(resource_path, "models")
+    model_dir = os.path.join(resources_path, "models")
 
+    # Set environment variables in current process
     os.environ["DEVICE_ARCH"] = device_arch
     os.environ["HAILO_ARCH"] = hailo_arch
-    os.environ["RESOURCE_PATH"] = resource_path
+    os.environ["RESOURCES_PATH"] = resources_path
     os.environ["TAPPAS_POST_PROC_DIR"] = tappas_postproc_dir
-    os.environ["MZ_VERSION"] = mz_version
+    os.environ["MODEL_DIR"] = model_dir
+    os.environ["MODEL_ZOO_VERSION"] = model_zoo_version
+    os.environ["HAILORT_VERSION"] = hailort_version
+    os.environ["TAPPAS_VERSION"] = tappas_version
+    os.environ["APPS_INFRA_VERSION"] = apps_infra_version
+    os.environ["AUTO_SYMLINK"] = str(auto_symlink)
+    os.environ["VIRTUAL_ENV_NAME"] = virtual_env_name
+    os.environ["SERVER_URL"] = server_url
+    os.environ["DEB_WHL_DIR"] = deb_whl_dir
+    os.environ["TAPPAS_VARIANT"] = tappas_variant
 
-    logger.info(f"Set DEVICE_ARCH={device_arch}")
-    logger.info(f"Set HAILO_ARCH={hailo_arch}")
-    logger.info(f"Set TAPPAS_POST_PROC_DIR={tappas_postproc_dir}")
-    logger.info(f"Set RESOURCE_PATH={resource_path}")
-    logger.info(f"Set MZ_VERSION={mz_version}")
+    # Persist environment variables to .env file
+    persist_env_vars(
+        device_arch, 
+        hailo_arch, 
+        resources_path, 
+        tappas_postproc_dir, 
+        model_dir, 
+        model_zoo_version,
+        hailort_version,
+        tappas_version,
+        apps_infra_version,
+        auto_symlink,
+        virtual_env_name,
+        server_url,
+        deb_whl_dir,
+        tappas_variant
+    )
 
-    persist_env_vars(device_arch, hailo_arch, resource_path, tappas_postproc_dir, model_dir, mz_version)
 
-
-def persist_env_vars(device_arch, hailo_arch, resource_path, tappas_postproc_dir, model_dir, mz_version):
+def persist_env_vars(device_arch, hailo_arch, resources_path, tappas_postproc_dir, model_dir, model_zoo_version,
+                    hailort_version, tappas_version, apps_infra_version, auto_symlink, virtual_env_name, 
+                    server_url, deb_whl_dir, tappas_variant):
+    """
+    Persist environment variables to .env file.
+    Updated to match config.yaml parameters.
+    """
     if ENV_PATH.exists() and not os.access(ENV_PATH, os.W_OK):
         try:
             logger.warning(f"⚠️ .env not writable — trying to fix permissions...")
@@ -66,38 +131,36 @@ def persist_env_vars(device_arch, hailo_arch, resource_path, tappas_postproc_dir
             logger.error(f"❌ Failed to fix permissions for .env: {e}")
             sys.exit(1)
 
-    with open(ENV_PATH, "w") as f:
-        f.write(f"DEVICE_ARCH={device_arch}\n")
-        f.write(f"HAILO_ARCH={hailo_arch}\n")
-        f.write(f"RESOURCE_PATH={resource_path}\n")
-        f.write(f"TAPPAS_POST_PROC_DIR={tappas_postproc_dir}\n")
-        f.write(f"MODEL_DIR={model_dir}\n")
-        f.write(f"MZ_VERSION={mz_version}\n")
+    # Create dictionary for all environment variables
+    env_vars = {
+        "DEVICE_ARCH": device_arch,
+        "HAILO_ARCH": hailo_arch,
+        "RESOURCES_PATH": resources_path,
+        "TAPPAS_POST_PROC_DIR": tappas_postproc_dir,
+        "MODEL_DIR": model_dir,
+        "MODEL_ZOO_VERSION": model_zoo_version,
+        "HAILORT_VERSION": hailort_version,
+        "TAPPAS_VERSION": tappas_version,
+        "APPS_INFRA_VERSION": apps_infra_version,
+        "AUTO_SYMLINK": str(auto_symlink),
+        "VIRTUAL_ENV_NAME": virtual_env_name,
+        "SERVER_URL": server_url,
+        "DEB_WHL_DIR": deb_whl_dir,
+        "TAPPAS_VARIANT": tappas_variant
+    }
 
+    # Write all variables to .env file
+    with open(ENV_PATH, "w") as f:
+        for key, value in env_vars.items():
+            if value is not None:
+                f.write(f"{key}={value}\n")
+                
     logger.info(f"✅ Persisted environment variables to {ENV_PATH}")
 
 
-
-def main():
-    print("DEBUG: MAIN FUNCTION STARTED ✅")
-
-    logger.info("🔧 Validating configuration...")
-    config = load_config(PROJECT_ROOT / "hailo_apps_infra" /"config" / "hailo_config" / "config.yaml")
-
-    logger.info("🔧 Setting environment...")
-    set_environment_vars(config)
-    logger.info("🔗 Linking resources directory...")
-
-    logger.info("Showing environment variables...")
-    print("DEBUG: Environment keys set:", list(os.environ.keys()))
-    for var in ["DEVICE_ARCH", "HAILO_ARCH", "RESOURCE_PATH", "TAPPAS_POST_PROC_DIR", "MODEL_DIR", "MZ_VERSION"]:
-        value = os.environ.get(var)
-        if value:
-            print(f"{var}={value}")
-            logger.info(f"{var}={value}")
-        else:
-            logger.warning(f"{var} is not set")
-    logger.info("✅ Environment setup complete.")
-
 if __name__ == "__main__":
-    main()
+    # Example usage
+    logging.basicConfig(level=logging.INFO)
+    
+    config = load_config()
+    set_environment_vars(config)

@@ -105,7 +105,7 @@ def download_resources(group=None, names=None):
         # Use original filename if provided
         filename = vid_cfg.get("filename", f"{vid_name}{extension}")
         dest = resource_path / "videos" / filename
-        download_file(url, dest
+        download_file(url, dest)
 
 def main():
     p = argparse.ArgumentParser(

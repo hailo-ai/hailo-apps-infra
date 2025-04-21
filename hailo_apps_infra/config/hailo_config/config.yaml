@@ -7,3 +7,5 @@ hailo_arch: "auto" # Options: "hailo8", "hailo8l", or "auto" (detect from device
 resources_path: "/usr/local/hailo/resources" # If set to "auto" or empty, defaults to /usr/local/hailo/resources
 auto_symlink: true
 virtual_env_name: "hailo_infra_venv" # Name of the virtual environment to be created
+server_url: "http://dev-public.hailo.ai/2025_01" # URL of the server to download models from
+deb_whl_dir: "hailo_temp_resources"

@@ -160,7 +160,7 @@ def create_virtualenv(venv_dir):
     
     logger.info(f"Creating virtualenv: {venv_dir}")
     try:
-        subprocess.run([sys.executable, "-m", "virtualenv", venv_dir], check=True)
+        subprocess.run([sys.executable, "-m", "venv", venv_dir], check=True)
         return True
     except subprocess.CalledProcessError as e:
         logger.error(f"Failed to create virtualenv: {e}")
@@ -169,14 +169,14 @@ def create_virtualenv(venv_dir):
 
 def install_wheels(venv_dir, wheels):
     """Install wheels into a virtualenv."""
-    pip_path = os.path.join(venv_dir, "bin", "pip")
+    # pip_path = os.path.join(venv_dir, "bin", "pip")
     
-    # Upgrade pip first
-    try:
-        subprocess.run([pip_path, "install", "--upgrade", "pip"], check=True)
-    except subprocess.CalledProcessError as e:
-        logger.error(f"Failed to upgrade pip: {e}")
-        return False
+    # # Upgrade pip first
+    # try:
+    #     subprocess.run([pip_path, "install", "--upgrade", "pip"], check=True)
+    # except subprocess.CalledProcessError as e:
+    #     logger.error(f"Failed to upgrade pip: {e}")
+    #     return False
     
     # Install each wheel
     for wheel in wheels:
@@ -186,7 +186,7 @@ def install_wheels(venv_dir, wheels):
         
         logger.info(f"Installing wheel: {wheel}")
         try:
-            subprocess.run([pip_path, "install", wheel], check=True)
+            subprocess.run(["pip", "install", wheel], check=True)
         except subprocess.CalledProcessError as e:
             logger.error(f"Failed to install wheel {wheel}: {e}")
             return False
@@ -197,8 +197,8 @@ def install_wheels(venv_dir, wheels):
 def print_installed_versions(venv_dir=None):
     """Print installed versions of Hailo packages."""
     if venv_dir:
-        pip_path = os.path.join(venv_dir, "bin", "pip")
-        result = subprocess.run([pip_path, "list"], capture_output=True, text=True)
+        #pip_path = os.path.join(venv_dir, "bin", "pip")
+        result = subprocess.run(["pip", "list"], capture_output=True, text=True)
         logger.info(f"\n✅ Installed packages in virtualenv {venv_dir}:\n")
         for line in result.stdout.splitlines():
             if "hailo" in line.lower() or "tappas" in line.lower():
@@ -256,6 +256,8 @@ def main():
         return
     
     # Prepare for installation in virtualenv
+    print (f"Installing in virtualenv: {args.venv_name}")
+    ##############
     venv_dir = args.venv_name
     
     # Determine wheel paths (either from args or construct default paths)

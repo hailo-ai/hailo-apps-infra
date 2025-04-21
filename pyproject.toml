@@ -4,11 +4,11 @@ version = "1.0.0"
 description = "Infra package to install all modular Hailo apps"
 authors = [{ name = "Hailo", email = "support@hailo.ai" }]
 dependencies = [
-    "hailo-common @ file://./common",
-    "hailo-config @ file://./config",
-    "hailo-installation @ file://./installation",
-    "hailo-gstreamer @ file://./gstreamer",
-    "hailo-pipeline @ file://./pipeline",
+    "hailo-common @ file://./hailo_apps_infra/common",
+    "hailo-config @ file://./hailo_apps_infra/config",
+    "hailo-installation @ file://./hailo_apps_infra/installation",
+    "hailo-gstreamer @ file://./hailo_apps_infra/gstreamer",
+    "hailo-pipeline @ file://./hailo_apps_infra/pipelines",
     "numpy<2.0.0",
     "setproctitle",
     "opencv-python",
