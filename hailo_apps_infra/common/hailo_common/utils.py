@@ -71,7 +71,7 @@ def load_environment(env_file=PROJECT_ROOT / ".env", required_vars=None):
     required_vars = required_vars or [
         "TAPPAS_POST_PROC_DIR",
         "RESOURCE_PATH",
-        "DEVICE_ARCH",
+        "HOST_ARCH",
         "HAILO_ARCH"
     ]
 
@@ -132,3 +132,26 @@ def get_resource_path(pipeline_name, resource_type, model = None):
         logger.error(f"Unknown pipeline name or arch: {pipeline_name}, {hailo_arch}")
         return None
     
+
+def detect_hailo_package_version(package_name):
+    """
+    Detects the installed Hailo package version using dpkg-query.
+    Args:
+        package_name (str): The name of the package to check.
+    Returns:
+        str: The version of the package, or None if not found.
+
+    Example packages: hailo-tappas-core, hailort-pcie-driver, hailort , hailo-tappas
+    """
+    try:
+        # -W: show package, -f='${Version}' prints just the version
+        version = subprocess.check_output(
+            ["dpkg-query", "-W", "-f=${Version}", package_name],
+            stderr=subprocess.STDOUT,
+            text=True
+        ).strip()
+        return version
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Failed to detect version for {package_name}: {e.output.strip()}")
+        return None
+

@@ -95,7 +95,7 @@ def detect_pkg_installed(pkg_name: str) -> bool:
     except subprocess.CalledProcessError:
         return False
     
-def detect_device_arch():
+def detect_host_arch():
     """
     Detect the host architecture: rpi, arm, or x86.
     Returns:

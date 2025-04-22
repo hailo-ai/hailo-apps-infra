@@ -96,7 +96,7 @@ pip install -r requirements.txt
 
 # Post-install setup
 echo "⚙️ Running post-install setup..."
-python3 -m hailo_installation.install
+python3 -m hailo_installation.post_install
 
 
 echo "✅ All done! To activate environment later, run:"
