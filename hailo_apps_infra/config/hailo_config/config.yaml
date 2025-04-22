@@ -2,7 +2,7 @@ hailort_version: "4.20.0"
 tappas_version: "3.31.0"
 apps_infra_version: "25.3.1"
 model_zoo_version: "v2.14.0"
-device_arch: "auto" # Options: "rpi" (Raspberry Pi), "x86" (desktop/server), "arm" (generic ARM board) or "auto" (detect from device)
+host_arch: "auto" # Options: "rpi" (Raspberry Pi), "x86" (desktop/server), "arm" (generic ARM board) or "auto" (detect from device)
 hailo_arch: "auto" # Options: "hailo8", "hailo8l", or "auto" (detect from device)
 resources_path: "/usr/local/hailo/resources" # If set to "auto" or empty, defaults to /usr/local/hailo/resources
 virtual_env_name: "hailo_infra_venv" # Name of the virtual environment to be created IF SET TO AUTO OR empty this will default to /usr/local/hailo/resources
