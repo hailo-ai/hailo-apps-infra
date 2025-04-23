@@ -1,316 +1,174 @@
 #!/usr/bin/env python3
-
+"""
+Installer for Hailo Python bindings: pyHailoRT (hailort) and hailo-tappas-core.
+Installs into an existing virtual environment or the current Python environment.
+Supports downloading wheel files from a base URL if not already present locally.
+"""
+import argparse
 import subprocess
 import sys
 import os
-import platform
-import argparse
-import urllib.request
-import importlib.util
 import logging
+import platform
 from pathlib import Path
-
-# Import utilities from common files if available
-try:
-    from hailo_common.hailo_rpi_common import detect_device_arch, detect_hailo_arch, run_command
-except ImportError:
-    # Fallback implementations
-    def detect_device_arch():
-        """
-        Detect the host architecture: rpi, arm, or x86.
-        Returns:
-            str: One of "rpi", "arm", "x86", or "unknown"
-        """
-        machine = platform.machine().lower()
-        system = platform.system().lower()
-
-        if "arm" in machine or "aarch64" in machine:
-            # Detect Raspberry Pi based on OS and CPU
-            if system == "linux" and (
-                "raspberrypi" in platform.uname().node or
-                "pi" in platform.uname().node
-            ):
-                return "rpi"
-            else:
-                return "arm"
-        elif "x86" in machine or "amd64" in machine:
-            return "x86"
-        else:
-            return "unknown"
-
-    def detect_hailo_arch():
-        try:
-            # Run the hailortcli command to get device information
-            result = subprocess.run(['hailortcli', 'fw-control', 'identify'], 
-                                   capture_output=True, text=True)
-
-            # Check if the command was successful
-            if result.returncode != 0:
-                print(f"Error running hailortcli: {result.stderr}")
-                return None
-
-            # Search for the "Device Architecture" line in the output
-            for line in result.stdout.split('\n'):
-                if "Device Architecture" in line:
-                    if "HAILO8L" in line:
-                        return "hailo8l"
-                    elif "HAILO8" in line:
-                        return "hailo8"
-
-            print("Could not determine Hailo architecture from device information.")
-            return None
-        except Exception as e:
-            print(f"An error occurred while detecting Hailo architecture: {e}")
-            return None
-
-    def run_command(command, error_msg, logger=None):
-        """
-        Run a shell command and log the output.
-        Args:
-            command (str): The shell command to run.
-            error_msg (str): The error message to log if the command fails.
-            logger (logging.Logger, optional): The logger to use. If None, a default logger will be created.
-        """
-        if logger is not None:
-            logger.info(f"Running: {command}")
-        else:
-            print(f"Running: {command}")
-        result = subprocess.run(command, shell=True)
-        if result.returncode != 0:
-            if logger is not None:
-                logger.error(f"{error_msg} (exit code {result.returncode})")
-            else:
-                print(f"{error_msg} (exit code {result.returncode})")
-            exit(result.returncode)
-
-# --- Configuration ---
-BASE_URL = "http://dev-public.hailo.ai/2025_01"
-DEFAULT_VENV = "hailo_venv"
-HAILORT_VERSION = "4.20.0"
-TAPPAS_CORE_VERSION = "3.31.0"
-DOWNLOAD_DIR = "hailo_temp_resources"
-
-# Set up logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger("hailo-installer")
+import urllib.request
+from hailo_apps_infra.common.hailo_common.get_config_values import get_default_config_value
 
 
-def package_is_importable(package_name):
-    """Check if a package can be imported in the current Python environment."""
-    return importlib.util.find_spec(package_name) is not None
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
 
 
-def get_package_version(package_name):
-    """Get the version of an installed package."""
+def get_pip_cmd(venv_path: str = None):
+    """
+    Return the pip command for the target environment.
+    If venv_path is given, uses venv_path/bin/pip, otherwise uses current Python's pip.
+    """
+    if venv_path:
+        pip_path = Path(venv_path) / "bin" / "pip"
+        if not pip_path.exists():
+            logger.error(f"pip not found in virtualenv at '{pip_path}'")
+            sys.exit(1)
+        return [str(pip_path)]
+    return [sys.executable, "-m", "pip"]
+
+
+def download_wheel(url: str, dest_path: Path):
+    """Download a wheel file from URL to dest_path."""
+    logger.info(f"Downloading wheel from {url}")
     try:
-        # Try to import the package and get its version
-        package = __import__(package_name)
-        return getattr(package, "__version__", "unknown")
-    except (ImportError, AttributeError):
-        try:
-            # Alternative method using pkg_resources if available
-            import pkg_resources
-            return pkg_resources.get_distribution(package_name).version
-        except (ImportError, pkg_resources.DistributionNotFound):
-            return None
+        urllib.request.urlretrieve(url, str(dest_path))
+    except Exception as e:
+        logger.error(f"Failed to download {url}: {e}")
+        sys.exit(1)
 
 
-def get_python_tag():
-    """Get the Python tag for the wheel filename."""
-    major, minor = sys.version_info[:2]
-    return f"cp{major}{minor}-cp{major}{minor}"
+def install_wheel(pip_cmd, wheel_path: Path):
+    """Install a wheel file via pip_cmd."""
+    if not wheel_path.exists():
+        logger.error(f"Wheel file not found: {wheel_path}")
+        sys.exit(1)
+    cmd = pip_cmd + ["install", str(wheel_path)]
+    logger.info(f"Installing wheel: {wheel_path.name}")
+    subprocess.check_call(cmd)
 
 
-def get_platform_tag():
-    """Get the platform tag for the wheel filename."""
-    machine = platform.machine()
-    if "x86_64" in machine:
-        return "linux_x86_64"
-    elif "aarch64" in machine:
-        return "linux_aarch64"
-    elif "arm" in machine:
-        # For older ARM platforms that are not aarch64
-        return "linux_armv7l"
-    else:
-        raise RuntimeError(f"Unsupported architecture: {machine}")
-
-
-def download_file(filename, dest):
-    """Download a file from the server."""
-    url = f"{BASE_URL}/{filename}"
-    logger.info(f"Downloading {url}...")
-    
-    try:
-        Path(os.path.dirname(dest)).mkdir(parents=True, exist_ok=True)
-        urllib.request.urlretrieve(url, dest)
-        return True
-    except urllib.error.URLError as e:
-        logger.error(f"Error downloading {url}: {e}")
-        return False
-
-
-def create_virtualenv(venv_dir):
-    """Create a virtual environment."""
-    if os.path.exists(venv_dir):
-        logger.info(f"Using existing virtualenv: {venv_dir}")
-        return True
-    
-    logger.info(f"Creating virtualenv: {venv_dir}")
-    try:
-        subprocess.run([sys.executable, "-m", "venv", venv_dir], check=True)
-        return True
-    except subprocess.CalledProcessError as e:
-        logger.error(f"Failed to create virtualenv: {e}")
-        return False
-
-
-def install_wheels(venv_dir, wheels):
-    """Install wheels into a virtualenv."""
-    # pip_path = os.path.join(venv_dir, "bin", "pip")
-    
-    # # Upgrade pip first
-    # try:
-    #     subprocess.run([pip_path, "install", "--upgrade", "pip"], check=True)
-    # except subprocess.CalledProcessError as e:
-    #     logger.error(f"Failed to upgrade pip: {e}")
-    #     return False
-    
-    # Install each wheel
-    for wheel in wheels:
-        if not os.path.exists(wheel):
-            logger.error(f"Wheel file not found: {wheel}")
-            return False
-        
-        logger.info(f"Installing wheel: {wheel}")
-        try:
-            subprocess.run(["pip", "install", wheel], check=True)
-        except subprocess.CalledProcessError as e:
-            logger.error(f"Failed to install wheel {wheel}: {e}")
-            return False
-    
-    return True
-
-
-def print_installed_versions(venv_dir=None):
-    """Print installed versions of Hailo packages."""
-    if venv_dir:
-        #pip_path = os.path.join(venv_dir, "bin", "pip")
-        result = subprocess.run(["pip", "list"], capture_output=True, text=True)
-        logger.info(f"\n✅ Installed packages in virtualenv {venv_dir}:\n")
-        for line in result.stdout.splitlines():
-            if "hailo" in line.lower() or "tappas" in line.lower():
-                print(line)
-    else:
-        # Print system packages
-        hailort_ver = get_package_version("hailort") or "not installed"
-        tappas_ver = get_package_version("hailo_tappas") or "not installed"
-        print(f"hailort: {hailort_ver}")
-        print(f"hailo_tappas: {tappas_ver}")
+def list_installed(pip_cmd):
+    """List installed hailo-related packages in the target environment."""
+    subprocess.run(pip_cmd + ["list", "--format=columns"])  
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Hailo Python Bindings Installer")
-    parser.add_argument("--venv-name", default=DEFAULT_VENV, 
-                        help=f"Name of the virtualenv (default: {DEFAULT_VENV})")
-    parser.add_argument("--hailort-version", default=HAILORT_VERSION,
-                        help=f"HailoRT version to install (default: {HAILORT_VERSION})")
-    parser.add_argument("--tappas-version", default=TAPPAS_CORE_VERSION,
-                        help=f"TAPPAS core version to install (default: {TAPPAS_CORE_VERSION})")
-    parser.add_argument("--hailort-wheel", 
-                        help="Path to HailoRT wheel file (if already downloaded)")
-    parser.add_argument("--tappas-wheel", 
-                        help="Path to TAPPAS wheel file (if already downloaded)")
-    parser.add_argument("--force-venv", action="store_true",
-                        help="Force installation in virtualenv even if packages are installed globally")
-    parser.add_argument("--verbose", "-v", action="store_true",
-                        help="Enable verbose logging")
-    
+    parser = argparse.ArgumentParser(
+        description="Install pyHailoRT (hailort) and hailo-tappas-core into an existing venv or current env"
+    )
+    parser.add_argument(
+        "--venv-path",
+        help="Path to existing virtualenv; if omitted, uses current Python environment"
+    )
+    parser.add_argument(
+        "--install-pyhailort", action="store_true",
+        help="Install pyHailoRT (hailort) package"
+    )
+    parser.add_argument(
+        "--pyhailort-version",
+        help="Version of pyHailoRT (hailort) to install"
+    )
+    parser.add_argument(
+        "--pyhailort-wheel",
+        help="Path to pyHailoRT (hailort) wheel file"
+    )
+    parser.add_argument(
+        "--install-tappas-core", action="store_true",
+        help="Install hailo-tappas-core package"
+    )
+    parser.add_argument(
+        "--tappas-version",
+        help="Version of hailo-tappas-core to install"
+    )
+    parser.add_argument(
+        "--tappas-wheel",
+        help="Path to hailo-tappas-core wheel file"
+    )
+    parser.add_argument(
+        "--download-dir",
+        default=os.environ.get("DEB_WHL_DIR", "hailo_temp_resources"),
+        help="Directory to download wheel files to"
+    )
+    parser.add_argument(
+        "-v", "--verbose", action="store_true",
+        help="Enable verbose output"
+    )
+
     args = parser.parse_args()
-    
     if args.verbose:
         logger.setLevel(logging.DEBUG)
-    
-    # Detect system architecture
-    device_arch = detect_device_arch()
-    hailo_arch = detect_hailo_arch()
-    py_ver = f"{sys.version_info.major}.{sys.version_info.minor}"
-    
-    logger.info(f"System details:")
-    logger.info(f"  - Device architecture: {device_arch}")
-    logger.info(f"  - Hailo architecture: {hailo_arch}")
-    logger.info(f"  - Python version: {py_ver}")
-    
-    # Check if packages are already installed globally
-    hailort_installed = package_is_importable("hailort")
-    tappas_installed = package_is_importable("hailo_tappas")
-    
-    if hailort_installed and tappas_installed and not args.force_venv:
-        logger.info("✅ 'hailort' and 'hailo_tappas' are already installed globally.")
-        hailort_ver = get_package_version("hailort")
-        tappas_ver = get_package_version("hailo_tappas")
-        logger.info(f"  - hailort version: {hailort_ver}")
-        logger.info(f"  - hailo_tappas version: {tappas_ver}")
-        return
-    
-    # Prepare for installation in virtualenv
-    print (f"Installing in virtualenv: {args.venv_name}")
-    ##############
-    venv_dir = args.venv_name
-    
-    # Determine wheel paths (either from args or construct default paths)
-    py_tag = get_python_tag()
-    platform_tag = get_platform_tag()
-    
-    if args.hailort_wheel:
-        hailort_wheel_path = args.hailort_wheel
-    else:
-        hailort_whl_name = f"hailort-{args.hailort_version}-{py_tag}-{platform_tag}.whl"
-        hailort_wheel_path = os.path.join(DOWNLOAD_DIR, hailort_whl_name)
-        
+
+    # If wheel paths are provided, assume installation
+    if args.pyhailort_wheel:
+        args.install_pyhailort = True
     if args.tappas_wheel:
-        tappas_wheel_path = args.tappas_wheel
-    else:
-        tappas_whl_name = f"tappas_core_python_binding-{args.tappas_version}-py3-none-any.whl"
-        tappas_wheel_path = os.path.join(DOWNLOAD_DIR, tappas_whl_name)
-    
-    # Download wheels if needed
-    if not os.path.exists(hailort_wheel_path):
-        hailort_whl_name = os.path.basename(hailort_wheel_path)
-        if not download_file(hailort_whl_name, hailort_wheel_path):
-            logger.error(f"Failed to download HailoRT wheel: {hailort_whl_name}")
-            return
-    else:
-        logger.info(f"Found cached wheel: {hailort_wheel_path}")
-    
-    if not os.path.exists(tappas_wheel_path):
-        tappas_whl_name = os.path.basename(tappas_wheel_path)
-        if not download_file(tappas_whl_name, tappas_wheel_path):
-            logger.error(f"Failed to download TAPPAS wheel: {tappas_whl_name}")
-            return
-    else:
-        logger.info(f"Found cached wheel: {tappas_wheel_path}")
-    
-    # Create or reuse virtualenv
-    if not create_virtualenv(venv_dir):
-        logger.error("Failed to set up virtualenv")
-        return
-    
-    # Install wheels
-    if not install_wheels(venv_dir, [hailort_wheel_path, tappas_wheel_path]):
-        logger.error("Failed to install wheels")
-        return
-    
-    # Print installed versions
-    print_installed_versions(venv_dir)
-    
-    logger.info(f"""
-✅ Installation complete.
-   To activate the environment, run:
-     source {venv_dir}/bin/activate
-""")
+        args.install_tappas_core = True
+
+    if not args.install_pyhailort and not args.install_tappas_core:
+        parser.error("No installation target specified; use --install-pyhailort and/or --install-tappas-core or provide wheel paths.")
+        exit(1)
+
+    server_url = get_default_config_value("server_url")
+    if not server_url:
+        logger.error("Server URL not found in config.")
+        sys.exit(1)
+
+    pip_cmd = get_pip_cmd(args.venv_path)
+    logger.debug(f"Using pip command: {' '.join(pip_cmd)}")
+
+    download_dir = Path(args.download_dir)
+    download_dir.mkdir(parents=True, exist_ok=True)
+
+    # Install pyHailoRT
+    if args.install_pyhailort:
+        if args.pyhailort_wheel:
+            wheel_path = Path(args.pyhailort_wheel)
+        else:
+            if not args.pyhailort_version:
+                parser.error("--pyhailort-version is required when not using --pyhailort-wheel")
+                exit(1)
+            version = args.pyhailort_version
+            py_tag = f"cp{sys.version_info.major}{sys.version_info.minor}-cp{sys.version_info.major}{sys.version_info.minor}"
+            machine = platform.machine()
+            if "x86_64" in machine:
+                platform_tag = "linux_x86_64"
+            elif "aarch64" in machine or "arm64" in machine:
+                platform_tag = "linux_aarch64"
+            else:
+                logger.error(f"Unsupported architecture: {machine}")
+                sys.exit(1)
+            wheel_name = f"hailort-{version}-{py_tag}-{platform_tag}.whl"
+            wheel_path = download_dir / wheel_name
+            if not wheel_path.exists():
+                url = f"{server_url}/{wheel_name}"
+                download_wheel(url, wheel_path)
+        install_wheel(pip_cmd, wheel_path)
+
+    # Install hailo-tappas-core
+    if args.install_tappas_core:
+        if args.tappas_wheel:
+            wheel_path = Path(args.tappas_wheel)
+        else:
+            if not args.tappas_version:
+                parser.error("--tappas-version is required when not using --tappas-wheel")
+                exit(1)
+            version = args.tappas_version
+            wheel_name = f"tappas_core_python_binding-{version}-py3-none-any.whl"
+            wheel_path = download_dir / wheel_name
+            if not wheel_path.exists():
+                url = f"{server_url}/{wheel_name}"
+                download_wheel(url, wheel_path)
+        install_wheel(pip_cmd, wheel_path)
+
+    # List installed packages
+    list_installed(pip_cmd)
+    logger.info("✅ Installation complete.")
 
 
 if __name__ == "__main__":

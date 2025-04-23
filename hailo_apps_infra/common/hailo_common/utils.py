@@ -4,6 +4,7 @@ import logging
 import yaml
 from pathlib import Path
 from dotenv import load_dotenv
+from hailo_common.hailo_rpi_common import detect_pkg_installed
 
 logger = logging.getLogger("hailo-utils")
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
@@ -154,4 +155,3 @@ def detect_hailo_package_version(package_name):
     except subprocess.CalledProcessError as e:
         logger.error(f"Failed to detect version for {package_name}: {e.output.strip()}")
         return None
-

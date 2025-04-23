@@ -72,7 +72,7 @@ def set_environment_vars(config, refresh=False):
             exit(1)
 
     logger.info("Using configuration values:")
-    logger.info(f"  Device Architecture: {host_arch}")
+    logger.info(f"  Host Architecture: {host_arch}")
     logger.info(f"  Hailo Architecture: {hailo_arch}")
     logger.info(f"  Resources Path: {resources_path}")
     logger.info(f"  Model Zoo Version: {model_zoo_version}")
@@ -88,7 +88,7 @@ def set_environment_vars(config, refresh=False):
     model_dir = os.path.join(resources_path, "models")
 
     # Set environment variables in current process
-    os.environ["host_arch"] = host_arch
+    os.environ["HOST_ARCH"] = host_arch
     os.environ["HAILO_ARCH"] = hailo_arch
     os.environ["RESOURCES_PATH"] = resources_path
     os.environ["TAPPAS_POST_PROC_DIR"] = tappas_postproc_dir
@@ -135,7 +135,7 @@ def persist_env_vars(host_arch, hailo_arch, resources_path, tappas_postproc_dir,
 
     # Create dictionary for all environment variables
     env_vars = {
-        "host_arch": host_arch,
+        "HOST_ARCH": host_arch,
         "HAILO_ARCH": hailo_arch,
         "RESOURCES_PATH": resources_path,
         "TAPPAS_POST_PROC_DIR": tappas_postproc_dir,

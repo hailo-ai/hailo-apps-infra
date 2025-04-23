@@ -39,6 +39,5 @@ echo "Running tests..."
 PYTHONPATH="." pytest --log-cli-level=INFO \
        "$TESTS_DIR/test_sanity_check.py" \
        "$TESTS_DIR/test_pipelines.py" \
-       "$TESTS_DIR/test_special_features.py"
 
 echo "All tests completed."

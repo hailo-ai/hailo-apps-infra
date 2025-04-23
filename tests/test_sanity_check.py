@@ -29,65 +29,105 @@ def test_check_hailo_runtime_installed():
     except FileNotFoundError:
         pytest.skip("Hailo runtime is not installed - skipping test on non-Hailo system.")
 
-
 def test_check_required_files():
-    """Test if required project files exist."""
-    # Get project root directory
+    """Test if required project files and directories exist."""
     project_root = Path(__file__).resolve().parents[1]
     
-    # Core setup files
+    # Core files at project root
     core_files = [
-        'setup.py',
-        'requirements.txt',
-        'scripts/download_resources.sh',
-        'scripts/compile_postprocess.sh',
-        'meson.build',
         'LICENSE',
+        'MANIFEST.in',
+        'meson.build',
+        'pyproject.toml',
         'README.md',
+        'requirements.txt',
+        'run_tests.sh',
+        'install.sh'
     ]
     
-    # Core module files
-    module_files = [
-        'hailo_apps_infra/common/hailo_rpi_common.py',
-        'hailo_apps_infra/gstreamer/gstreamer_app.py',
-        'hailo_apps_infra/gstreamer/gstreamer_helper_pipelines.py',
-        'hailo_apps_infra/common/get_usb_camera.py',
+    # Script files
+    script_files = [
+        'scripts/compile_postprocess.sh',
+        'scripts/DirToPdf.py',
+        'scripts/download_resources.sh',
+        'scripts/hailo_installation_script.sh'
     ]
     
-    # Pipeline implementations
-    pipeline_files = [
-        'hailo_apps_infra/core/detection_pipeline.py',
-        'hailo_apps_infra/core/detection_pipeline_simple.py',
-        'hailo_apps_infra/core/pose_estimation_pipeline.py',
-        'hailo_apps_infra/core/instance_segmentation_pipeline.py',
-        'hailo_apps_infra/core/depth_pipeline.py',
+    # Documentation files
+    doc_files = [
+        'doc/developer_guide.md',
+        'doc/development_guide.md',
+        'doc/installation_guide.md',
+        'doc/usage_of_all_pipelines.md'
     ]
     
     # C++ files
     cpp_files = [
+        'cpp/depth_estimation.cpp',
+        'cpp/depth_estimation.hpp',
+        'cpp/hailo_nms_decode.hpp',
+        'cpp/__init__.py',
+        'cpp/mask_decoding.hpp',
         'cpp/meson.build',
+        'cpp/remove_labels.cpp',
+        'cpp/remove_labels.hpp',
         'cpp/yolo_hailortpp.cpp',
         'cpp/yolo_hailortpp.hpp',
         'cpp/yolov5seg.cpp',
         'cpp/yolov5seg.hpp',
         'cpp/yolov8pose_postprocess.cpp',
-        'cpp/yolov8pose_postprocess.hpp',
-        'cpp/depth_estimation.cpp',
-        'cpp/depth_estimation.hpp',
+        'cpp/yolov8pose_postprocess.hpp'
     ]
     
-    # Check all file groups
-    all_required_files = core_files + module_files + pipeline_files + cpp_files
+    # hailo_apps_infra modules and their internal files
+    module_files = [
+        # Common module
+        'hailo_apps_infra/common/pyproject.toml',
+        'hailo_apps_infra/common/hailo_common/get_config_values.py',
+        'hailo_apps_infra/common/hailo_common/get_usb_camera.py',
+        'hailo_apps_infra/common/hailo_common/hailo_rpi_common.py',
+        'hailo_apps_infra/common/hailo_common/__init__.py',
+        'hailo_apps_infra/common/hailo_common/installation_utils.py',
+        'hailo_apps_infra/common/hailo_common/test_utils.py',
+        'hailo_apps_infra/common/hailo_common/utils.py',
+        
+        # Config module
+        'hailo_apps_infra/config/pyproject.toml',
+        'hailo_apps_infra/config/hailo_config/config.yaml',
+        'hailo_apps_infra/config/hailo_config/resources_config.yaml',
+        
+        # GStreamer module
+        'hailo_apps_infra/gstreamer/pyproject.toml',
+        'hailo_apps_infra/gstreamer/hailo_gstreamer/gstreamer_app.py',
+        'hailo_apps_infra/gstreamer/hailo_gstreamer/gstreamer_helper_pipelines.py',
+        'hailo_apps_infra/gstreamer/hailo_gstreamer/__init__.py',
+        
+        # Installation module
+        'hailo_apps_infra/installation/pyproject.toml',
+        'hailo_apps_infra/installation/hailo_installation/compile_cpp.py',
+        'hailo_apps_infra/installation/hailo_installation/download_resources.py',
+        'hailo_apps_infra/installation/hailo_installation/__init__.py',
+        'hailo_apps_infra/installation/hailo_installation/post_install.py',
+        'hailo_apps_infra/installation/hailo_installation/python_installation_dev.py',
+        'hailo_apps_infra/installation/hailo_installation/python_installation.py',
+        'hailo_apps_infra/installation/hailo_installation/set_env.py',
+        'hailo_apps_infra/installation/hailo_installation/validate_config.py',
+        
+        # Pipelines module
+        'hailo_apps_infra/pipelines/pyproject.toml',
+        'hailo_apps_infra/pipelines/hailo_pipelines/depth_pipeline.py',
+        'hailo_apps_infra/pipelines/hailo_pipelines/detection_pipeline.py',
+        'hailo_apps_infra/pipelines/hailo_pipelines/detection_pipeline_simple.py',
+        'hailo_apps_infra/pipelines/hailo_pipelines/__init__.py',
+        'hailo_apps_infra/pipelines/hailo_pipelines/instance_segmentation_pipeline.py',
+        'hailo_apps_infra/pipelines/hailo_pipelines/pose_estimation_pipeline.py'
+    ]
     
-    missing_files = []
-    for file in all_required_files:
-        file_path = project_root / file
-        if not file_path.exists():
-            missing_files.append(file)
+    required_paths = core_files + script_files + doc_files + cpp_files + module_files
+    missing = [path for path in required_paths if not (project_root / path).exists()]
     
-    if missing_files:
-        pytest.fail(f"The following required files are missing: {', '.join(missing_files)}")
-
+    if missing:
+        pytest.fail(f"The following required files or directories are missing: {', '.join(missing)}")
 
 def test_check_resource_directory():
     """Test if the resources directory exists and has expected subdirectories."""
