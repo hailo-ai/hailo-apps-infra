@@ -47,7 +47,7 @@ This comprehensive guide describes how to install and configure the Hailo Apps I
 
 ## Prerequisites
 
-- **Linux/macOS** with `bash` and Python 3.7+
+- **Linux** with `bash` and Python 3.8-3.11 for x86 or 3.10 and 3.11 for rpi
 - `sudo` privileges (for installing system directories and packages)
 - `virtualenv` (bundled with Python 3 `venv` module)
 - Internet access (to download wheels, models, videos)
@@ -65,15 +65,6 @@ Creates resource directories, bootstraps a Python virtual environment, installs 
 #### Usage
 
 ```bash
-# From repo root, give execute permission if needed:
-chmod +x install.sh
-
-# Install only GStreamer bindings:
-sudo ./install.sh --gstreamer-only
-
-# Install pipelines + GStreamer:
-sudo ./install.sh --pipelines-only
-
 # Install everything (GStreamer + pipelines):
 sudo ./install.sh --all
 ```
@@ -131,12 +122,6 @@ python3 python_installation_dev.py [OPTIONS]
 ```bash
 # Basic installation using defaults
 python3 python_installation_dev.py
-
-# Custom virtual environment and version settings
-python3 python_installation_dev.py --venv-name my_hailo_env --hailort-version 4.20.0 --tappas-version 3.31.0
-
-# Force virtualenv with verbose logging
-python3 python_installation_dev.py --force-venv --verbose
 
 # Using pre-downloaded wheel files
 python3 python_installation_dev.py --hailort-wheel /path/to/hailort.whl --tappas-wheel /path/to/tappas.whl
@@ -290,7 +275,7 @@ set_environment_vars(config)
 
 #### Purpose
 
-Checks that `config.yaml` contains all required keys (`server_url`) and that optional keys are valid. Prints a summary and exits on errors.
+Checks that `config.yaml` contains all required keys and that optional keys are valid. Prints a summary and exits on errors.
 
 #### Usage
 
