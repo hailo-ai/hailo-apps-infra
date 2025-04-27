@@ -24,8 +24,8 @@ def post_install():
     logger.info("🔧 Setting environment...")
     set_environment_vars(config)
 
-    resource_path = get_config_value('resources_path', default=get_default_config_value('resources_path'))
-    
+    resource_path = get_config_value('resources_path') or get_default_config_value('resources_path')    
+
     logger.info(f"🔗 Linking resources directory to {resource_path}...")
     create_symlink(resource_path, PROJECT_ROOT / "resources")
 

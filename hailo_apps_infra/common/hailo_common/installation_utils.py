@@ -4,8 +4,8 @@ import logging
 import subprocess
 from pathlib import Path
 from dotenv import load_dotenv
-from hailo_common.hailo_rpi_common import detect_pkg_installed
-from hailo_common.utils import detect_hailo_package_version
+from hailo_rpi_common import detect_pkg_installed
+from utils import detect_hailo_package_version
 
 logger = logging.getLogger("hailo-utils")
 PROJECT_ROOT = Path(__file__).resolve().parents[3]

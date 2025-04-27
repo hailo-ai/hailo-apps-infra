@@ -42,7 +42,7 @@ def download_resources(group=None, names=None):
     logger.info(f"Detected Hailo architecture: {hailo_arch}")
     resource_path = Path(os.getenv("RESOURCE_PATH", "/usr/local/hailo/resources"))
     models_base_url = config["defaults"]["model_zoo_url"]
-    model_zoo_version = os.getenv("MZ_VERSION")
+    model_zoo_version = os.getenv("MODEL_ZOO_VERSION")
     print(f"================Model Zoo version: {model_zoo_version}===================")
 
     if group is None or group == "default":

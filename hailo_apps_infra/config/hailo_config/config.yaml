@@ -8,4 +8,4 @@ resources_path: "/usr/local/hailo/resources" # If set to "auto" or empty, defaul
 virtual_env_name: "hailo_infra_venv" # Name of the virtual environment to be created IF SET TO AUTO OR empty this will default to /usr/local/hailo/resources
 server_url: "http://dev-public.hailo.ai/2025_01" # URL of the server to download models from , This is static 
 deb_whl_dir: "hailo_temp_resources" # Directory to store the deb and whl files , this is the default if set to auot or empty 
-tappas_variant: "tappas" # Options : "tappas" or " tappa-core" or "None"
+tappas_variant: "tappas-core" # Options : "tappas" or " tappa-core"  or "Auto"
