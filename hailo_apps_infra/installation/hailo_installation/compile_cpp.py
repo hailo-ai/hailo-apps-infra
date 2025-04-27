@@ -12,3 +12,6 @@ def compile_postprocess(mode="release"):
 
     logger.info(f"Running C++ build: {' '.join(cmd)}")
     subprocess.run(cmd, check=True)
+
+if __name__ == "__main__":
+    compile_postprocess()
