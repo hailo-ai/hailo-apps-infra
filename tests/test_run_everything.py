@@ -38,13 +38,12 @@ pipelines = [
         "script": "hailo_apps_infra/pipelines/hailo_pipelines/depth_pipeline.py",
         "cli": "hailo-depth"
     },
-    # Uncomment if needed.
-    # {
-    #     "name": "instance_segmentation",
-    #     "module": "hailo_apps_infra.pipelines.hailo_pipelines.instance_segmentation_pipeline",
-    #     "script": "hailo_apps_infra/pipelines/hailo_pipelines/instance_segmentation_pipeline.py",
-    #     "cli": "hailo-seg"
-    # },
+    {
+        "name": "instance_segmentation",
+        "module": "hailo_apps_infra.pipelines.hailo_pipelines.instance_segmentation_pipeline",
+        "script": "hailo_apps_infra/pipelines/hailo_pipelines/instance_segmentation_pipeline.py",
+        "cli": "hailo-seg"
+    },
     {
         "name": "simple_detection",
         "module": "hailo_apps_infra.pipelines.hailo_pipelines.detection_pipeline_simple",

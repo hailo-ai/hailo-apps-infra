@@ -2,7 +2,7 @@
 name = "hailo-apps-infra"
 version = "1.0.0"
 description = "Infra package to install all modular Hailo apps"
-authors = [{ name = "Hailo", email = "support@hailo.ai" }]
+authors = [{ name = "Hailo", email = "https://community.hailo.ai/" }]
 dependencies = [
     "hailo-common @ file://./hailo_apps_infra/common",
     "hailo-config @ file://./hailo_apps_infra/config",

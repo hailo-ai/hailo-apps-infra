@@ -66,5 +66,4 @@ def main():
     
 if __name__ == "__main__":
     print("Starting Hailo Depth App...")
-    #load_environment()
     main()

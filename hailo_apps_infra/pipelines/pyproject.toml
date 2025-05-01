@@ -2,7 +2,7 @@
 name = "hailo-pipeline"
 version = "0.1.0"
 description = "Pipeline logic"
-authors = [{ name = "Omriz" }]
+authors = [{ name = "Hailo" }]
 dependencies = []
 
 [build-system]

@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 import yaml
 import urllib.request
-from hailo_common.hailo_rpi_common import detect_hailo_arch
+from hailo_common.common import detect_hailo_arch
 from hailo_common.utils import load_config
 from importlib.resources import files
 

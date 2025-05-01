@@ -115,6 +115,5 @@ def main():    # Create an instance of the user app callback class
     app.run()
 
 if __name__ == "__main__":
-    load_environment()
     print("Starting Hailo Pose Estimation App...")
     main()

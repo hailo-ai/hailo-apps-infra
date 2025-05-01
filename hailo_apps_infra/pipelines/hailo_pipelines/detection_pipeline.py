@@ -131,6 +131,5 @@ def main():
     
 if __name__ == "__main__":
     print("Starting Hailo Detection App...")
-    load_environment()
     main()
  

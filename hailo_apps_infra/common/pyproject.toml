@@ -2,7 +2,7 @@
 name = "hailo-common"
 version = "0.1.0"
 description = "Shared utilities for Hailo apps"
-authors = [{ name = "Omriz" }]
+authors = [{ name = "Hailo" }]
 dependencies = []
 
 [build-system]

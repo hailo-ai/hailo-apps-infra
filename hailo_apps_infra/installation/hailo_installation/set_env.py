@@ -3,7 +3,7 @@ import logging
 import subprocess
 from pathlib import Path
 import sys
-from hailo_common.hailo_rpi_common import detect_host_arch, detect_hailo_arch, detect_pkg_installed
+from hailo_common.common import detect_host_arch, detect_hailo_arch, detect_pkg_installed
 from hailo_common.utils import run_command_with_output, detect_hailo_package_version
 from hailo_common.get_config_values import load_config, get_default_config_value
 
@@ -47,11 +47,8 @@ def set_environment_vars(config, refresh=False):
         logger.warning("⚠️ tappas_variant is set to 'auto'. Detecting TAPPAS variant...")
         if detect_pkg_installed("tappas"):
             tappas_variant = "tappas"
-            tappas_workspace = run_command_with_output("pkg-config --variable=tappas_workspace hailo_tappas")
-            tappas_postproc_dir = f"{tappas_workspace}/apps/h8/gstreamer/libs/post_processes/"
         elif detect_pkg_installed("tappas-core"):
             tappas_variant = "tappas-core"
-            tappas_postproc_dir = run_command_with_output("pkg-config --variable=tappas_postproc_lib_dir hailo-tappas-core")
         else:
             logger.error("⚠ Could not detect TAPPAS variant.")
             sys.exit(1)
@@ -65,10 +62,13 @@ def set_environment_vars(config, refresh=False):
             logger.error("⚠ Could not detect TAPPAS version.")
             sys.exit(1)
 
-    # Prevent NoneType when setting env
-    if tappas_postproc_dir is None:
-        logger.warning("⚠️ TAPPAS_POST_PROC_DIR was not detected; defaulting to empty string.")
-        tappas_postproc_dir = ""
+    if tappas_variant == "tappas":
+        tappas_workspace = run_command_with_output("pkg-config --variable=tappas_workspace hailo_tappas")
+        tappas_postproc_dir = f"{tappas_workspace}/apps/h8/gstreamer/libs/post_processes/"
+    elif tappas_variant == "tappas-core":
+        tappas_postproc_dir = run_command_with_output("pkg-config --variable=tappas_postproc_lib_dir hailo-tappas-core")
+
+
 
     # Log final config
     logger.info("Using configuration values:")

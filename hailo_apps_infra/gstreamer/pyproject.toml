@@ -2,7 +2,7 @@
 name = "hailo-gstreamer"
 version = "0.1.0"
 description = "GStreamer interface"
-authors = [{ name = "Omriz" }]
+authors = [{ name = "Hailo" }]
 dependencies = []
 
 [build-system]

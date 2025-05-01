@@ -1,4 +1,5 @@
 import gi
+# Initialize GStreamer
 gi.require_version('Gst', '1.0')
 from gi.repository import Gst, GLib
 import os
@@ -17,8 +18,8 @@ from hailo_gstreamer.gstreamer_helper_pipelines import(
     SOURCE_PIPELINE,
     INFERENCE_PIPELINE,
     INFERENCE_PIPELINE_WRAPPER,
-    USER_CALLBACK_PIPELINE,
     TRACKER_PIPELINE,
+    USER_CALLBACK_PIPELINE,
     DISPLAY_PIPELINE,
 )
 from hailo_gstreamer.gstreamer_app import (
@@ -34,26 +35,27 @@ from hailo_common.utils import (
 from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 RESOURCES_DIR = PROJECT_ROOT / "resources"
+LOCAL_RESOURCES = PROJECT_ROOT / "local_resources"
 
 #-----------------------------------------------------------------------------------------------
-# User Gstreamer Application
-# -----------------------------------------------------------------------------------------------
-
-# This class inherits from the hailo_rpi_common.GStreamerApp class
+# User GStreamer Application: Instance Segmentation
+#-----------------------------------------------------------------------------------------------
 
 class GStreamerInstanceSegmentationApp(GStreamerApp):
     def __init__(self, app_callback, user_data, parser=None):
-        if parser == None:
+        # Load .env variables (e.g., RESOURCE_PATH)
+        load_environment()
+
+        if parser is None:
             parser = get_default_parser()
-        # Call the parent class constructor
         super().__init__(parser, user_data)
-        # Additional initialization code can be added here
-        # Set Hailo parameters these parameters should be set based on the model used
+
+        # Hailo parameters
         self.batch_size = 2
         self.video_width = 640
         self.video_height = 640
 
-        # Determine the architecture if not specified
+        # Detect architecture if not provided
         if self.options_menu.arch is None:
             detected_arch = detect_hailo_arch()
             if detected_arch is None:
@@ -63,32 +65,44 @@ class GStreamerInstanceSegmentationApp(GStreamerApp):
         else:
             self.arch = self.options_menu.arch
 
-        # Set the HEF file path based on the architecture
+        # Set HEF path (string) for segmentation models
         if self.options_menu.hef_path:
-            self.hef_path = self.options_menu.hef_path
+            self.hef_path = str(self.options_menu.hef_path)
         else:
-            self.hef_path = get_resource_path("seg","models")
+            # get_resource_path will use RESOURCE_PATH from env
+            self.hef_path = str(get_resource_path(
+                pipeline_name="seg",
+                resource_type="models",
+            ))
 
-        # Determine config file based on selected HEF
-        if 'yolov5m_seg' in self.hef_path:
-            self.config_file = str(RESOURCES_DIR / "json"  / "yolov5m_seg.json")
-        elif 'yolov5n_seg' in self.hef_path:
-            self.config_file = str(RESOURCES_DIR / "json"  / "yolov5n_seg.json")
+        # Determine which JSON config to use based on HEF filename
+        hef_name = Path(self.hef_path).name
+        if 'yolov5m_seg' in hef_name:
+            self.config_file = str(LOCAL_RESOURCES / "yolov5m_seg.json")
+        elif 'yolov5n_seg' in hef_name:
+            self.config_file = str(LOCAL_RESOURCES / "yolov5n_seg.json")
         else:
-            raise ValueError("HEF version not supported, you will need to provide a config file")
+            raise ValueError("HEF version not supported; please provide a compatible segmentation HEF or config file.")
 
-        # Set post-process .so path
-        self.post_process_so = get_resource_path("seg","so","libyolov5seg_postprocess.so")
+        # Post-process shared object
+        self.post_process_so = str(RESOURCES_DIR / "so" / "libyolov5seg_postprocess.so")
         self.post_function_name = "filter_letterbox"
+
+        # Callback
         self.app_callback = app_callback
 
-        # Set the process title
+        # Set process title for easy identification
         setproctitle.setproctitle("Hailo Instance Segmentation App")
 
+        # Build the GStreamer pipeline
         self.create_pipeline()
 
     def get_pipeline_string(self):
-        source_pipeline = SOURCE_PIPELINE(video_source=self.video_source, video_width=self.video_width, video_height=self.video_height)
+        source_pipeline = SOURCE_PIPELINE(
+            video_source=self.video_source,
+            video_width=self.video_width,
+            video_height=self.video_height,
+        )
         infer_pipeline = INFERENCE_PIPELINE(
             hef_path=self.hef_path,
             post_process_so=self.post_process_so,
@@ -99,21 +113,24 @@ class GStreamerInstanceSegmentationApp(GStreamerApp):
         infer_pipeline_wrapper = INFERENCE_PIPELINE_WRAPPER(infer_pipeline)
         tracker_pipeline = TRACKER_PIPELINE(class_id=1)
         user_callback_pipeline = USER_CALLBACK_PIPELINE()
-        display_pipeline = DISPLAY_PIPELINE(video_sink=self.video_sink, sync=self.sync, show_fps=self.show_fps)
+        display_pipeline = DISPLAY_PIPELINE(
+            video_sink=self.video_sink,
+            sync=self.sync,
+            show_fps=self.show_fps,
+        )
+
         pipeline_string = (
-            f'{source_pipeline} ! '
-            f'{infer_pipeline_wrapper} ! '
-            f'{tracker_pipeline} ! '
-            f'{user_callback_pipeline} ! '
-            f'{display_pipeline}'
+            f"{source_pipeline} ! "
+            f"{infer_pipeline_wrapper} ! "
+            f"{tracker_pipeline} ! "
+            f"{user_callback_pipeline} ! "
+            f"{display_pipeline}"
         )
         print(pipeline_string)
         return pipeline_string
 
 
-
 def main():
-    # Create an instance of the user app callback class
     user_data = app_callback_class()
     app = GStreamerInstanceSegmentationApp(dummy_callback, user_data)
     app.run()

@@ -16,8 +16,6 @@
 # The deb server is hosted at: http://dev-public.hailo.ai/2025_01
 # Owner: Sergii Tishchenko
 #
-# Usage example:
-#   wget http://dev-public.hailo.ai/2025_01/hailo_runtime_installer.sh -O installer.sh && bash installer.sh [--version=<version>]
 #
 
 set -e

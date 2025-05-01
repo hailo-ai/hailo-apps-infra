@@ -2,7 +2,7 @@
 name = "hailo-installation"
 version = "0.1.0"
 description = "Installation and setup logic"
-authors = [{ name = "Omriz" }]
+authors = [{ name = "Hailo" }]
 dependencies = []
 
 [build-system]
