@@ -19,7 +19,7 @@ After installing the package in editable mode (`pip install -e .`), these comman
 
 **Example:**
 ```bash
-hailo-simple-detect --input /dev/video0 --show-fps
+hailo-simple-detect --input usb
 ```
 Get pipeline‑specific options:
 ```bash
@@ -54,14 +54,21 @@ Inherited from `get_default_parser()`:
 | `--disable-callback`| Skip the `identity` pad probe callback                                     |
 | `--use-frame, -u`   | Enable frame queue callback (for OpenCV or custom consumption)            |
 | `--dump-dot`        | Dump GStreamer graph to `pipeline.dot` after initialization               |
+| `--frame-rate, -r`  | Frame rate of the video source. Default is 30.                            |
+
 
 ### 2.2 Detection‑Specific Flag
 - **`--labels-json <PATH>`**: custom JSON mapping of class IDs to labels (only for `hailo-detect`).
 
+**Example:**
+```bash
+hailo-detect --labels-json /path/to/labels.json
+```
+
 ---
 
 ## 3. Pipeline Building Blocks
-Utilities in **`gstreamer_helper_pipelines.py`** for composing custom pipelines:
+Utilities in **[`gstreamer_helper_pipelines.py`](../hailo_apps_infra/gstreamer/hailo_gstreamer/gstreamer_helper_pipelines.py)** for composing custom pipelines:
 
 - **`get_source_type(input_source)`**
   Classifies source as `file`, `usb`, `rpi`, `libcamera`, or `ximage` based on prefix. citeturn1file0
@@ -86,31 +93,34 @@ Utilities in **`gstreamer_helper_pipelines.py`** for composing custom pipelines:
 
 ---
 
+---
+
 ## 4. Function Reference
 
-### 4.1 utils.py
-- `run_command(command, error_msg)`: shell exec with exit on error. citeturn2file0
-- `run_command_with_output(command)`: returns stdout or `None`. citeturn2file0
-- `create_symlink(source_path, link_path)`: safely makes a directory symlink. citeturn2file0
-- `load_config(config_path)`: loads YAML config into `dict`. citeturn2file0
-- `load_environment(env_file, required_vars)`: loads `.env` and warns missing. citeturn2file0
+### 4.1 [utils.py](../hailo_apps_infra/common/hailo_common/utils.py)
+- `run_command(command, error_msg)`: shell exec with exit on error.
+- `run_command_with_output(command)`: returns stdout or `None`.
+- `create_symlink(source_path, link_path)`: safely makes a directory symlink.
+- `load_config(config_path)`: loads YAML config into `dict`.
+- `load_environment(env_file, required_vars)`: loads `.env` and warns missing.
 - Model/resource helpers:
   - `get_model_name(pipeline_name, hailo_arch)`
   - `get_resource_path(pipeline_name, resource_type, model=None)`
-- `detect_hailo_package_version(package_name)`: queries `dpkg`. 
+- `detect_hailo_package_version(package_name)`: queries `dpkg`.
 
-### 4.2 hailo_rpi_common.py
-- `get_default_parser()`: builds the shared `argparse` with flags. citeturn2file2
+### 4.2 [hailo_rpi_common.py](../hailo_apps_infra/common/hailo_common/hailo_rpi_common.py)
+- `get_default_parser()`: builds the shared `argparse` with flags.
 - `detect_host_arch()`, `detect_hailo_arch()`, `detect_pkg_installed()`
-- Resource directory helpers
+- Resource directory helpers.
 - Buffer→NumPy handlers: `handle_rgb`, `handle_nv12`, `handle_yuyv`, `get_numpy_from_buffer`, `get_caps_from_pad`
 
-### 4.3 get_config_values.py
+### 4.3 [get_config_values.py](../hailo_apps_infra/common/hailo_common/get_config_values.py)
 - `load_config()`, `get_config_value(key)`, `get_default_config_value(key)`, `validate_config(config)`
 
-### 4.4 get_usb_camera.py
-- `get_usb_video_devices()`: lists USB `/dev/video*` devices via `udevadm`. citeturn2file4
+### 4.4 [get_usb_camera.py](../hailo_apps_infra/common/hailo_common/get_usb_camera.py)
+- `get_usb_video_devices()`: lists USB `/dev/video*` devices via `udevadm`.
 
+---
 ---
 
 ## 5. Developing & Extending
@@ -124,9 +134,11 @@ Utilities in **`gstreamer_helper_pipelines.py`** for composing custom pipelines:
 ---
 
 ## 6. Debugging & Visualization
-- **Graphviz**: use `--dump-dot`, then `dot -Tpng pipeline.dot -o pipeline.png`.
+- **Graphviz**: use `--dump-dot`, then `dot -Tpng pipeline.dot -o pipeline.png`.  
+  *Installation*: On Ubuntu, run `sudo apt install graphviz`. For more details, see the [Graphviz Installation Guide](https://graphviz.org/download/).
 - **GST_DEBUG logs**: set `GST_DEBUG=*:<LEVEL>`.
 - **FPS**: use `--show-fps`; QoS is auto‑disabled to avoid dropping.
+- **Community Help**: For further support, visit the [Hailo Community Forum](https://community.hailo.ai/).
 
 
 

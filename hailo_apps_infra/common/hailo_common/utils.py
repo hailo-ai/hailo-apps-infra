@@ -4,7 +4,7 @@ import logging
 import yaml
 from pathlib import Path
 from dotenv import load_dotenv
-from hailo_common.hailo_rpi_common import detect_pkg_installed
+from hailo_common.common import detect_pkg_installed
 
 logger = logging.getLogger("hailo-utils")
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
@@ -116,7 +116,7 @@ def get_model_name(pipeline_name, hailo_arch=None):
     else:
         logger.error(f"Unknown pipeline name or arch: {pipeline_name}, {hailo_arch}")
         return None
-    
+        
 
 def get_resource_path(pipeline_name, resource_type, model = None):
     """

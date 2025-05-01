@@ -13,7 +13,7 @@ VALID_HAILORT_VERSION = ["auto", "4.20.0" ,"4.21.0" ,"4.22.0"]
 VALID_TAPPAS_VERSION = ["auto","3.30.0", "3.31.0", "3.32.0"]
 VALID_MODEL_ZOO_VERSION = ["v2.13.0","v2.14.0", "v2.15.0"]
 VALID_HOST_ARCH = ["auto" , "x86" , "rpi" , "arm"]
-VALID_HAILO_ARCH = ["auto", "hailo8", "haiol8l"]
+VALID_HAILO_ARCH = ["auto", "hailo8", "hailo8l"]
 VALID_SERVER_URL = ["http://dev-public.hailo.ai/2025_01"]
 VALID_TAPPAS_VARIANT = ["auto", "hailo-tappas", "hailo-tappas-core"]
 

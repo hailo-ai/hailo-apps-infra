@@ -39,8 +39,10 @@ VENV_NAME="hailo_venv"
 # For a more complex versioning scheme, you might also separate HailoRT and TAPPAS versions.
 while [[ "$#" -gt 0 ]]; do
     case $1 in
-        --version=*)
+        --hailort-version=*)
             HAILORT_VERSION="${1#*=}"
+            ;;
+        --tappas-core-version=*)
             TAPPAS_CORE_VERSION="${1#*=}"
             ;;
         --venv-name=*)
@@ -108,7 +110,7 @@ if [[ "$ARCH" == *"arm"* ]]; then
             if ! command -v hailo-all &> /dev/null; then
                 echo "hailo-all is not installed on this Raspberry Pi."
                 echo "Please refer to the Raspberry Pi installation documentation:"
-                echo "    http://dev-public.hailo.ai/rpi-docs"
+                echo "https://www.raspberrypi.com/documentation/computers/ai.html"
                 exit 1
             else
                 echo "hailo-all is already installed. Note: This installer does not auto-install on RPi."

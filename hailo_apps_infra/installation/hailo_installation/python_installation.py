@@ -12,7 +12,6 @@ import logging
 import platform
 from pathlib import Path
 import urllib.request
-from hailo_apps_infra.common.hailo_common.get_config_values import get_default_config_value
 
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -114,7 +113,7 @@ def main():
         parser.error("No installation target specified; use --install-pyhailort and/or --install-tappas-core or provide wheel paths.")
         exit(1)
 
-    server_url = get_default_config_value("server_url")
+    server_url = "http://dev-public.hailo.ai/2025_01"
     if not server_url:
         logger.error("Server URL not found in config.")
         sys.exit(1)

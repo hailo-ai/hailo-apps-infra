@@ -8,7 +8,7 @@ import numpy as np
 import setproctitle
 import cv2
 import time
-from hailo_common.hailo_rpi_common import (
+from hailo_common.common import (
     get_default_parser,
     detect_hailo_arch,
 )

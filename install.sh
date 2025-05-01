@@ -21,8 +21,8 @@ else
 fi
 
 ###——— ARG PARSING —————————————————————————————————————————————————
-INSTALL_GSTREAMER=false
-INSTALL_PIPELINES=false
+INSTALL_GSTREAMER=true
+INSTALL_PIPELINES=true
 
 for arg in "$@"; do
   case "$arg" in
@@ -70,14 +70,28 @@ check_system_pkg() {
 }
 
 ###——— RESOURCE DIRS —————————————————————————————————————————————————
+
+# detect real invoking user & group (works under sudo or direct run)
+if [ -n "$SUDO_USER" ]; then
+  INSTALL_USER="$SUDO_USER"
+else
+  INSTALL_USER="$(id -un)"
+fi
+INSTALL_GROUP="$(id -gn "$INSTALL_USER")"
+
+RESOURCE_BASE="/usr/local/hailo/resources"
+
 echo
-echo "🔧 Creating /usr/local/hailo/resources subdirs…"
+echo "🔧 Creating $RESOURCE_BASE subdirs…"
 RESOURCE_BASE="/usr/local/hailo/resources"
 for sub in models/hailo8 models/hailo8l videos so; do
   sudo mkdir -p "$RESOURCE_BASE/$sub"
 done
-sudo chown -R "$SUDO_USER":"$SUDO_USER" "$RESOURCE_BASE"
+
+# chown/chmod with the detected user:group
+sudo chown -R "$INSTALL_USER":"$INSTALL_GROUP" "$RESOURCE_BASE"
 sudo chmod -R 755 "$RESOURCE_BASE"
+
 
 ###——— SYSTEM PKG CHECKS —————————————————————————————————————————————
 echo
@@ -86,13 +100,18 @@ check_system_pkg "$SYS_PKG"
 check_system_pkg hailort
 
 echo
+echo "📋 Checking for HailoRT system version"
+HRT_VER=$(detect_system_pkg_version hailort)
 echo "📋 Checking for hailo-tappas vs hailo-tappas-core…"
 HT1=$(detect_system_pkg_version hailo-tappas)
 HT2=$(detect_system_pkg_version hailo-tappas-core)
+HTC_VER="none"
 if [[ -n "$HT1" ]]; then
   echo "✅ hailo-tappas version: $HT1"
+  HTC_VER="$HT1"
 elif [[ -n "$HT2" ]]; then
   echo "✅ hailo-tappas-core version: $HT2"
+  HTC_VER="$HT2"
 else
   echo "❌ Neither hailo-tappas nor hailo-tappas-core is installed."
   exit 1
@@ -146,13 +165,33 @@ if ! pip show "$TAPPAS_PIP_PKG" >/dev/null 2>&1; then INSTALL_TAPPAS_CORE=true; 
 echo
 echo "📦 Installing missing pip packages…"
 to_install=()
+
+# this is the python installer path
+PY_INSTALLER="hailo_apps_infra/installation/hailo_installation/python_installation.py"
+
+# build list of what we _would_ install
 $INSTALL_PYHAILORT   && to_install+=( "hailort" )
 $INSTALL_TAPPAS_CORE && to_install+=( "$TAPPAS_PIP_PKG" )
+
 if [[ ${#to_install[@]} -gt 0 ]]; then
-  $PIP_CMD install "${to_install[@]}"
+  echo "🔧 Installing Hailo Python bindings via installer script…"
+
+  cmd=( python3 "$PY_INSTALLER" --venv-path "$VENV_NAME" )
+
+  # only pass flags for what we need
+  if [[ $INSTALL_PYHAILORT == true ]]; then
+    cmd+=( --install-pyhailort --pyhailort-version "$HRT_VER" )
+  fi
+  if [[ $INSTALL_TAPPAS_CORE == true ]]; then
+    cmd+=( --install-tappas-core --tappas-version "$HTC_VER" )
+  fi
+
+  # run it
+  "${cmd[@]}"
 else
   echo "✅ All required pip packages present."
 fi
+
 
 ###——— ENV FILE —————————————————————————————————————————————————————
 ENV_FILE=".env"

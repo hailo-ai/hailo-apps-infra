@@ -109,6 +109,3 @@ Both will break with:
 | User-friendly CLI | `hailo-detect` via `pyproject.toml` |
 | Notebook/testing | Small `run_*.py` wrappers |
 
----
-
-Want me to wire up the `pyproject.toml` so you can use CLI like `hailo-detect` right now?

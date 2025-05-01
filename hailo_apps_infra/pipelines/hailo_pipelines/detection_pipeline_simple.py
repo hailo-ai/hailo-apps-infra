@@ -11,7 +11,7 @@ import time
 import hailo
 from pathlib import Path
 
-from hailo_common.hailo_rpi_common import (
+from hailo_common.common import (
     get_default_parser,
     detect_hailo_arch,
 )
