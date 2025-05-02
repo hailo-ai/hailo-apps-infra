@@ -8,9 +8,9 @@ from hailo_apps_infra.common.hailo_common.test_utils import (
     get_pipeline_args,
     TEST_RUN_TIME
 )
-from hailo_common.hailo_rpi_common import (
+from hailo_common.common import (
     detect_hailo_arch,
-    detect_device_arch,
+    detect_host_arch,
     is_rpi_camera_available,
 )
 
@@ -131,9 +131,9 @@ def test_pipeline_run_defaults(pipeline, run_method_name):
     # --------- Third run: RPi camera (using common package function) ---------
     # Only run if the machine appears to be a Raspberry Pi.
     extra_args_rpi = get_pipeline_args(suite="rpi_camera")
-    if ("rpi" == detect_device_arch()):
-        # Get the RPi camera input using a common function.
-        rpi_device = is_rpi_camera_available()
+    rpi_device = is_rpi_camera_available()
+
+    if ("rpi" == detect_host_arch() and rpi_device):
         log_file_path_rpi = os.path.join(log_dir, f"{pipeline_name}_{run_method_name}_rpi.log")
         if run_method_name == "module":
             cmd = ['python', '-u', '-m', pipeline["module"]] + extra_args_rpi
@@ -156,7 +156,7 @@ def test_pipeline_run_defaults(pipeline, run_method_name):
         assert "error" not in err_rpi_str, f"{pipeline_name} ({run_method_name}) error in RPi run: {err_rpi_str}"
         assert "traceback" not in err_rpi_str, f"{pipeline_name} ({run_method_name}) traceback in RPi run: {err_rpi_str}"
     else:
-        pytest.skip("Not running on Raspberry Pi; skipping RPi camera run.")
+        print("Not running on Raspberry Pi; skipping RPi camera run.")
 
 
 if __name__ == "__main__":

@@ -5,8 +5,8 @@ import sys
 import importlib
 from pathlib import Path
 import logging
-from hailo_apps_infra.common.hailo_rpi_common import (
-    detect_device_arch,
+from hailo_common.common import (
+    detect_host_arch,
     detect_hailo_arch,
     detect_pkg_installed
 )
@@ -48,7 +48,6 @@ def test_check_required_files():
     # Script files
     script_files = [
         'scripts/compile_postprocess.sh',
-        'scripts/DirToPdf.py',
         'scripts/download_resources.sh',
         'scripts/hailo_installation_script.sh'
     ]
@@ -85,9 +84,8 @@ def test_check_required_files():
         'hailo_apps_infra/common/pyproject.toml',
         'hailo_apps_infra/common/hailo_common/get_config_values.py',
         'hailo_apps_infra/common/hailo_common/get_usb_camera.py',
-        'hailo_apps_infra/common/hailo_common/hailo_rpi_common.py',
+        'hailo_apps_infra/common/hailo_common/common.py',
         'hailo_apps_infra/common/hailo_common/__init__.py',
-        'hailo_apps_infra/common/hailo_common/installation_utils.py',
         'hailo_apps_infra/common/hailo_common/test_utils.py',
         'hailo_apps_infra/common/hailo_common/utils.py',
         
@@ -108,7 +106,6 @@ def test_check_required_files():
         'hailo_apps_infra/installation/hailo_installation/download_resources.py',
         'hailo_apps_infra/installation/hailo_installation/__init__.py',
         'hailo_apps_infra/installation/hailo_installation/post_install.py',
-        'hailo_apps_infra/installation/hailo_installation/python_installation_dev.py',
         'hailo_apps_infra/installation/hailo_installation/python_installation.py',
         'hailo_apps_infra/installation/hailo_installation/set_env.py',
         'hailo_apps_infra/installation/hailo_installation/validate_config.py',
@@ -287,7 +284,7 @@ def test_hailo_gstreamer_elements():
 def test_arch_specific_environment():
     """Test architecture-specific environment components."""
     # Use the utility function from hailo_rpi_common
-    device_arch = detect_device_arch()
+    device_arch = detect_host_arch()
     logger.info(f"Detected device architecture: {device_arch}")
     
     # Arch-specific checks
@@ -331,7 +328,7 @@ def test_environment_variables():
     """Test if required environment variables are set."""
     # Check for key environment variables
     env_vars = {
-        "DEVICE_ARCH": detect_device_arch(),
+        "DEVICE_ARCH": detect_host_arch(),
         "HAILO_ARCH": detect_hailo_arch() or "unknown",
     }
     

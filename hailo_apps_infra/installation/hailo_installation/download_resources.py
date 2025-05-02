@@ -6,7 +6,7 @@ from pathlib import Path
 import yaml
 import urllib.request
 from hailo_common.common import detect_hailo_arch
-from hailo_common.utils import load_config
+from hailo_common.utils import load_config, load_environment
 from importlib.resources import files
 
 logger = logging.getLogger("resource-downloader")
@@ -118,7 +118,7 @@ def main():
         help="Which resource group to download (default, all, combined, hailo8, hailo8l, retrain)",
     )
     args = p.parse_args()
-
+    load_environment()
     # call into your downloader
     download_resources(group=args.group)
 

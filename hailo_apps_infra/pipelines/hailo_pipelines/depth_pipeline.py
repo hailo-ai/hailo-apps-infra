@@ -4,7 +4,7 @@ import os
 import setproctitle
 from hailo_gstreamer.gstreamer_app import app_callback_class, dummy_callback, GStreamerApp
 from hailo_gstreamer.gstreamer_helper_pipelines import DISPLAY_PIPELINE, INFERENCE_PIPELINE, INFERENCE_PIPELINE_WRAPPER, SOURCE_PIPELINE, USER_CALLBACK_PIPELINE
-from hailo_common.hailo_rpi_common import detect_hailo_arch, get_default_parser
+from hailo_common.common import detect_hailo_arch, get_default_parser
 from hailo_common.utils import load_environment, get_resource_path
 from pathlib import Path
 
@@ -13,7 +13,7 @@ RESOURCES_DIR = PROJECT_ROOT / "resources"
 
 
 
-# User Gstreamer Application: This class inherits from the hailo_rpi_common.GStreamerApp class
+# User Gstreamer Application: This class inherits from the common.GStreamerApp class
 class GStreamerDepthApp(GStreamerApp):
     def __init__(self, app_callback, user_data, parser=None):
         
