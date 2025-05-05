@@ -71,7 +71,7 @@ def load_environment(env_file=PROJECT_ROOT / ".env", required_vars=None):
 
     required_vars = required_vars or [
         "TAPPAS_POST_PROC_DIR",
-        "RESOURCE_PATH",
+        "RESOURCES_PATH",
         "HOST_ARCH",
         "HAILO_ARCH"
     ]
