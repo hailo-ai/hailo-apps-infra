@@ -1,64 +1,56 @@
-import argparse
-import json
-import logging
+"""
+Installation-related utilities.
+"""
 import subprocess
+import sys
 from pathlib import Path
 from dotenv import load_dotenv
-from hailo_rpi_common import detect_pkg_installed
-from utils import detect_hailo_package_version
+from .utils import run_command_with_output
+from .defines import  PIP_CMD, PROJECT_ROOT
 
-logger = logging.getLogger("hailo-utils")
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
-RESOURCE_PATH = PROJECT_ROOT / "resources"
+logger = __import__('logging').getLogger("hailo_install")
 
-def detect_pip_package_installed(package_name):
+def load_environment(env_path: Path = None) -> None:
+    """
+    Load a .env file into process environment variables.
+    """
+    # Default to PROJECT_ROOT/.env if no path given
+    env_path = env_path or PROJECT_ROOT / ".env"
+    load_dotenv(dotenv_path=env_path)
+    logger.info(f"Loaded environment from {env_path}")
+    
+def detect_pip_package_installed(pkg: str) -> bool:
+    """Check if a pip package is installed."""
     try:
         result = subprocess.run(
-            ['pip', 'show', package_name],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
+            [PIP_CMD, 'show', pkg], stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE, text=True, timeout=None
         )
         return result.returncode == 0
-    except subprocess.CalledProcessError as e:
-        logger.error(f"Failed to detect pip package {package_name}: {e}")
+    except Exception:
         return False
 
-def detect_pip_package_version(package_name):
+
+def detect_pip_package_version(pkg: str) -> str | None:
+    """Get pip package version if installed."""
     try:
-        result = subprocess.run(
-            ['pip', 'show', package_name],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            check=True
-        )
-        for line in result.stdout.splitlines():
+        output = run_command_with_output([PIP_CMD, 'show', pkg])
+        for line in output.splitlines():
             if line.startswith("Version:"):
                 return line.split(":", 1)[1].strip()
-        return None
-    except subprocess.CalledProcessError as e:
-        logger.error(f"Failed to detect version for pip package {package_name}: {e}")
-        return None
+    except Exception:
+        pass
+    return None
 
-def check_package_info(pkg, pkg_type):
-    if pkg_type == "system":
-        installed = detect_pkg_installed(pkg)
-        version = detect_hailo_package_version(pkg) if installed else None
-    elif pkg_type == "pip":
-        installed = detect_pip_package_installed(pkg)
-        version = detect_pip_package_version(pkg) if installed else None
-    else:
-        raise ValueError(f"Unknown package type: {pkg_type}")
-    return version
 
-def main():
-    parser = argparse.ArgumentParser(description="Check package info from installation_utils")
-    parser.add_argument("--pkg", required=True, help="Name of the package to check")
-    parser.add_argument("--type", required=True, choices=["system", "pip"], help="Package type: 'system' or 'pip'")
-    args = parser.parse_args()
-    version = check_package_info(args.pkg, args.type)
-    print(version)
-
-if __name__ == '__main__':
-    main()
+def set_environment_vars(config: dict, env_path: Path = None):
+    """Persist environment variables to a .env file."""
+    load_dotenv()
+    env_path = env_path or PROJECT_ROOT / ".env"
+    lines = []
+    for key, val in config.items():
+        if val is not None:
+            lines.append(f"{key.upper()}={val}\n")
+    with open(env_path, 'w') as f:
+        f.writelines(lines)
+    logger.info(f"Environment written to {env_path}")

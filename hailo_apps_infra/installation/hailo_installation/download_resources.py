@@ -1,19 +1,39 @@
-
+#!/usr/bin/env python3
 import argparse
 import logging
 import os
-from pathlib import Path
-import yaml
 import urllib.request
+from pathlib import Path
+
 from hailo_common.common import detect_hailo_arch
 from hailo_common.utils import load_config, load_environment
-from importlib.resources import files
+
+from hailo_common.defines import (
+    DEFAULT_RESOURCES_CONFIG_PATH,
+    HAILO_ARCH_KEY,
+    RESOURCES_PATH_KEY,
+    RESOURCES_PATH_DEFAULT,
+    MODEL_ZOO_VERSION_KEY,
+    MODEL_ZOO_VERSION_DEFAULT,
+    RESOURCES_CONFIG_DEFAULTS_KEY,
+    RESOURCES_MODEL_ZOO_URL_KEY,
+    RESOURCES_CONFIG_GROUPS_KEY,
+    RESOURCES_CONFIG_VIDEOS_KEY,
+    RESOURCES_GROUP_DEFAULT,
+    RESOURCES_GROUP_ALL,
+    RESOURCES_GROUP_COMBINED,
+    RESOURCES_GROUP_HAILO8,
+    RESOURCES_GROUP_HAILO8L,
+    RESOURCES_GROUP_RETRAIN,
+    RESOURCES_MODELS_DIR_NAME,
+    RESOURCES_VIDEOS_DIR_NAME,
+)
 
 logger = logging.getLogger("resource-downloader")
 logging.basicConfig(level=logging.INFO)
 
 
-def download_file(url, dest_path):
+def download_file(url: str, dest_path: Path):
     if dest_path.exists():
         logger.info(f"✅ {dest_path.name} already exists, skipping.")
         return
@@ -22,104 +42,82 @@ def download_file(url, dest_path):
     urllib.request.urlretrieve(url, dest_path)
     logger.info(f"✅ Downloaded to {dest_path}")
 
-def download_resources(group=None, names=None):
-    """
-    Downloads resources from the specified group or names.
 
-    Args:
-        group (str): The resource group to download.
-        names (list): Specific resource names to download.
-    """
-
-    cfg_path = (
-        Path(__file__).resolve().parents[2]
-        / "config"
-        / "hailo_config"
-        / "resources_config.yaml"
-    )
+def download_resources(group: str = None):
+    # Load the YAML config
+    cfg_path = Path(DEFAULT_RESOURCES_CONFIG_PATH)
     config = load_config(cfg_path)
-    hailo_arch = os.getenv("HAILO_ARCH", detect_hailo_arch())
+
+    # Determine Hailo architecture
+    hailo_arch = os.getenv(HAILO_ARCH_KEY, detect_hailo_arch())
     logger.info(f"Detected Hailo architecture: {hailo_arch}")
-    resource_path = Path(os.getenv("RESOURCE_PATH", "/usr/local/hailo/resources"))
-    models_base_url = config["defaults"]["model_zoo_url"]
-    model_zoo_version = os.getenv("MODEL_ZOO_VERSION")
-    print(f"================Model Zoo version: {model_zoo_version}===================")
 
-    if group is None or group == "default":
-        # default = combined + arch‐specific
-        selected_groups = ["combined", hailo_arch]
-    else:
-        selected_groups = list(config["groups"].get("all", []))
+    # Where to store resources
+    resource_root = Path(os.getenv(RESOURCES_PATH_KEY, RESOURCES_PATH_DEFAULT))
 
-        # 4) Figure out which groups to pull
-    if group is None or group == "default":
-        # default = combined + arch‑specific
-        selected_groups = ["combined", hailo_arch]
-    elif group == "all":
-        selected_groups = ["all"]
-    elif group in config["groups"]:
-        selected_groups = [group]
+    # Which model zoo version
+    model_zoo_version = os.getenv(
+        MODEL_ZOO_VERSION_KEY,
+        MODEL_ZOO_VERSION_DEFAULT
+    )
+    logger.info(f"Using Model Zoo version: {model_zoo_version}")
+
+    # Select groups
+    if group is None or group == RESOURCES_GROUP_DEFAULT:
+        groups = [RESOURCES_GROUP_COMBINED, hailo_arch]
+    elif group == RESOURCES_GROUP_ALL:
+        groups = [RESOURCES_GROUP_ALL]
+    elif group in config.get(RESOURCES_CONFIG_GROUPS_KEY, {}):
+        groups = [group]
     else:
         logger.error(f"Unknown group '{group}'")
         return
 
-    # 5) Flatten into one list
-    selected = []
-    for grp in selected_groups:
-        selected.extend(config["groups"].get(grp, []))
-
-    # 6) Dedupe (preserve first‑seen order)
+    # Flatten and dedupe
     seen = set()
-    deduped = []
-    for item in selected:
-        if isinstance(item, str):
-            name = item
-        elif isinstance(item, dict):
-            name = next(iter(item.keys()))
+    items = []
+    for grp in groups:
+        for entry in config[RESOURCES_CONFIG_GROUPS_KEY].get(grp, []):
+            name = entry if isinstance(entry, str) else next(iter(entry.keys()))
+            if name not in seen:
+                seen.add(name)
+                items.append(entry)
+
+    # Download models
+    base_url = config[RESOURCES_CONFIG_DEFAULTS_KEY][RESOURCES_MODEL_ZOO_URL_KEY]
+    for entry in items:
+        if isinstance(entry, str):
+            name = entry
+            url = f"{base_url}/{model_zoo_version}/{hailo_arch}/{name}.hef"
         else:
-            continue
+            name, url = next(iter(entry.items()))
 
-        if name not in seen:
-            seen.add(name)
-            deduped.append(item)
-
-    # 7) Download models
-    for item in deduped:
-        if isinstance(item, str):
-            # standard model‑zoo entry
-            name = item
-            url = f"{models_base_url}/{model_zoo_version}/{hailo_arch}/{name}.hef"
-        else:
-            # full‑URL override (e.g. retrain)
-            name, url = next(iter(item.items()))
-
-        dest = resource_path / "models" / hailo_arch / f"{name}.hef"
-        print(f"Downloading {name} from {url} to {dest}")
+        dest = resource_root / RESOURCES_MODELS_DIR_NAME / hailo_arch / f"{name}.hef"
         download_file(url, dest)
 
-    # 8) Download all videos
-    for vid_name, vid_cfg in config.get("videos", {}).items():
+    # Download videos
+    for vid_name, vid_cfg in config.get(RESOURCES_CONFIG_VIDEOS_KEY, {}).items():
         url = vid_cfg["url"]
-        # Get extension from URL or config, defaulting to .mp4 if not specified
-        extension = os.path.splitext(url)[1] if os.path.splitext(url)[1] else vid_cfg.get("extension", ".mp4")
-        # Use original filename if provided
-        filename = vid_cfg.get("filename", f"{vid_name}{extension}")
-        dest = resource_path / "videos" / filename
+        ext = Path(url).suffix or ".mp4"
+        filename = vid_cfg.get("filename", f"{vid_name}{ext}")
+        dest = resource_root / RESOURCES_VIDEOS_DIR_NAME / filename
         download_file(url, dest)
+
 
 def main():
-    p = argparse.ArgumentParser(
+    parser = argparse.ArgumentParser(
         description="Install and download Hailo resources"
     )
-    p.add_argument(
+    parser.add_argument(
         "--group",
         type=str,
-        default="default",
-        help="Which resource group to download (default, all, combined, hailo8, hailo8l, retrain)",
+        default=RESOURCES_GROUP_DEFAULT,
+        help="Which resource group to download"
     )
-    args = p.parse_args()
+    args = parser.parse_args()
+
+    # Populate env defaults
     load_environment()
-    # call into your downloader
     download_resources(group=args.group)
 
 
