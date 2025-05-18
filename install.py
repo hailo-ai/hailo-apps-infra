@@ -297,11 +297,16 @@ def _persist_env_vars(env_vars: dict) -> None:
     print(f"✅ Persisted environment variables to {ENV_PATH}")
 
 
-def install_core_modules(req_file: str = None, pip_cmd: str = PIP_CMD) -> None:
+def install_core_modules(pip_cmd: str = PIP_CMD,hailo_apps_infra_path: str = None) -> None:
     # print("📦 Upgrading pip/setuptools/wheel…")
     # run_command(f"{pip_cmd} install --break-system-packages --upgrade pip setuptools wheel", "Failed to upgrade pip/tools")
 
-    run_command(f"{pip_cmd} install -e .", "Failed to upgrade pip")
+    # print("📦 Installing Hailo Apps Infra…")
+    if hailo_apps_infra_path is not None:
+        run_command(f"{pip_cmd} install -e {hailo_apps_infra_path}", "Failed to install Hailo Apps Infra")
+    else:
+        run_command(f"{pip_cmd} install -e .", "Failed to upgrade pip")
+
     # print("📦 Installing requirements.txt…")
     # if req_file is None:
     #     req_file = Path(REPO_ROOT / 'requirements.txt')
@@ -403,6 +408,10 @@ def main():
         "-a", "--all", action="store_true",
         help="Download all resources"
     )
+    parser.add_argument(
+        "--apps-infra-path", type=str, default=None,
+        help="Set the path to project directory , used for when installing hailo-apps-infra in other projects"
+    )
     args = parser.parse_args()
     if args.all:
         args.group = RESOURCES_GROUP_ALL
@@ -455,7 +464,7 @@ def main():
         )
 
     print("🔧 Installing core modules and requirements...")
-    install_core_modules(pip_cmd=venv_pip_cmd)
+    install_core_modules(pip_cmd=venv_pip_cmd,hailo_apps_infra_path= args.apps_infra_path)
     print("✅ Core modules and requirements installed successfully.")
 
     print("Creating directories for resources and storage...")
@@ -470,7 +479,7 @@ def main():
     download_resources(args.group, args.resources_config)
 
     # print("⚙️ Compiling post-process...")
-    compile_postprocess()
+    compile_postprocess(args.apps_infra_path)
 
     print("✅ Hailo Infra installation complete.")
 
