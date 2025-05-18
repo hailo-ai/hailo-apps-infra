@@ -1,18 +1,29 @@
 import gi
 gi.require_version('Gst', '1.0')
-import os
 import setproctitle
-from hailo_gstreamer.gstreamer_app import app_callback_class, dummy_callback, GStreamerApp
-from hailo_gstreamer.gstreamer_helper_pipelines import DISPLAY_PIPELINE, INFERENCE_PIPELINE, INFERENCE_PIPELINE_WRAPPER, SOURCE_PIPELINE, USER_CALLBACK_PIPELINE
-from hailo_common.common import detect_hailo_arch, get_default_parser
-from hailo_common.utils import load_environment, get_resource_path
-from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
-RESOURCES_DIR = PROJECT_ROOT / "resources"
-
-
-
+from hailo_apps_infra.gstreamer.hailo_gstreamer.gstreamer_app import (
+    app_callback_class,
+    dummy_callback,
+    GStreamerApp,
+)
+from hailo_apps_infra.gstreamer.hailo_gstreamer.gstreamer_helper_pipelines import (
+    DISPLAY_PIPELINE,
+    INFERENCE_PIPELINE,
+    INFERENCE_PIPELINE_WRAPPER,
+    SOURCE_PIPELINE,
+    USER_CALLBACK_PIPELINE,
+)
+from hailo_apps_infra.common.hailo_common.core import get_default_parser, get_resource_path
+from hailo_apps_infra.common.hailo_common.installation_utils import detect_hailo_arch
+from hailo_apps_infra.common.hailo_common.defines import (
+    DEPTH_POSTPROCESS_FUNCTION,
+    RESOURCES_SO_DIR_NAME,
+    DEPTH_POSTPROCESS_SO_FILENAME,
+    RESOURCES_MODELS_DIR_NAME,
+    DEPTH_PIPELINE,
+    DEPTH_APP_TITLE,
+)
 # User Gstreamer Application: This class inherits from the common.GStreamerApp class
 class GStreamerDepthApp(GStreamerApp):
     def __init__(self, app_callback, user_data, parser=None):
@@ -32,11 +43,11 @@ class GStreamerDepthApp(GStreamerApp):
             self.arch = self.options_menu.arch
 
         self.app_callback = app_callback
-        setproctitle.setproctitle("Hailo Depth App")  # Set the process title
+        setproctitle.setproctitle(DEPTH_APP_TITLE)  # Set the process title
 
-        self.hef_path = get_resource_path("depth", "models")
-        self.post_process_so = get_resource_path("depth", "so", "libdepth_postprocess.so")
-        self.post_function_name = "filter_scdepth"
+        self.hef_path = get_resource_path(DEPTH_PIPELINE, RESOURCES_MODELS_DIR_NAME)
+        self.post_process_so = get_resource_path(DEPTH_PIPELINE, RESOURCES_SO_DIR_NAME, DEPTH_POSTPROCESS_SO_FILENAME)
+        self.post_function_name = DEPTH_POSTPROCESS_FUNCTION
         self.create_pipeline()
 
     def get_pipeline_string(self):

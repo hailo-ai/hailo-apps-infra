@@ -1,19 +1,31 @@
-import gi
-# Initialize GStreamer
-gi.require_version('Gst', '1.0')
-from gi.repository import Gst, GLib
+
 import os
-import argparse
-import multiprocessing
 import numpy as np
 import setproctitle
-import cv2
-import time
-from hailo_common.common import (
+from pathlib import Path
+
+# ─── Common Hailo helpers ────────────────────────────────────────────────────────
+from hailo_apps_infra.common.hailo_common.installation_utils import detect_hailo_arch
+from hailo_apps_infra.common.hailo_common.core import (
     get_default_parser,
-    detect_hailo_arch,
+    get_resource_path,
 )
-from hailo_gstreamer.gstreamer_helper_pipelines import(
+from hailo_apps_infra.common.hailo_common.defines import (
+    HAILO_ARCH_KEY,
+    INSTANCE_SEGMENTATION_APP_TITLE,
+    INSTANCE_SEGMENTATION_PIPELINE,
+    RESOURCES_MODELS_DIR_NAME,
+    RESOURCES_SO_DIR_NAME,
+    INSTANCE_SEGMENTATION_MODEL_NAME_H8,
+    INSTANCE_SEGMENTATION_MODEL_NAME_H8L,
+    INSTANCE_SEGMENTATION_POSTPROCESS_SO_FILENAME,
+    INSTANCE_SEGMENTATION_POSTPROCESS_FUNCTION,
+    DEFAULT_LOCAL_RESOURCES_PATH,
+    JSON_FILE_EXTENSION
+)
+
+# ─── GStreamer routines (from your hailo_gstreamer package) ────────────────────
+from hailo_apps_infra.gstreamer.hailo_gstreamer.gstreamer_helper_pipelines import (
     QUEUE,
     SOURCE_PIPELINE,
     INFERENCE_PIPELINE,
@@ -22,20 +34,11 @@ from hailo_gstreamer.gstreamer_helper_pipelines import(
     USER_CALLBACK_PIPELINE,
     DISPLAY_PIPELINE,
 )
-from hailo_gstreamer.gstreamer_app import (
+from hailo_apps_infra.gstreamer.hailo_gstreamer.gstreamer_app import (
     GStreamerApp,
     app_callback_class,
-    dummy_callback
+    dummy_callback,
 )
-from hailo_common.utils import (
-    load_environment,
-    get_resource_path,
-)
-
-from pathlib import Path
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
-RESOURCES_DIR = PROJECT_ROOT / "resources"
-LOCAL_RESOURCES = PROJECT_ROOT / "local_resources"
 
 #-----------------------------------------------------------------------------------------------
 # User GStreamer Application: Instance Segmentation
@@ -43,8 +46,6 @@ LOCAL_RESOURCES = PROJECT_ROOT / "local_resources"
 
 class GStreamerInstanceSegmentationApp(GStreamerApp):
     def __init__(self, app_callback, user_data, parser=None):
-        # Load .env variables (e.g., RESOURCE_PATH)
-        load_environment()
 
         if parser is None:
             parser = get_default_parser()
@@ -57,7 +58,7 @@ class GStreamerInstanceSegmentationApp(GStreamerApp):
 
         # Detect architecture if not provided
         if self.options_menu.arch is None:
-            detected_arch = detect_hailo_arch()
+            detected_arch = os.getenv(HAILO_ARCH_KEY, detect_hailo_arch())
             if detected_arch is None:
                 raise ValueError("Could not auto-detect Hailo architecture. Please specify --arch manually.")
             self.arch = detected_arch
@@ -71,28 +72,29 @@ class GStreamerInstanceSegmentationApp(GStreamerApp):
         else:
             # get_resource_path will use RESOURCE_PATH from env
             self.hef_path = str(get_resource_path(
-                pipeline_name="seg",
-                resource_type="models",
+                pipeline_name=INSTANCE_SEGMENTATION_PIPELINE,
+                resource_type=RESOURCES_MODELS_DIR_NAME,
             ))
 
         # Determine which JSON config to use based on HEF filename
         hef_name = Path(self.hef_path).name
-        if 'yolov5m_seg' in hef_name:
-            self.config_file = str(LOCAL_RESOURCES / "yolov5m_seg.json")
-        elif 'yolov5n_seg' in hef_name:
-            self.config_file = str(LOCAL_RESOURCES / "yolov5n_seg.json")
+        if INSTANCE_SEGMENTATION_MODEL_NAME_H8 in hef_name:
+            self.config_file = (Path(DEFAULT_LOCAL_RESOURCES_PATH) / (INSTANCE_SEGMENTATION_MODEL_NAME_H8 + JSON_FILE_EXTENSION))
+            print(f"Using config file: {self.config_file}")
+        elif INSTANCE_SEGMENTATION_MODEL_NAME_H8L in hef_name:
+            self.config_file = (Path(DEFAULT_LOCAL_RESOURCES_PATH) / (INSTANCE_SEGMENTATION_MODEL_NAME_H8L + JSON_FILE_EXTENSION))
         else:
             raise ValueError("HEF version not supported; please provide a compatible segmentation HEF or config file.")
 
         # Post-process shared object
-        self.post_process_so = str(RESOURCES_DIR / "so" / "libyolov5seg_postprocess.so")
-        self.post_function_name = "filter_letterbox"
+        self.post_process_so = get_resource_path(INSTANCE_SEGMENTATION_PIPELINE, RESOURCES_SO_DIR_NAME, INSTANCE_SEGMENTATION_POSTPROCESS_SO_FILENAME)
+        self.post_function_name = INSTANCE_SEGMENTATION_POSTPROCESS_FUNCTION
 
         # Callback
         self.app_callback = app_callback
 
         # Set process title for easy identification
-        setproctitle.setproctitle("Hailo Instance Segmentation App")
+        setproctitle.setproctitle(INSTANCE_SEGMENTATION_APP_TITLE)
 
         # Build the GStreamer pipeline
         self.create_pipeline()

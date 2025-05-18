@@ -1,10 +1,11 @@
-hailort_version: "4.20.0"
-tappas_version: "3.31.0"
-model_zoo_version: "v2.14.0"
+hailort_version: "auto" # Options: "auto" (detect from device), "latest" (latest version), or specific version 
+tappas_version: "auto" # Version of the Tappas model to use, set to "auto" to detect automatically
+model_zoo_version: "v2.14.0" # Version of the model zoo to use
 host_arch: "auto" # Options: "rpi" (Raspberry Pi), "x86" (desktop/server), "arm" (generic ARM board) or "auto" (detect from device)
 hailo_arch: "auto" # Options: "hailo8", "hailo8l", or "auto" (detect from device)
-resources_path: "/usr/local/hailo/resources" # If set to "auto" or empty, defaults to /usr/local/hailo/resources
-virtual_env_name: "hailo_infra_venv" # Name of the virtual environment to be created IF SET TO AUTO OR empty this will default to /usr/local/hailo/resources
+resources_path: "resources" # Path to the resources directory, relative to the current working directory
+virtual_env_name: "hailo_infra_venv" # Name of the virtual environment to be created 
 server_url: "http://dev-public.hailo.ai/2025_01" # URL of the server to download models from , This is static 
-deb_whl_dir: "hailo_temp_resources" # Directory to store the deb and whl files , this is the default if set to auot or empty 
-tappas_variant: "tappas-core" # Options : "tappas" or " tappa-core"  or "Auto"
+storage_dir: "hailo_temp_resources" # Directory to store the deb and whl files , this is the default if set to auot or empty 
+tappas_variant: "auto" # Options : "tappas" or " tappa-core"  or "Auto"
+tappas_postproc_path: "auto" # Path to the post-processing script for Tappas, relative to the current working directory. If set to "auto", it will be detected automatically.

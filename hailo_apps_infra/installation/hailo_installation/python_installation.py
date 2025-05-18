@@ -12,7 +12,12 @@ import logging
 import platform
 from pathlib import Path
 import urllib.request
-
+from hailo_apps_infra.common.hailo_common.defines import (
+    SERVER_URL_KEY,
+    SERVER_URL_DEFAULT,
+    STORAGE_PATH_KEY,
+    STORAGE_PATH_DEFAULT,
+    )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -91,7 +96,7 @@ def main():
     )
     parser.add_argument(
         "--download-dir",
-        default=os.environ.get("DEB_WHL_DIR", "hailo_temp_resources"),
+        default=os.environ.get(STORAGE_PATH_KEY, STORAGE_PATH_DEFAULT),
         help="Directory to download wheel files to"
     )
     parser.add_argument(
@@ -112,11 +117,23 @@ def main():
     if not args.install_pyhailort and not args.install_tappas_core:
         parser.error("No installation target specified; use --install-pyhailort and/or --install-tappas-core or provide wheel paths.")
         exit(1)
+    
+    # If no --venv-path was given, but we're already in a venv, use that:
+    venv = args.venv_path
+    if args.venv_path is None:
+        # first, check $VIRTUAL_ENV
+        venv = os.environ.get("VIRTUAL_ENV")
+        # if that’s not set, compare prefixes
+        if not venv and hasattr(sys, "base_prefix") and sys.prefix != sys.base_prefix:
+            venv = sys.prefix
+        if venv:
+            args.venv_path = venv
+            logger.info(f"🔍 Detected active virtualenv at '{venv}', using it.")
 
-    server_url = "http://dev-public.hailo.ai/2025_01"
-    if not server_url:
-        logger.error("Server URL not found in config.")
-        sys.exit(1)
+    pip_cmd = get_pip_cmd(venv)
+    logger.debug(f"Using pip command: {' '.join(pip_cmd)}")
+
+    server_url = os.environ.get(SERVER_URL_KEY, SERVER_URL_DEFAULT)
 
     pip_cmd = get_pip_cmd(args.venv_path)
     logger.debug(f"Using pip command: {' '.join(pip_cmd)}")

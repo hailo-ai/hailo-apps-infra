@@ -1,5 +1,4 @@
 import os
-import pathlib
 import logging
 from pathlib import Path
 
@@ -13,24 +12,37 @@ from hailo_installation.compile_cpp import compile_postprocess
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("post-install")
 
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
-
-def post_install():
-    logger.info("🔧 Validating configuration...")
-    config = load_config(PROJECT_ROOT / "hailo_apps_infra" / "config" / "hailo_config" / "config.yaml")
-    validate_config(config)
-
+def post_install(config_path: Path | str = None,group: str = None,resource_config_path: str = None):
+    """
+    Post-installation script for Hailo Apps Infra.
+    This script performs the following tasks:
+    1. Loads and validates the configuration file.
+    2. Sets up environment variables based on the configuration.
+    3. Creates a symlink to the resources directory.
+    4. Downloads resources based on the configuration.
+    5. Compiles the post-process C++ code.
+    """
+    # 1) Load and validate config
+    cfg_path = Path(config_path or DEFAULT_CONFIG_PATH)
+    logger.info(f"🔧 Validating configuration at {cfg_path}...")
+    config = load_config(cfg_path)
+    if (validate_config(config) == False):
+        logger.error("❌ Invalid configuration. Please check the config file.")
+        return
+    logger.info("✅ Configuration is valid.")
+    
+    # 2) Set environment variables
     logger.info("🔧 Setting environment...")
     set_environment_vars(config)
 
-    resource_path = get_config_value('resources_path') or get_default_config_value('resources_path')    
+    resource_path = os.getenv(RESOURCES_PATH_KEY, DEFAULT_RESOURCES_SYMLINK_PATH)
 
     logger.info(f"🔗 Linking resources directory to {resource_path}...")
-    create_symlink(resource_path, PROJECT_ROOT / "resources")
+    create_symlink(RESOURCES_ROOT_PATH_DEFAULT, resource_path)
 
     logger.info("⬇️ Downloading resources...")
-    download_resources(group="default")
+    download_resources(group,resource_config_path)
 
     logger.info("⚙️ Compiling post-process...")
     compile_postprocess()

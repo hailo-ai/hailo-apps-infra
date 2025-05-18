@@ -6,11 +6,11 @@ from hailo_apps_infra.common.hailo_common.test_utils import (
     run_pipeline_pythonpath_with_args,
     run_pipeline_cli_with_args,
     get_pipeline_args,
-    TEST_RUN_TIME
 )
-from hailo_common.common import (
-    detect_hailo_arch,
+from hailo_apps_infra.common.hailo_common.installation_utils import (
     detect_host_arch,
+)
+from hailo_apps_infra.common.hailo_common.camera_utils import (
     is_rpi_camera_available,
 )
 

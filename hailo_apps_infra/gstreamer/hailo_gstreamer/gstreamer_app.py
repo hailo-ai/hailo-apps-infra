@@ -1,4 +1,5 @@
 import multiprocessing
+from pathlib import Path
 import setproctitle
 import signal
 import os
@@ -10,13 +11,24 @@ import numpy as np
 import time
 gi.require_version('Gst', '1.0')
 from gi.repository import Gst, GLib, GObject
-from hailo_gstreamer.gstreamer_helper_pipelines import get_source_type
-from hailo_common.get_usb_camera import get_usb_video_devices
-from hailo_common.utils import load_environment
-from pathlib import Path
+from hailo_apps_infra.gstreamer.hailo_gstreamer.gstreamer_helper_pipelines import (
+    get_source_type,
+)
+from hailo_apps_infra.common.hailo_common.defines import (
+    HAILO_RGB_VIDEO_FORMAT,
+    GST_AUTO_VIDEO_SINK,
+    TAPPAS_POSTPROC_PATH_KEY,
+    RESOURCES_PATH_KEY,
+    RESOURCES_ROOT_PATH_DEFAULT,
+    RESOURCES_VIDEOS_DIR_NAME,
+    BASIC_PIPELINES_VIDEO_EXAMPLE_NAME,
+    USB_CAMERA,
+    RPI_NAME_I,
+    )
 
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
-RESOURCES_DIR = PROJECT_ROOT / "resources"
+from hailo_apps_infra.common.hailo_common.camera_utils import get_usb_video_devices
+from hailo_apps_infra.common.hailo_common.core import load_environment
+
 
 try:
     from picamera2 import Picamera2
@@ -86,16 +98,18 @@ class GStreamerApp:
         load_environment()
 
         # Initialize variables
-        tappas_post_process_dir = os.environ.get('TAPPAS_POST_PROC_DIR', '')
+        tappas_post_process_dir = Path(os.environ.get(TAPPAS_POSTPROC_PATH_KEY, ''))
         if tappas_post_process_dir == '':
-            print("TAPPAS_POST_PROC_DIR environment variable is not set. Please set it to by sourcing setup_env.sh")
+            print("TAPPAS_POST_PROC_DIR environment variable is not set. Please set it by running set-env in cli")
             exit(1)
         self.current_path = os.path.dirname(os.path.abspath(__file__))
         self.postprocess_dir = tappas_post_process_dir
-        self.video_source = self.options_menu.input
-        if self.video_source is None:
-            self.video_source = str(RESOURCES_DIR / "videos" / "example.mp4")
-        if self.video_source == 'usb':
+        if self.options_menu.input is None:
+            root = Path(os.environ.get(RESOURCES_PATH_KEY, RESOURCES_ROOT_PATH_DEFAULT))
+            self.video_source = str(root / RESOURCES_VIDEOS_DIR_NAME / BASIC_PIPELINES_VIDEO_EXAMPLE_NAME)
+        else:
+            self.video_source = self.options_menu.input
+        if self.video_source == USB_CAMERA:
             self.video_source = get_usb_video_devices()
             if not self.video_source:
                 print('Provided argument "--input" is set to "usb", however no available USB cameras found. Please connect a camera or specifiy different input method.')
@@ -104,7 +118,7 @@ class GStreamerApp:
                 self.video_source = self.video_source[0]
         self.source_type = get_source_type(self.video_source)
         self.user_data = user_data
-        self.video_sink = "autovideosink"
+        self.video_sink = GST_AUTO_VIDEO_SINK
         self.pipeline = None
         self.loop = None
         self.threads = []
@@ -115,7 +129,7 @@ class GStreamerApp:
         self.batch_size = 1
         self.video_width = 1280
         self.video_height = 720
-        self.video_format = "RGB"
+        self.video_format = HAILO_RGB_VIDEO_FORMAT
         self.hef_path = None
         self.app_callback = None
 
@@ -231,7 +245,7 @@ class GStreamerApp:
             display_process = multiprocessing.Process(target=display_user_data_frame, args=(self.user_data,))
             display_process.start()
 
-        if self.source_type == "rpi":
+        if self.source_type == RPI_NAME_I:
             picam_thread = threading.Thread(target=picamera_thread, args=(self.pipeline, self.video_width, self.video_height, self.video_format))
             self.threads.append(picam_thread)
             picam_thread.start()

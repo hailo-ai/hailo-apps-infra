@@ -1,108 +1,133 @@
 import os
 import logging
-import subprocess
 from pathlib import Path
 import sys
-from hailo_common.common import detect_host_arch, detect_hailo_arch, detect_pkg_installed
-from hailo_common.utils import run_command_with_output, detect_hailo_package_version
-from hailo_common.get_config_values import load_config, get_default_config_value
+from hailo_common.installation_utils import run_command_with_output,detect_system_pkg_version,detect_host_arch, detect_hailo_arch, detect_pkg_installed
+from hailo_common.config_utils import load_config
+from hailo_common.defines import (
+    HOST_ARCH_KEY,
+    HAILO_ARCH_KEY,
+    RESOURCES_PATH_KEY,
+    MODEL_ZOO_VERSION_KEY,
+    HAILORT_VERSION_KEY,
+    TAPPAS_VERSION_KEY,
+    STORAGE_PATH_KEY,
+    TAPPAS_VARIANT_KEY,
+    SERVER_URL_KEY,
+    VIRTUAL_ENV_NAME_KEY,
+    DEFAULT_DOTENV_PATH,
+    HOST_ARCH_DEFAULT,
+    DEFAULT_RESOURCES_SYMLINK_PATH,
+    MODEL_ZOO_VERSION_DEFAULT,
+    HAILORT_VERSION_DEFAULT,
+    TAPPAS_VERSION_DEFAULT,
+    VIRTUAL_ENV_NAME_DEFAULT,
+    STORAGE_PATH_DEFAULT,
+    TAPPAS_VARIANT_DEFAULT,
+    SERVER_URL_DEFAULT,
+    AUTO_DETECT,
+    HAILORT_PACKAGE,
+    HAILO_TAPPAS,
+    HAILO_TAPPAS_CORE,
+    TAPPAS_POSTPROC_PATH_KEY,
+    HAILO_TAPPAS,
+    HAILO_TAPPAS_CORE,
+    HAILORT_VERSION_DEFAULT,
+    TAPPAS_VERSION_DEFAULT,
+    TAPPAS_VARIANT_DEFAULT,
+    HAILO_ARCH_DEFAULT,
+)
+
+
+# Path for persisting environment variables
+ENV_PATH = Path(DEFAULT_DOTENV_PATH)
 
 logger = logging.getLogger("env-setup")
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
-ENV_PATH = PROJECT_ROOT / ".env"
 
-def set_environment_vars(config, refresh=False):
+def set_environment_vars(config):
     # Load config values with defaults
-    host_arch = config.get("host_arch", get_default_config_value("host_arch"))
-    hailo_arch = config.get("hailo_arch", get_default_config_value("hailo_arch"))
-    resources_path = config.get("resources_path", get_default_config_value("resources_path"))
-    model_zoo_version = config.get("model_zoo_version", get_default_config_value("model_zoo_version"))
-    hailort_version = config.get("hailort_version", get_default_config_value("hailort_version"))
-    tappas_version  = config.get("tappas_version", get_default_config_value("tappas_version"))
-    apps_infra_version = config.get("apps_infra_version", get_default_config_value("apps_infra_version"))
-    virtual_env_name = config.get("virtual_env_name", get_default_config_value("virtual_env_name"))
-    deb_whl_dir = config.get("deb_whl_dir", get_default_config_value("deb_whl_dir"))
-    tappas_variant = config.get("tappas_variant", get_default_config_value("tappas_variant"))
-    tappas_postproc_dir = None
-    server_url = config.get("server_url", get_default_config_value("server_url"))
+    host_arch = config.get(HOST_ARCH_KEY, HOST_ARCH_DEFAULT)
+    hailo_arch = config.get(HAILO_ARCH_KEY, HAILO_ARCH_DEFAULT)
+    resources_path = config.get(RESOURCES_PATH_KEY, DEFAULT_RESOURCES_SYMLINK_PATH)
+    model_zoo_version = config.get(MODEL_ZOO_VERSION_KEY, MODEL_ZOO_VERSION_DEFAULT)
+    hailort_version = config.get(HAILORT_VERSION_KEY, HAILORT_VERSION_DEFAULT)
+    tappas_version = config.get(TAPPAS_VERSION_KEY, TAPPAS_VERSION_DEFAULT)
+    virtual_env_name = config.get(VIRTUAL_ENV_NAME_KEY,VIRTUAL_ENV_NAME_DEFAULT)
+    storage_dir = config.get(STORAGE_PATH_KEY, STORAGE_PATH_DEFAULT)
+    tappas_variant = config.get(TAPPAS_VARIANT_KEY, TAPPAS_VARIANT_DEFAULT)
+    server_url = config.get(SERVER_URL_KEY, SERVER_URL_DEFAULT)
 
     # Auto-detect values if needed
-    if host_arch in ("auto", None):
+    if host_arch == AUTO_DETECT:
         logger.warning("⚠️ host_arch is set to 'auto'. Detecting device architecture...")
         host_arch = detect_host_arch()
-    if hailo_arch in ("auto", None):
+    if hailo_arch == AUTO_DETECT:
         logger.warning("⚠️ hailo_arch is set to 'auto'. Detecting Hailo architecture...")
         hailo_arch = detect_hailo_arch()
-    if resources_path in ("auto", None):
-        logger.warning("⚠️ resources_path is set to 'auto'. Using default path...")
-        resources_path = get_default_config_value("resources_path")
-    if hailort_version in ("auto", None):
+    if hailort_version == AUTO_DETECT:
         logger.warning("⚠️ hailort_version is set to 'auto'. Detecting HailoRT version...")
-        hailort_version = detect_hailo_package_version("hailort")
+        hailort_version = detect_system_pkg_version(HAILORT_PACKAGE)
         if not hailort_version:
             logger.error("⚠ Could not detect HailoRT version.")
             sys.exit(1)
     # Detect TAPPAS variant and postproc dir
-    if tappas_variant in ("auto", None):
-        logger.warning("⚠️ tappas_variant is set to 'auto'. Detecting TAPPAS variant...")
-        if detect_pkg_installed("tappas"):
-            tappas_variant = "tappas"
-        elif detect_pkg_installed("tappas-core"):
-            tappas_variant = "tappas-core"
+    if tappas_variant ==  AUTO_DETECT:
+        print("⚠️ tappas_variant is set to 'auto'. Detecting TAPPAS variant...")
+        if detect_pkg_installed(HAILO_TAPPAS):
+            tappas_variant =HAILO_TAPPAS
+        elif detect_pkg_installed(HAILO_TAPPAS_CORE):
+            tappas_variant = HAILO_TAPPAS_CORE
         else:
-            logger.error("⚠ Could not detect TAPPAS variant.")
+            print("⚠ Could not detect TAPPAS variant, Please install TAPPAS or TAPPAS-CORE.")
             sys.exit(1)
-    if tappas_version in ("auto", None):
-        logger.warning("⚠️ tappas_version is set to 'auto'. Detecting TAPPAS version...")
-        if tappas_variant == "tappas":
-            tappas_version = detect_hailo_package_version("tappas")
-        elif tappas_variant == "tappas-core":
-            tappas_version = detect_hailo_package_version("tappas-core")
+    if tappas_version == AUTO_DETECT:
+        print("⚠️ tappas_version is set to 'auto'. Detecting TAPPAS version...")
+        if tappas_variant ==HAILO_TAPPAS:
+            tappas_version = detect_system_pkg_version(HAILO_TAPPAS)
+        elif tappas_variant == HAILO_TAPPAS_CORE:
+            tappas_version = detect_system_pkg_version(HAILO_TAPPAS_CORE)
         else:
-            logger.error("⚠ Could not detect TAPPAS version.")
+            print("⚠ Could not detect TAPPAS version.")
             sys.exit(1)
 
-    if tappas_variant == "tappas":
-        tappas_workspace = run_command_with_output("pkg-config --variable=tappas_workspace hailo_tappas")
+    tappas_postproc_dir = None
+    if tappas_variant ==HAILO_TAPPAS:
+        tappas_workspace = run_command_with_output("pkg-config --variable=tappas_workspace {HAILO_TAPPAS}")
         tappas_postproc_dir = f"{tappas_workspace}/apps/h8/gstreamer/libs/post_processes/"
-    elif tappas_variant == "tappas-core":
-        tappas_postproc_dir = run_command_with_output("pkg-config --variable=tappas_postproc_lib_dir hailo-tappas-core")
+    elif tappas_variant == HAILO_TAPPAS_CORE:
+        tappas_postproc_dir = run_command_with_output("pkg-config --variable=tappas_postproc_lib_dir {HAILO_TAPPAS_CORE}")
 
 
 
     # Log final config
     logger.info("Using configuration values:")
     for key, val in {
-        "Host Architecture": host_arch,
-        "Hailo Architecture": hailo_arch,
-        "Resources Path": resources_path,
-        "Model Zoo Version": model_zoo_version,
-        "HailoRT Version": hailort_version,
-        "TAPPAS Version": tappas_version,
-        "Apps Infra Version": apps_infra_version,
-        "Virtual Environment Name": virtual_env_name,
-        "Server URL": server_url,
-        "Deb/Wheel Directory": deb_whl_dir,
-        "TAPPAS Variant": tappas_variant,
-        "TAPPAS Dir": tappas_postproc_dir
+        HOST_ARCH_KEY: host_arch,
+        HAILO_ARCH_KEY: hailo_arch,
+        RESOURCES_PATH_KEY: resources_path,
+        MODEL_ZOO_VERSION_KEY: model_zoo_version,
+        HAILORT_VERSION_KEY: hailort_version,
+        TAPPAS_VERSION_KEY: tappas_version,
+        VIRTUAL_ENV_NAME_KEY: virtual_env_name,
+        SERVER_URL_KEY: server_url,
+        STORAGE_PATH_KEY: storage_dir,
+        TAPPAS_VARIANT_KEY: tappas_variant,
     }.items():
         logger.info(f"  {key}: {val}")
 
     # Set environment vars in process
     os.environ.update({
-        "HOST_ARCH": host_arch,
-        "HAILO_ARCH": hailo_arch,
-        "RESOURCES_PATH": resources_path,
-        "TAPPAS_POST_PROC_DIR": tappas_postproc_dir,
-        "MODEL_DIR": os.path.join(resources_path, "models"),
-        "MODEL_ZOO_VERSION": model_zoo_version,
-        "HAILORT_VERSION": hailort_version,
-        "TAPPAS_VERSION": tappas_version,
-        "APPS_INFRA_VERSION": apps_infra_version,
-        "VIRTUAL_ENV_NAME": virtual_env_name,
-        "SERVER_URL": server_url,
-        "DEB_WHL_DIR": deb_whl_dir,
-        "TAPPAS_VARIANT": tappas_variant
+        HOST_ARCH_KEY: host_arch,
+        HAILO_ARCH_KEY: hailo_arch,
+        RESOURCES_PATH_KEY: resources_path,
+        TAPPAS_POSTPROC_PATH_KEY: tappas_postproc_dir,
+        MODEL_ZOO_VERSION_KEY: model_zoo_version,
+        HAILORT_VERSION_KEY: hailort_version,
+        TAPPAS_VERSION_KEY: tappas_version,
+        VIRTUAL_ENV_NAME_KEY: virtual_env_name,
+        SERVER_URL_KEY: server_url,
+        STORAGE_PATH_KEY: storage_dir,
+        TAPPAS_VARIANT_KEY: tappas_variant
     })
 
     persist_env_vars(
@@ -110,21 +135,19 @@ def set_environment_vars(config, refresh=False):
         hailo_arch,
         resources_path,
         tappas_postproc_dir,
-        os.path.join(resources_path, "models"),
         model_zoo_version,
         hailort_version,
         tappas_version,
-        apps_infra_version,
         virtual_env_name,
         server_url,
-        deb_whl_dir,
+        storage_dir,
         tappas_variant
     )
 
 
-def persist_env_vars(host_arch, hailo_arch, resources_path, tappas_postproc_dir, model_dir,
-                     model_zoo_version, hailort_version, tappas_version, apps_infra_version,
-                     virtual_env_name, server_url, deb_whl_dir, tappas_variant):
+def persist_env_vars(host_arch, hailo_arch, resources_path, tappas_postproc_dir,
+                     model_zoo_version, hailort_version, tappas_version,
+                     virtual_env_name, server_url, storage_dir, tappas_variant):
     if ENV_PATH.exists() and not os.access(ENV_PATH, os.W_OK):
         try:
             logger.warning(f"⚠️ .env not writable — trying to fix permissions...")
@@ -134,19 +157,17 @@ def persist_env_vars(host_arch, hailo_arch, resources_path, tappas_postproc_dir,
             sys.exit(1)
 
     env_vars = {
-        "HOST_ARCH": host_arch,
-        "HAILO_ARCH": hailo_arch,
-        "RESOURCES_PATH": resources_path,
-        "TAPPAS_POST_PROC_DIR": tappas_postproc_dir,
-        "MODEL_DIR": model_dir,
-        "MODEL_ZOO_VERSION": model_zoo_version,
-        "HAILORT_VERSION": hailort_version,
-        "TAPPAS_VERSION": tappas_version,
-        "APPS_INFRA_VERSION": apps_infra_version,
-        "VIRTUAL_ENV_NAME": virtual_env_name,
-        "SERVER_URL": server_url,
-        "DEB_WHL_DIR": deb_whl_dir,
-        "TAPPAS_VARIANT": tappas_variant
+        HOST_ARCH_KEY: host_arch,
+        HAILO_ARCH_KEY: hailo_arch,
+        RESOURCES_PATH_KEY: resources_path,
+        TAPPAS_POSTPROC_PATH_KEY: tappas_postproc_dir,
+        MODEL_ZOO_VERSION_KEY: model_zoo_version,
+        HAILORT_VERSION_KEY: hailort_version,
+        TAPPAS_VERSION_KEY: tappas_version,
+        VIRTUAL_ENV_NAME_KEY: virtual_env_name,
+        SERVER_URL_KEY: server_url,
+        STORAGE_PATH_KEY: storage_dir,
+        TAPPAS_VARIANT_KEY: tappas_variant
     }
 
     with open(ENV_PATH, "w") as f:

@@ -1,24 +1,25 @@
-import gi
-gi.require_version('Gst', '1.0')
-from gi.repository import Gst, GLib
-import argparse
-import multiprocessing
+
 import numpy as np
 import setproctitle
-import cv2
-import time
-import hailo
 from pathlib import Path
 
-from hailo_common.utils import ( 
-    load_environment,
+# ─── Common Hailo helpers ────────────────────────────────────────────────────────
+from hailo_apps_infra.common.hailo_common.installation_utils import detect_hailo_arch
+from hailo_apps_infra.common.hailo_common.core import (
+    get_default_parser,
     get_resource_path,
 )
-from hailo_common.common import (
-    get_default_parser,
-    detect_hailo_arch,
+from hailo_apps_infra.common.hailo_common.defines import (
+    DETECTION_APP_TITLE,
+    DETECTION_PIPELINE,
+    RESOURCES_MODELS_DIR_NAME,
+    RESOURCES_SO_DIR_NAME,
+    DETECTION_POSTPROCESS_SO_FILENAME,
+    DETECTION_POSTPROCESS_FUNCTION,
 )
-from hailo_gstreamer.gstreamer_helper_pipelines import(
+
+# ─── GStreamer routines (from your hailo_gstreamer package) ────────────────────
+from hailo_apps_infra.gstreamer.hailo_gstreamer.gstreamer_helper_pipelines import (
     QUEUE,
     SOURCE_PIPELINE,
     INFERENCE_PIPELINE,
@@ -27,15 +28,11 @@ from hailo_gstreamer.gstreamer_helper_pipelines import(
     USER_CALLBACK_PIPELINE,
     DISPLAY_PIPELINE,
 )
-from hailo_gstreamer.gstreamer_app import (
+from hailo_apps_infra.gstreamer.hailo_gstreamer.gstreamer_app import (
     GStreamerApp,
     app_callback_class,
-    dummy_callback
+    dummy_callback,
 )
-
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
-RESOURCES_DIR = PROJECT_ROOT / "resources"
-
 
 
 # -----------------------------------------------------------------------------------------------
@@ -75,13 +72,13 @@ class GStreamerDetectionApp(GStreamerApp):
         if self.options_menu.hef_path is not None:
             self.hef_path = self.options_menu.hef_path
         else:
-            self.hef_path = get_resource_path("detection", "models")
+            self.hef_path = get_resource_path(DETECTION_PIPELINE, RESOURCES_MODELS_DIR_NAME)
 
         # Set the post-processing shared object file
         self.post_process_so = get_resource_path(
-            "detection", "so", "libyolo_hailortpp_postprocess.so"
+            DETECTION_PIPELINE, RESOURCES_SO_DIR_NAME, DETECTION_POSTPROCESS_SO_FILENAME
         )
-        self.post_function_name = "filter_letterbox"
+        self.post_function_name = DETECTION_POSTPROCESS_FUNCTION
         # User-defined label JSON file
         self.labels_json = self.options_menu.labels_json
 
@@ -94,7 +91,7 @@ class GStreamerDetectionApp(GStreamerApp):
         )
 
         # Set the process title
-        setproctitle.setproctitle("Hailo Detection App")
+        setproctitle.setproctitle(DETECTION_APP_TITLE)
 
         self.create_pipeline()
 

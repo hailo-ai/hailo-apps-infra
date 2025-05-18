@@ -1,18 +1,26 @@
-import gi
-gi.require_version('Gst', '1.0')
-from gi.repository import Gst, GLib
 import os
-import argparse
-import multiprocessing
 import numpy as np
 import setproctitle
-import cv2
-import time
-from hailo_common.common import (
+
+
+# ─── Common Hailo helpers ────────────────────────────────────────────────────────
+from hailo_apps_infra.common.hailo_common.installation_utils import detect_hailo_arch
+from hailo_apps_infra.common.hailo_common.core import (
     get_default_parser,
-    detect_hailo_arch,
+    get_resource_path,
 )
-from hailo_gstreamer.gstreamer_helper_pipelines import(
+from hailo_apps_infra.common.hailo_common.defines import (
+    POSE_ESTIMATION_APP_TITLE,
+    POSE_ESTIMATION_PIPELINE,
+    RESOURCES_MODELS_DIR_NAME,
+    RESOURCES_SO_DIR_NAME,
+    POSE_ESTIMATION_POSTPROCESS_SO_FILENAME,
+    POSE_ESTIMATION_POSTPROCESS_FUNCTION,
+    HAILO_ARCH_KEY,
+)
+
+# ─── GStreamer routines (from your hailo_gstreamer package) ────────────────────
+from hailo_apps_infra.gstreamer.hailo_gstreamer.gstreamer_helper_pipelines import (
     QUEUE,
     SOURCE_PIPELINE,
     INFERENCE_PIPELINE,
@@ -21,20 +29,13 @@ from hailo_gstreamer.gstreamer_helper_pipelines import(
     USER_CALLBACK_PIPELINE,
     DISPLAY_PIPELINE,
 )
-from hailo_gstreamer.gstreamer_app import (
+from hailo_apps_infra.gstreamer.hailo_gstreamer.gstreamer_app import (
     GStreamerApp,
     app_callback_class,
-    dummy_callback
-)
-from hailo_common.utils import (
-    load_environment,
-    get_resource_path,
+    dummy_callback,
 )
 
 
-from pathlib import Path
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
-RESOURCES_DIR = PROJECT_ROOT / "resources"
 
 #-----------------------------------------------------------------------------------------------
 # User Gstreamer Application
@@ -57,7 +58,7 @@ class GStreamerPoseEstimationApp(GStreamerApp):
 
         # Determine the architecture if not specified
         if self.options_menu.arch is None:
-            detected_arch = detect_hailo_arch()
+            detected_arch = os.getenv(HAILO_ARCH_KEY, detect_hailo_arch())
             if detected_arch is None:
                 raise ValueError("Could not auto-detect Hailo architecture. Please specify --arch manually.")
             self.arch = detected_arch
@@ -72,17 +73,18 @@ class GStreamerPoseEstimationApp(GStreamerApp):
             self.hef_path = self.options_menu.hef_path
         else: # Set models based on hailo8 or hailo8l
             self.hef_path = get_resource_path( 
-                pipeline_name="pose",
-                resource_type="models",
+                pipeline_name=POSE_ESTIMATION_PIPELINE,
+                resource_type=RESOURCES_MODELS_DIR_NAME,
             )
         self.app_callback = app_callback
 
         # Set the post-processing shared object file
-        self.post_process_so = str(RESOURCES_DIR / "so" / "libyolov8pose_postprocess.so")
-        self.post_process_function = "filter_letterbox"
+        self.post_process_so = get_resource_path(POSE_ESTIMATION_PIPELINE, RESOURCES_SO_DIR_NAME, POSE_ESTIMATION_POSTPROCESS_SO_FILENAME)
+
+        self.post_process_function = POSE_ESTIMATION_POSTPROCESS_FUNCTION
 
         # Set the process title
-        setproctitle.setproctitle("Hailo Pose Estimation App")
+        setproctitle.setproctitle(POSE_ESTIMATION_APP_TITLE)
 
         self.create_pipeline()
 

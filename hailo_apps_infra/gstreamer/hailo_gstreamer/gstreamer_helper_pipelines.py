@@ -1,5 +1,7 @@
 import os
 
+from hailo_apps_infra.common.hailo_common.defines import TAPPAS_POSTPROC_PATH_KEY
+
 def get_source_type(input_source):
     # This function will return the source type based on the input source
     # return values can be "file", "mipi" or "usb"
@@ -206,7 +208,7 @@ def INFERENCE_PIPELINE_WRAPPER(inner_pipeline, bypass_max_size_buffers=20, name=
         str: A string representing the GStreamer pipeline for the inference wrapper.
     """
     # Get the directory for post-processing shared objects
-    tappas_post_process_dir = os.environ.get('TAPPAS_POST_PROC_DIR', '')
+    tappas_post_process_dir = os.environ.get(TAPPAS_POSTPROC_PATH_KEY, '')
     whole_buffer_crop_so = os.path.join(tappas_post_process_dir, 'cropping_algorithms/libwhole_buffer.so')
 
     # Construct the inference wrapper pipeline string

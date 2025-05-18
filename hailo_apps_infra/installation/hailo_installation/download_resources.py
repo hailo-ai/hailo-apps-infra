@@ -5,29 +5,41 @@ import os
 import urllib.request
 from pathlib import Path
 
-from hailo_common.common import detect_hailo_arch
-from hailo_common.utils import load_config, load_environment
 
-from hailo_common.defines import (
-    DEFAULT_RESOURCES_CONFIG_PATH,
-    HAILO_ARCH_KEY,
-    RESOURCES_PATH_KEY,
-    RESOURCES_PATH_DEFAULT,
-    MODEL_ZOO_VERSION_KEY,
-    MODEL_ZOO_VERSION_DEFAULT,
-    RESOURCES_CONFIG_DEFAULTS_KEY,
-    RESOURCES_MODEL_ZOO_URL_KEY,
-    RESOURCES_CONFIG_GROUPS_KEY,
-    RESOURCES_CONFIG_VIDEOS_KEY,
-    RESOURCES_GROUP_DEFAULT,
-    RESOURCES_GROUP_ALL,
-    RESOURCES_GROUP_COMBINED,
-    RESOURCES_GROUP_HAILO8,
-    RESOURCES_GROUP_HAILO8L,
-    RESOURCES_GROUP_RETRAIN,
-    RESOURCES_MODELS_DIR_NAME,
-    RESOURCES_VIDEOS_DIR_NAME,
-)
+
+# ─── load_config, load_environment ────────────────────────────────────────────────
+try:
+    from hailo_apps_infra.common.hailo_common.config_utils import load_config
+except ImportError:
+    from ...common.hailo_common.config_utils import load_config
+
+try:
+    from hailo_apps_infra.common.hailo_common.core import load_environment
+except ImportError:
+    from ...common.hailo_common.core import load_environment
+
+
+# ─── all the defines ──────────────────────────────────────────────────────────────
+from hailo_apps_infra.common.hailo_common.defines import (
+        DEFAULT_RESOURCES_CONFIG_PATH,
+        HAILO_ARCH_KEY,
+        MODEL_ZOO_URL,
+        MODEL_ZOO_VERSION_KEY,
+        MODEL_ZOO_VERSION_DEFAULT,
+        RESOURCES_GROUPS_MAP,
+        RESOURCES_GROUP_DEFAULT,
+        HAILO8_ARCH,
+        HAILO8L_ARCH,
+        RESOURCES_GROUP_HAILO8,
+        RESOURCES_GROUP_HAILO8L,
+        RESOURCES_ROOT_PATH_DEFAULT,
+        RESOURCES_MODELS_DIR_NAME,
+        RESOURCES_VIDEOS_DIR_NAME,
+        HAILO_FILE_EXTENSION,
+        RESOURCES_GROUP_ALL,
+    )
+
+
 
 logger = logging.getLogger("resource-downloader")
 logging.basicConfig(level=logging.INFO)
@@ -42,71 +54,97 @@ def download_file(url: str, dest_path: Path):
     urllib.request.urlretrieve(url, dest_path)
     logger.info(f"✅ Downloaded to {dest_path}")
 
-
-def download_resources(group: str = None):
-    # Load the YAML config
-    cfg_path = Path(DEFAULT_RESOURCES_CONFIG_PATH)
+def download_resources(group: str = None,
+                       resource_config_path: str = None):
+    # 1) Load your YAML config (expects a mapping: group -> [entries])
+    cfg_path = Path(resource_config_path or DEFAULT_RESOURCES_CONFIG_PATH)
     config = load_config(cfg_path)
 
-    # Determine Hailo architecture
-    hailo_arch = os.getenv(HAILO_ARCH_KEY, detect_hailo_arch())
+    # 2) Detect architecture & version
+    hailo_arch = os.getenv(HAILO_ARCH_KEY)
     logger.info(f"Detected Hailo architecture: {hailo_arch}")
 
-    # Where to store resources
-    resource_root = Path(os.getenv(RESOURCES_PATH_KEY, RESOURCES_PATH_DEFAULT))
-
-    # Which model zoo version
     model_zoo_version = os.getenv(
         MODEL_ZOO_VERSION_KEY,
         MODEL_ZOO_VERSION_DEFAULT
     )
     logger.info(f"Using Model Zoo version: {model_zoo_version}")
 
-    # Select groups
-    if group is None or group == RESOURCES_GROUP_DEFAULT:
-        groups = [RESOURCES_GROUP_COMBINED, hailo_arch]
-    elif group == RESOURCES_GROUP_ALL:
-        groups = [RESOURCES_GROUP_ALL]
-    elif group in config.get(RESOURCES_CONFIG_GROUPS_KEY, {}):
-        groups = [group]
-    else:
-        logger.error(f"Unknown group '{group}'")
-        return
 
-    # Flatten and dedupe
+    # 3) Build list of groups to fetch
+    groups = [RESOURCES_GROUP_DEFAULT]
+
+    if group != RESOURCES_GROUP_DEFAULT:
+        if group in RESOURCES_GROUPS_MAP:
+            groups.append(group)
+        else:
+            logger.warning(f"Unknown group '{group}', skipping.")
+
+    else:
+        if hailo_arch == HAILO8_ARCH:
+            groups.append(RESOURCES_GROUP_HAILO8)
+            print(f"Detected Hailo architecture: {hailo_arch} → adding Hailo8 resources")
+        elif hailo_arch == HAILO8L_ARCH:
+            groups.append(RESOURCES_GROUP_HAILO8L)
+            print(f"Detected Hailo architecture: {hailo_arch} → adding Hailo8L resources")
+        else:
+            print(f"Unknown architecture: {hailo_arch}, only default resources will be downloaded")
+
+                
+
+    # 4) Flatten + dedupe
     seen = set()
     items = []
     for grp in groups:
-        for entry in config[RESOURCES_CONFIG_GROUPS_KEY].get(grp, []):
-            name = entry if isinstance(entry, str) else next(iter(entry.keys()))
-            if name not in seen:
-                seen.add(name)
+        for entry in config.get(grp, []):
+            key = entry if isinstance(entry, str) else next(iter(entry.keys()))
+            if key not in seen:
+                seen.add(key)
                 items.append(entry)
 
-    # Download models
-    base_url = config[RESOURCES_CONFIG_DEFAULTS_KEY][RESOURCES_MODEL_ZOO_URL_KEY]
+    resource_root = Path(RESOURCES_ROOT_PATH_DEFAULT)
+    base_url = MODEL_ZOO_URL
+
+    # 5) Process each entry
     for entry in items:
+        # Determine URL + destination based on type
         if isinstance(entry, str):
-            name = entry
-            url = f"{base_url}/{model_zoo_version}/{hailo_arch}/{name}.hef"
+            if entry.startswith(("http://", "https://")):
+                url = entry
+                ext = Path(url).suffix.lower()
+                if ext == HAILO_FILE_EXTENSION:
+                    # model URL
+                    name = Path(url).stem
+                    dest = resource_root / RESOURCES_MODELS_DIR_NAME / hailo_arch / f"{name}{HAILO_FILE_EXTENSION}"
+                else:
+                    # video URL
+                    filename = Path(url).name
+                    dest = resource_root / RESOURCES_VIDEOS_DIR_NAME / filename
+            else:
+                # bare model name → construct URL
+                name = entry
+                url = f"{base_url}/{model_zoo_version}/{hailo_arch}/{name}{HAILO_FILE_EXTENSION}"
+                dest = resource_root / RESOURCES_MODELS_DIR_NAME / hailo_arch / f"{name}{HAILO_FILE_EXTENSION}"
         else:
+            # mapping { name: url }
             name, url = next(iter(entry.items()))
+            ext = Path(url).suffix.lower()
+            if ext == HAILO_FILE_EXTENSION:
+                dest = resource_root / RESOURCES_MODELS_DIR_NAME / hailo_arch / f"{name}{HAILO_FILE_EXTENSION}"
+            else:
+                filename = f"{name}{ext}"
+                dest = resource_root / RESOURCES_VIDEOS_DIR_NAME / filename
 
-        dest = resource_root / RESOURCES_MODELS_DIR_NAME / hailo_arch / f"{name}.hef"
+        logger.info(f"Downloading {url} → {dest}")
         download_file(url, dest)
-
-    # Download videos
-    for vid_name, vid_cfg in config.get(RESOURCES_CONFIG_VIDEOS_KEY, {}).items():
-        url = vid_cfg["url"]
-        ext = Path(url).suffix or ".mp4"
-        filename = vid_cfg.get("filename", f"{vid_name}{ext}")
-        dest = resource_root / RESOURCES_VIDEOS_DIR_NAME / filename
-        download_file(url, dest)
-
-
 def main():
     parser = argparse.ArgumentParser(
         description="Install and download Hailo resources"
+    )
+    parser.add_argument(
+        "--all",
+        action="store_true",
+        help="Download all resources"
     )
     parser.add_argument(
         "--group",
@@ -114,11 +152,21 @@ def main():
         default=RESOURCES_GROUP_DEFAULT,
         help="Which resource group to download"
     )
+    parser.add_argument(
+        "--config",
+        type=str,
+        default=DEFAULT_RESOURCES_CONFIG_PATH,
+        help="Path to the resources config file"
+    )
     args = parser.parse_args()
+
+    if args.all:
+        args.group = RESOURCES_GROUP_ALL
 
     # Populate env defaults
     load_environment()
-    download_resources(group=args.group)
+    download_resources(group=args.group, resource_config_path=args.config)
+    logger.info("✅ All resources downloaded successfully.")
 
 
 if __name__ == "__main__":
