@@ -117,6 +117,7 @@ class GStreamerApp:
             else:
                 self.video_source = self.video_source[0]
         self.source_type = get_source_type(self.video_source)
+        self.frame_rate = self.options_menu.frame_rate
         self.user_data = user_data
         self.video_sink = GST_AUTO_VIDEO_SINK
         self.pipeline = None
@@ -178,19 +179,37 @@ class GStreamerApp:
         # QOS
         elif t == Gst.MessageType.QOS:
             # Handle QoS message here
-            qos_element = message.src.get_name()
-            print(f"QoS message received from {qos_element}")
+            # If lots of QoS messages are received, it may indicate that the pipeline is not able to keep up
+            if not hasattr(self, 'qos_count'):
+                self.qos_count = 0
+            self.qos_count += 1
+            if self.qos_count > 50 and self.qos_count % 10 == 0:
+                qos_element = message.src.get_name()
+                print(f"\033[91mQoS message received from {qos_element}\033[0m")
+                print(f"\033[91mLots of QoS messages received: {self.qos_count}, consider optimizing the pipeline or reducing the pipeline frame rate see '--frame-rate' flag.\033[0m")
+
         return True
+
+
 
 
     def on_eos(self):
         if self.source_type == "file":
-             # Seek to the start (position 0) in nanoseconds
+            if self.sync == "false":
+                # Pause the pipeline to clear any queued data. It is required when running with sync=false
+                # This will produce some warnings, but it's fine
+                print("Pausing pipeline for rewind... some warnings are expected.")
+                self.pipeline.set_state(Gst.State.PAUSED)
+            
+            # Seek to the beginning (position 0) using a flush seek.
             success = self.pipeline.seek_simple(Gst.Format.TIME, Gst.SeekFlags.FLUSH, 0)
             if success:
                 print("Video rewound successfully. Restarting playback...")
             else:
-                print("Error rewinding the video.", file=sys.stderr)
+                print("Error rewinding video.", file=sys.stderr)
+
+            # Resume playback.
+            self.pipeline.set_state(Gst.State.PLAYING)
         else:
             self.shutdown()
 
@@ -206,6 +225,40 @@ class GStreamerApp:
 
         self.pipeline.set_state(Gst.State.NULL)
         GLib.idle_add(self.loop.quit)
+   
+    def update_fps_caps(self, new_fps=30, source_name='source'):
+        """Updates the FPS by setting max-rate on videorate element directly"""
+        # Derive the videorate and capsfilter element names based on the source name
+        videorate_name = f"{source_name}_videorate"
+        capsfilter_name = f"{source_name}_fps_caps"
+
+        # Get the videorate element
+        videorate = self.pipeline.get_by_name(videorate_name)
+        if videorate is None:
+            print(f"Element {videorate_name} not found in the pipeline.")
+            return
+
+        # Print current properties for debugging
+        current_max_rate = videorate.get_property("max-rate")
+        print(f"Current videorate max-rate: {current_max_rate}")
+
+        # Update the max-rate property directly
+        videorate.set_property("max-rate", new_fps)
+
+        # Verify the change
+        updated_max_rate = videorate.get_property("max-rate")
+        print(f"Updated videorate max-rate to: {updated_max_rate}")
+
+        # Get the capsfilter element
+        capsfilter = self.pipeline.get_by_name(capsfilter_name)
+        if capsfilter:
+            new_caps_str = f"video/x-raw, framerate={new_fps}/1"
+            new_caps = Gst.Caps.from_string(new_caps_str)
+            capsfilter.set_property("caps", new_caps)
+            print(f"Updated capsfilter caps to match new rate")
+
+        # Update frame_rate property
+        self.frame_rate = new_fps
 
 
     def get_pipeline_string(self):

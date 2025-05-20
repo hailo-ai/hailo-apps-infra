@@ -105,7 +105,11 @@ class GStreamerDetectionApp(GStreamerApp):
         self.create_pipeline()
 
     def get_pipeline_string(self):
-        source_pipeline = SOURCE_PIPELINE(self.video_source, self.video_width, self.video_height, no_webcam_compression=True)
+        source_pipeline = SOURCE_PIPELINE(video_source=self.video_source,
+                                          video_width=self.video_width, video_height=self.video_height,
+                                          frame_rate=self.frame_rate, sync=self.sync,
+                                          no_webcam_compression=True)
+        
         detection_pipeline = INFERENCE_PIPELINE(
             hef_path=self.hef_path,
             post_process_so=self.post_process_so,

@@ -48,9 +48,13 @@ def get_camera_resulotion(video_width=640, video_height=640):
         return 3840, 2160
 
 
-def SOURCE_PIPELINE(video_source, video_width=640, video_height=640, video_format='RGB', name='source', no_webcam_compression=False):
+def SOURCE_PIPELINE(video_source, video_width=640, video_height=640,
+                    name='source', no_webcam_compression=False, 
+                    frame_rate=30, sync=True, 
+                    video_format='RGB'):
     """
-    Creates a GStreamer pipeline string for the video source.
+    Creates a GStreamer pipeline string for the video source with a separate fps caps
+    for frame rate control.
 
     Args:
         video_source (str): The path or device name of the video source.
@@ -66,7 +70,7 @@ def SOURCE_PIPELINE(video_source, video_width=640, video_height=640, video_forma
 
     if source_type == 'usb':
         if no_webcam_compression:
-            # When using uncomressed format, only low resolution is supported
+            # When using uncompressed format, only low resolution is supported
             source_element = (
                 f'v4l2src device={video_source} name={name} ! '
                 f'video/x-raw, width=640, height=480 ! '
@@ -104,13 +108,24 @@ def SOURCE_PIPELINE(video_source, video_width=640, video_height=640, video_forma
             f'{QUEUE(name=f"{name}_queue_decode")} ! '
             f'decodebin name={name}_decodebin ! '
         )
+
+    # Set up the fps caps.
+    # If sync is True, constrain the rate with the given frame_rate.
+    # Otherwise, pass through (no framerate limitation).
+    if sync:
+        fps_caps = f"video/x-raw, framerate={frame_rate}/1"
+    else:
+        fps_caps = "video/x-raw"
+
     source_pipeline = (
         f'{source_element} '
         f'{QUEUE(name=f"{name}_scale_q")} ! '
         f'videoscale name={name}_videoscale n-threads=2 ! '
         f'{QUEUE(name=f"{name}_convert_q")} ! '
         f'videoconvert n-threads=3 name={name}_convert qos=false ! '
-        f'video/x-raw, pixel-aspect-ratio=1/1, format={video_format}, width={video_width}, height={video_height} '
+        f'video/x-raw, pixel-aspect-ratio=1/1, format={video_format}, '
+        f'width={video_width}, height={video_height} ! '
+        f'videorate name={name}_videorate ! capsfilter name={name}_fps_caps caps="{fps_caps}" '
     )
 
     return source_pipeline
