@@ -10,13 +10,14 @@ project('hailo_apps_infra', 'c', 'cpp',
 postprocess_dep = dependency('hailo-tappas-core', version : '>=3.30.0', required : false)
 
 if not postprocess_dep.found()
-    postprocess_dep = dependency('hailo_tappas', version : '>=3.30.0')
+    postprocess_dep = dependency('hailo_tappas', version : '>=3.30.0', required : false)
 endif
 
-# Use the rapidjson_includedir from the pkg-config file
-rapidjson_inc_dir = postprocess_dep.get_variable(pkgconfig: 'rapidjson_includedir')
+if postprocess_dep.found()
+    rapidjson_inc_dir = postprocess_dep.get_variable(pkgconfig: 'rapidjson_includedir', default_value: '')
+    rapidjson_inc = include_directories(rapidjson_inc_dir, is_system: true)
 
-# rapidjson Include Directories
-rapidjson_inc = include_directories(rapidjson_inc_dir, is_system: true)
-
-subdir('cpp')
+    subdir('cpp')
+else
+    message('⚠️  No Hailo TAPPAS dependencies found — skipping C++ postprocess build.')
+endif

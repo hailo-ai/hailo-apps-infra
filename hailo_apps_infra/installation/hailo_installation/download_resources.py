@@ -18,6 +18,10 @@ try:
 except ImportError:
     from ...common.hailo_common.core import load_environment
 
+try:
+    from hailo_apps_infra.common.hailo_common.installation_utils import detect_hailo_arch
+except ImportError:
+    from ...common.hailo_common.installation_utils import detect_hailo_arch
 
 # ─── all the defines ──────────────────────────────────────────────────────────────
 from hailo_apps_infra.common.hailo_common.defines import (
@@ -61,8 +65,11 @@ def download_resources(group: str = None,
     config = load_config(cfg_path)
 
     # 2) Detect architecture & version
-    hailo_arch = os.getenv(HAILO_ARCH_KEY)
-    logger.info(f"Detected Hailo architecture: {hailo_arch}")
+    hailo_arch = os.getenv(HAILO_ARCH_KEY) or detect_hailo_arch()
+    if not hailo_arch:
+        print("❌ Hailo architecture could not be detected.")
+        hailo_arch = HAILO8_ARCH
+        print(f"➡️ Defaulting to architecture: {hailo_arch}")
 
     model_zoo_version = os.getenv(
         MODEL_ZOO_VERSION_KEY,
