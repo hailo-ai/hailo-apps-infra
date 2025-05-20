@@ -45,7 +45,9 @@ def setup_resource_dirs(storage_dir: str = None):
         "sudo", "chmod", "-R", "755", str(resource_base)
     ], check=True)
 
-    os.makedirs(storage_dir, exist_ok=True)
+    # 5) Create the storage directory if it doesn't exist
+    if storage_dir is not None:
+        os.makedirs(storage_dir, exist_ok=True)
 
 if __name__ == "__main__":
     setup_resource_dirs(STORAGE_PATH_DEFAULT)

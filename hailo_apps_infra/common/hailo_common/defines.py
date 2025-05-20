@@ -39,7 +39,6 @@ HAILO_CONFIG_MODULE = "config"
 HAILO_INSTALLATION_MODULE = "installation"
 HAILO_GSTREAMER_MODULE = "gstreamer"
 HAILO_PIPELINES_MODULE = "pipelines"
-
 HAILO_MODULE_NAMES = [
     HAILO_COMMON_MODULE,
     HAILO_CONFIG_MODULE,
@@ -88,6 +87,7 @@ RESOURCES_PATH_KEY = "resources_path"
 VIRTUAL_ENV_NAME_KEY = "virtual_env_name"
 STORAGE_PATH_KEY = "storage_path"
 TAPPAS_POSTPROC_PATH_KEY = "tappas_postproc_path"
+HAILO_APPS_INFRA_PATH_KEY = "hailo_apps_infra_path"
 
 # Environment variable groups
 DIC_CONFIG_VARIANTS = [
