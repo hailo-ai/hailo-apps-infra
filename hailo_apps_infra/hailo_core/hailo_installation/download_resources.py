@@ -1,30 +1,29 @@
 #!/usr/bin/env python3
+from pathlib import Path
+import sys
+# Ensure hailo_core is importable from anywhere
+PROJECT_ROOT = Path(__file__).resolve().parents[2]  # ~/dev/hailo-apps-infra/hailo_apps_infra
+sys.path.insert(0, str(PROJECT_ROOT))
+
+# ─── other imports ────────────────────────────────────────────────────────────
+
 import argparse
 import logging
 import os
 import urllib.request
-from pathlib import Path
+
 
 
 
 # ─── load_config, load_environment ────────────────────────────────────────────────
-try:
-    from hailo_apps_infra.common.hailo_common.config_utils import load_config
-except ImportError:
-    from ...common.hailo_common.config_utils import load_config
+from hailo_core.hailo_common.config_utils import load_config
 
-try:
-    from hailo_apps_infra.common.hailo_common.core import load_environment
-except ImportError:
-    from ...common.hailo_common.core import load_environment
+from hailo_core.hailo_common.core import load_environment
 
-try:
-    from hailo_apps_infra.common.hailo_common.installation_utils import detect_hailo_arch
-except ImportError:
-    from ...common.hailo_common.installation_utils import detect_hailo_arch
+from hailo_core.hailo_common.installation_utils import detect_hailo_arch
 
 # ─── all the defines ──────────────────────────────────────────────────────────────
-from hailo_apps_infra.common.hailo_common.defines import (
+from hailo_core.hailo_common.defines import (
         DEFAULT_RESOURCES_CONFIG_PATH,
         HAILO_ARCH_KEY,
         MODEL_ZOO_URL,

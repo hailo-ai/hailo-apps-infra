@@ -1,48 +1,40 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Default values
-CONFIG=""
-GROUP=""
-RESOURCES_CONFIG=""
-ALL=false
 
-usage() {
-  cat <<EOF
-Usage: $(basename "$0") [-c config_file] [-g group_name] [-r resources_config_file]
 
-  -c, --config            Path to configuration file
-  -g, --group             Group name for downloading resources
-  -r, --resources-config  Path to resources config file
-  -h, --help              Show this help message
-EOF
-  exit 1
-}
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CREATE_SCRIPT="${SCRIPT_DIR}/hailo_apps_infra/hailo_core/hailo_installation/create_hailo_venv.py"
 
-# Parse arguments
+# Capture any --venv-name / -n flags (so we can re-source the right dir later)
+VENV_NAME="hailo_infra_venv"
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    -c|--config)
-      CONFIG="$2"; shift 2 ;;
-    -g|--group)
-      GROUP="$2"; shift 2 ;;
-    -r|--resources-config)
-      RESOURCES_CONFIG="$2"; shift 2 ;;
-    -h|--help)
-      usage ;;
-    --all)
-      ALL=true; shift ;;
+    -n|--venv-name)
+      VENV_NAME="$2"
+      shift 2
+      ;;
     *)
-      echo "Unknown option: $1"; usage ;;
+      # pass through anything else to the create script
+      shift
+      ;;
   esac
 done
 
-# Build the python command
-cmd=(python3 install.py)
+echo "🌱 Running venv-creation script…"
+python3 "$CREATE_SCRIPT" --virtualenv "$VENV_NAME"
 
-[[ -n "$CONFIG"         ]] && cmd+=(-c        "$CONFIG")
-[[ -n "$GROUP"          ]] && cmd+=(-g        "$GROUP")
-[[ -n "$RESOURCES_CONFIG" ]] && cmd+=(-r      "$RESOURCES_CONFIG")
-[[ "$ALL" == true      ]] && cmd+=(--all)
-# Execute
-exec "${cmd[@]}"
+VENV_PATH="${SCRIPT_DIR}/${VENV_NAME}"
+if [[ ! -f "${VENV_PATH}/bin/activate" ]]; then
+  echo "❌ Could not find activate at ${VENV_PATH}/bin/activate"
+  exit 1
+fi
+
+echo "🔌 Activating venv: ${VENV_NAME}"
+# shellcheck disable=SC1090
+source "${VENV_PATH}/bin/activate"
+
+echo "📦 Installing package (editable + post-install)…"
+pip install -e .
+
+echo "✅ All done! Your package is now in '${VENV_NAME}'."

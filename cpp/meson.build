@@ -12,7 +12,7 @@ shared_library('yolo_hailortpp_postprocess',
     dependencies : postprocess_dep,
     gnu_symbol_visibility : 'default',
     install: true,
-    install_dir: join_paths(meson.project_source_root(), 'resources', 'so'),
+    install_dir: '/usr/local/hailo/resources/so',
 )
 ################################################
 # REMOVE LABELS POST SOURCES
@@ -26,7 +26,7 @@ shared_library('remove_labels',
     dependencies : postprocess_dep,
     gnu_symbol_visibility : 'default',
     install: true,
-    install_dir: join_paths(meson.project_source_root(), 'resources', 'so'),
+    install_dir: '/usr/local/hailo/resources/so',
 )
 
 ################################################
@@ -41,7 +41,7 @@ shared_library('yolov8pose_postprocess',
     dependencies : postprocess_dep,
     gnu_symbol_visibility : 'default',
     install: true,
-    install_dir: join_paths(meson.project_source_root(), 'resources', 'so'),
+    install_dir: '/usr/local/hailo/resources/so',
 )
 
 ################################################
@@ -56,7 +56,7 @@ shared_library('yolov5seg_postprocess',
     dependencies : postprocess_dep,
     gnu_symbol_visibility : 'default',
     install: true,
-    install_dir: join_paths(meson.project_source_root(), 'resources', 'so'),
+    install_dir: '/usr/local/hailo/resources/so',
 )
 
 ################################################
@@ -71,5 +71,5 @@ shared_library('depth_postprocess',
     dependencies : postprocess_dep,
     gnu_symbol_visibility : 'default',
     install: true,
-    install_dir: join_paths(meson.project_source_root(), 'resources', 'so'),
+    install_dir: '/usr/local/hailo/resources/so',
 )

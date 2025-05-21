@@ -1,22 +1,27 @@
+import sys
+from pathlib import Path
+# Ensure hailo_core is importable from anywhere
+PROJECT_ROOT = Path(__file__).resolve().parents[2]  # ~/dev/hailo-apps-infra/hailo_apps_infra
+sys.path.insert(0, str(PROJECT_ROOT))
 import gi
 gi.require_version('Gst', '1.0')
 import setproctitle
 
-from hailo_apps_infra.gstreamer.hailo_gstreamer.gstreamer_app import (
+from hailo_apps.hailo_gstreamer.gstreamer_app import (
     app_callback_class,
     dummy_callback,
     GStreamerApp,
 )
-from hailo_apps_infra.gstreamer.hailo_gstreamer.gstreamer_helper_pipelines import (
+from hailo_apps.hailo_gstreamer.gstreamer_helper_pipelines import (
     DISPLAY_PIPELINE,
     INFERENCE_PIPELINE,
     INFERENCE_PIPELINE_WRAPPER,
     SOURCE_PIPELINE,
     USER_CALLBACK_PIPELINE,
 )
-from hailo_apps_infra.common.hailo_common.core import get_default_parser, get_resource_path
-from hailo_apps_infra.common.hailo_common.installation_utils import detect_hailo_arch
-from hailo_apps_infra.common.hailo_common.defines import (
+from hailo_core.hailo_common.core import get_default_parser, get_resource_path
+from hailo_core.hailo_common.installation_utils import detect_hailo_arch
+from hailo_core.hailo_common.defines import (
     DEPTH_POSTPROCESS_FUNCTION,
     RESOURCES_SO_DIR_NAME,
     DEPTH_POSTPROCESS_SO_FILENAME,

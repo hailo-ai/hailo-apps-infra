@@ -1,6 +1,6 @@
 import os
 
-from hailo_apps_infra.common.hailo_common.defines import TAPPAS_POSTPROC_PATH_KEY
+from hailo_core.hailo_common.defines import TAPPAS_POSTPROC_PATH_KEY
 
 def get_source_type(input_source):
     # This function will return the source type based on the input source

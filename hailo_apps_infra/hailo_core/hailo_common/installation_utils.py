@@ -5,6 +5,7 @@ import platform
 import shlex
 import subprocess
 from pathlib import Path
+import sys
 from .defines import (
     X86_POSSIBLE_NAME,
     ARM_POSSIBLE_NAME,
@@ -20,8 +21,10 @@ from .defines import (
     HAILO8_ARCH,
     HAILO8L_ARCH,
     PIP_CMD, 
-    RESOURCES_DIRS_MAP, 
-    RESOURCES_ROOT_PATH_DEFAULT
+    HAILORT_PACKAGE,
+    HAILO_TAPPAS_CORE_PYTHON,
+    HAILO_TAPPAS,
+    HAILO_TAPPAS_CORE,
 )
 #logger = __import__('logging').getLogger("hailo_install")
 
@@ -107,20 +110,6 @@ def detect_pip_package_version(pkg: str) -> str | None:
     return None
 
 
-def create_standard_resource_dirs(base_path: Path = RESOURCES_ROOT_PATH_DEFAULT):
-    """
-    Create the default folder layout under a given resource path.
-    - /models/hailo8
-    - /models/hailo8l
-    - /videos
-    - /photos
-    - /gifs
-    - /json
-    - /so
-    """
-    for sub in RESOURCES_DIRS_MAP:
-        (base_path / sub).mkdir(parents=True, exist_ok=True)
-
 def run_command(command, error_msg, logger=None):
     """
     Run a shell command and log the output.
@@ -155,3 +144,92 @@ def create_symlink(src: str, dst: str) -> None:
     if os.path.islink(dst) or os.path.exists(dst):
         os.remove(dst)
     os.symlink(src, dst)
+
+def auto_detect_hailort_python_bindings() -> bool:
+    """
+    Automatically detect the installed HailoRT version for Python.
+    Returns:
+        bool: True if HailoRT Python bindings are installed, False otherwise.
+    """
+    if detect_pip_package_installed(HAILORT_PACKAGE):
+        return True
+    return False
+
+def auto_detect_hailort_version() -> str:
+    """
+    Automatically detect the installed HailoRT version.
+    Returns:
+        str: The detected HailoRT version.
+    """
+    if detect_pkg_installed(HAILORT_PACKAGE):
+        return detect_system_pkg_version(HAILORT_PACKAGE)
+    else:
+        print("⚠ Could not detect HailoRT version, please install HailoRT.")
+        return None
+
+
+def auto_detect_tappas_variant() -> str:
+    """
+    Automatically detect the TAPPAS variant based on installed packages.
+    Returns:
+        str: The detected TAPPAS variant.
+    """
+    if detect_pkg_installed(HAILO_TAPPAS):
+        return HAILO_TAPPAS
+    elif detect_pkg_installed(HAILO_TAPPAS_CORE):
+        return HAILO_TAPPAS_CORE
+    else:
+        print("⚠ Could not detect TAPPAS variant, please install TAPPAS or TAPPAS-CORE.")
+        sys.exit(1)
+
+def auto_detect_installed_tappas_python_bindings() -> bool:
+    """
+    Automatically detect the installed TAPPAS version for Python.
+    Returns:
+        str: The detected TAPPAS version.
+    """
+    if detect_pip_package_installed(HAILO_TAPPAS):
+        return True
+    elif detect_pip_package_installed(HAILO_TAPPAS_CORE_PYTHON):
+        return True
+    else:
+        print("⚠ Could not detect TAPPAS variant, please install TAPPAS or TAPPAS-CORE.")
+        return False
+
+def auto_detect_tappas_version(tappas_variant: str) -> str:
+    """
+    Automatically detect the TAPPAS version based on the variant.
+    Args:
+        tappas_variant (str): The TAPPAS variant (HAILO_TAPPAS or HAILO_TAPPAS_CORE).
+    Returns:
+        str: The detected TAPPAS version.
+    """
+    if tappas_variant == HAILO_TAPPAS:
+        return detect_system_pkg_version(HAILO_TAPPAS)
+    elif tappas_variant == HAILO_TAPPAS_CORE:
+        return detect_system_pkg_version(HAILO_TAPPAS_CORE)
+    else:
+        print("⚠ Could not detect TAPPAS version.")
+        return None
+
+def auto_detect_tappas_postproc_dir(tappas_variant: str) -> str:
+    """
+    Automatically detect the TAPPAS post-processing directory based on the variant.
+    Args:
+        tappas_variant (str): The TAPPAS variant (HAILO_TAPPAS or HAILO_TAPPAS_CORE).
+    Returns:
+        str: The detected TAPPAS post-processing directory.
+    """
+    if tappas_variant == HAILO_TAPPAS:
+        workspace = run_command_with_output(
+            ["pkg-config", "--variable=tappas_workspace", HAILO_TAPPAS]
+        )
+        return f"{workspace}/apps/h8/gstreamer/libs/post_processes/"
+    elif tappas_variant == HAILO_TAPPAS_CORE:
+        return run_command_with_output(
+            ["pkg-config", "--variable=tappas_postproc_lib_dir", HAILO_TAPPAS_CORE]
+        )
+    else:
+        print("⚠ Could not detect TAPPAS variant.")
+        sys.exit(1)
+    

@@ -10,7 +10,8 @@ HAILO_TAPPAS_CORE_PYTHON = "hailo-tappas-core-python-binding"
 HAILORT_PACKAGE = "hailort"
 HAILO_FILE_EXTENSION = ".hef"
 MODEL_ZOO_URL = "https://hailo-model-zoo.s3.eu-west-2.amazonaws.com/ModelZoo/Compiled"
-RESOURCES_ROOT_PATH_DEFAULT = "/usr/local/hailo/resources"
+RESOURCES_ROOT_PATH_DEFAULT = "/usr/local/hailo/resources" # Do Not Change!
+
 # Core defaults
 ARM_POSSIBLE_NAME = ["arm", "aarch64"]
 X86_POSSIBLE_NAME = ["x86", "amd64", "x86_64"]
@@ -32,6 +33,7 @@ JSON_FILE_EXTENSION = ".json"
 # CLI defaults
 PYTHON_CMD = "python3"
 PIP_CMD = "pip3"
+VENV_CREATE_CMD = "python3 -m venv"
 
 # Module names
 HAILO_COMMON_MODULE = "common"
@@ -48,8 +50,7 @@ HAILO_MODULE_NAMES = [
 ]
 
 # Base project paths
-# repo root: two levels above hailo_apps_infra/common/hailo_common
-REPO_ROOT = Path(__file__).resolve().parents[3]
+REPO_ROOT = Path(__file__).resolve().parents[2]
 PACKAGE_ROOT = REPO_ROOT / "hailo_apps_infra"
 COMMON_ROOT = PACKAGE_ROOT / HAILO_COMMON_MODULE
 CONFIG_ROOT = PACKAGE_ROOT / HAILO_CONFIG_MODULE / "hailo_config"
@@ -85,7 +86,6 @@ SERVER_URL_KEY = "server_url"
 TAPPAS_VARIANT_KEY = "tappas_variant"
 RESOURCES_PATH_KEY = "resources_path"
 VIRTUAL_ENV_NAME_KEY = "virtual_env_name"
-STORAGE_PATH_KEY = "storage_path"
 TAPPAS_POSTPROC_PATH_KEY = "tappas_postproc_path"
 HAILO_APPS_INFRA_PATH_KEY = "hailo_apps_infra_path"
 
@@ -100,7 +100,6 @@ DIC_CONFIG_VARIANTS = [
     TAPPAS_VARIANT_KEY,
     RESOURCES_PATH_KEY,
     VIRTUAL_ENV_NAME_KEY,
-    STORAGE_PATH_KEY,
     TAPPAS_POSTPROC_PATH_KEY,
 ]
 
@@ -141,13 +140,16 @@ RESOURCES_SO_DIR_NAME = "so"
 RESOURCES_PHOTOS_DIR_NAME = "photos"
 RESOURCES_GIF_DIR_NAME = "gifs"
 RESOURCES_JSON_DIR_NAME = "json"
+RESOURCE_STORAGE_DIR_NAME = "installation-storage"
 RESOURCES_DIRS_MAP = [
-    f"{RESOURCES_MODELS_DIR_NAME}/{HAILO8_ARCH}",
-    f"{RESOURCES_MODELS_DIR_NAME}/{HAILO8L_ARCH}",
-    RESOURCES_SO_DIR_NAME,
-    RESOURCES_PHOTOS_DIR_NAME,
-    RESOURCES_GIF_DIR_NAME,
-    RESOURCES_JSON_DIR_NAME,
+    f"{RESOURCES_ROOT_PATH_DEFAULT}/{RESOURCES_MODELS_DIR_NAME}/{HAILO8_ARCH}",
+    f"{RESOURCES_ROOT_PATH_DEFAULT}/{RESOURCES_MODELS_DIR_NAME}/{HAILO8L_ARCH}",
+    f"{RESOURCES_ROOT_PATH_DEFAULT}/{RESOURCES_SO_DIR_NAME}",
+    f"{RESOURCES_ROOT_PATH_DEFAULT}/{RESOURCES_PHOTOS_DIR_NAME}",
+    f"{RESOURCES_ROOT_PATH_DEFAULT}{RESOURCES_GIF_DIR_NAME}",
+    f"{RESOURCES_ROOT_PATH_DEFAULT}{RESOURCES_JSON_DIR_NAME}",
+    f"{RESOURCES_ROOT_PATH_DEFAULT}/{RESOURCES_VIDEOS_DIR_NAME}",
+    f"{RESOURCES_ROOT_PATH_DEFAULT}/{RESOURCE_STORAGE_DIR_NAME}",
 ]
 
 # GStreamer defaults

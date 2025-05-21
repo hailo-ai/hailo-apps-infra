@@ -16,7 +16,6 @@ from .defines import (
     TAPPAS_VARIANT_KEY,
     RESOURCES_PATH_KEY,
     VIRTUAL_ENV_NAME_KEY,
-    STORAGE_PATH_KEY,
     # Default values
     HAILORT_VERSION_DEFAULT,
     TAPPAS_VERSION_DEFAULT,
@@ -35,7 +34,7 @@ from .defines import (
     VALID_HOST_ARCH,
     VALID_HAILO_ARCH,
     VALID_SERVER_URL,
-    VALID_TAPPAS_VARIANT
+    VALID_TAPPAS_VARIANT,
 )
 
 def load_config(path: Path) -> dict:
@@ -58,7 +57,6 @@ def load_default_config() -> dict:
         TAPPAS_VARIANT_KEY: TAPPAS_VARIANT_DEFAULT,
         RESOURCES_PATH_KEY: DEFAULT_RESOURCES_SYMLINK_PATH,
         VIRTUAL_ENV_NAME_KEY: VIRTUAL_ENV_NAME_DEFAULT,
-        STORAGE_PATH_KEY: STORAGE_PATH_DEFAULT,
     }
 
 def validate_config(config: dict) -> bool:
@@ -79,3 +77,16 @@ def validate_config(config: dict) -> bool:
             valid_config = False
             print(f"Invalid value '{val}'. Valid options: {valid_choices}")
     return valid_config
+
+def load_and_validate_config(config_path: str) -> dict:
+    """
+    Load and validate the configuration file.
+    Returns the loaded configuration as a dictionary.
+    """
+    cfg_path = Path(config_path)
+    config = load_config(cfg_path)
+    if not validate_config(config):
+        print("❌ Invalid configuration. Please check the config file.")
+        sys.exit(1)
+    return config
+

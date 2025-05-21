@@ -1,0 +1,19 @@
+[project]
+name = "hailo_core"
+version = "0.4.0"
+description = "Core utilities and setup for Hailo infrastructure"
+authors = [{ name = "Hailo" }]
+readme = "README.md"
+requires-python = ">=3.7"
+dependencies = []
+
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = [
+    "hailo_common",
+    "hailo_config",
+    "hailo_installation"
+]

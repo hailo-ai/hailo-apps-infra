@@ -3,14 +3,18 @@ import os
 import numpy as np
 import setproctitle
 from pathlib import Path
+import sys
+# Ensure hailo_core is importable from anywhere
+PROJECT_ROOT = Path(__file__).resolve().parents[2]  # ~/dev/hailo-apps-infra/hailo_apps_infra
+sys.path.insert(0, str(PROJECT_ROOT))
 
 # ─── Common Hailo helpers ────────────────────────────────────────────────────────
-from hailo_apps_infra.common.hailo_common.installation_utils import detect_hailo_arch
-from hailo_apps_infra.common.hailo_common.core import (
+from hailo_core.hailo_common.installation_utils import detect_hailo_arch
+from hailo_core.hailo_common.core import (
     get_default_parser,
     get_resource_path,
 )
-from hailo_apps_infra.common.hailo_common.defines import (
+from hailo_core.hailo_common.defines import (
     HAILO_ARCH_KEY,
     INSTANCE_SEGMENTATION_APP_TITLE,
     INSTANCE_SEGMENTATION_PIPELINE,
@@ -25,7 +29,7 @@ from hailo_apps_infra.common.hailo_common.defines import (
 )
 
 # ─── GStreamer routines (from your hailo_gstreamer package) ────────────────────
-from hailo_apps_infra.gstreamer.hailo_gstreamer.gstreamer_helper_pipelines import (
+from hailo_apps.hailo_gstreamer.gstreamer_helper_pipelines import (
     QUEUE,
     SOURCE_PIPELINE,
     INFERENCE_PIPELINE,
@@ -34,7 +38,7 @@ from hailo_apps_infra.gstreamer.hailo_gstreamer.gstreamer_helper_pipelines impor
     USER_CALLBACK_PIPELINE,
     DISPLAY_PIPELINE,
 )
-from hailo_apps_infra.gstreamer.hailo_gstreamer.gstreamer_app import (
+from hailo_apps.hailo_gstreamer.gstreamer_app import (
     GStreamerApp,
     app_callback_class,
     dummy_callback,
@@ -100,11 +104,11 @@ class GStreamerInstanceSegmentationApp(GStreamerApp):
         self.create_pipeline()
 
     def get_pipeline_string(self):
-        source_pipeline = SOURCE_PIPELINE(
-            video_source=self.video_source,
-            video_width=self.video_width,
-            video_height=self.video_height,
-        )
+        source_pipeline = SOURCE_PIPELINE(video_source=self.video_source, 
+                                          video_width=self.video_width, video_height=self.video_height, 
+                                          frame_rate=self.frame_rate, sync=self.sync    
+    )
+        
         infer_pipeline = INFERENCE_PIPELINE(
             hef_path=self.hef_path,
             post_process_so=self.post_process_so,

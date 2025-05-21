@@ -11,10 +11,10 @@ import numpy as np
 import time
 gi.require_version('Gst', '1.0')
 from gi.repository import Gst, GLib, GObject
-from hailo_apps_infra.gstreamer.hailo_gstreamer.gstreamer_helper_pipelines import (
+from .gstreamer_helper_pipelines import (
     get_source_type,
 )
-from hailo_apps_infra.common.hailo_common.defines import (
+from hailo_core.hailo_common.defines import (
     HAILO_RGB_VIDEO_FORMAT,
     GST_AUTO_VIDEO_SINK,
     TAPPAS_POSTPROC_PATH_KEY,
@@ -26,8 +26,8 @@ from hailo_apps_infra.common.hailo_common.defines import (
     RPI_NAME_I,
     )
 
-from hailo_apps_infra.common.hailo_common.camera_utils import get_usb_video_devices
-from hailo_apps_infra.common.hailo_common.core import load_environment
+from hailo_core.hailo_common.camera_utils import get_usb_video_devices
+from hailo_core.hailo_common.core import load_environment
 
 
 try:

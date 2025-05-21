@@ -1,13 +1,19 @@
 import numpy as np
 import setproctitle
+from pathlib import Path
+import sys
+
+# Ensure hailo_core is importable from anywhere
+PROJECT_ROOT = Path(__file__).resolve().parents[2]  # ~/dev/hailo-apps-infra/hailo_apps_infra
+sys.path.insert(0, str(PROJECT_ROOT))
 
 # ─── Common Hailo helpers ────────────────────────────────────────────────────────
-from hailo_apps_infra.common.hailo_common.core import (
+from hailo_core.hailo_common.core import (
     get_default_parser,
     detect_hailo_arch,
 )
-from hailo_apps_infra.common.hailo_common.core import get_resource_path
-from hailo_apps_infra.common.hailo_common.defines import (
+from hailo_core.hailo_common.core import get_resource_path
+from hailo_core.hailo_common.defines import (
     SIMPLE_DETECTION_PIPELINE,
     RESOURCES_VIDEOS_DIR_NAME,
     RESOURCES_MODELS_DIR_NAME,
@@ -19,13 +25,13 @@ from hailo_apps_infra.common.hailo_common.defines import (
 )
 
 # ─── GStreamer routines (from your hailo_gstreamer package) ────────────────────
-from hailo_apps_infra.gstreamer.hailo_gstreamer.gstreamer_helper_pipelines import (
+from hailo_apps.hailo_gstreamer.gstreamer_helper_pipelines import (
     SOURCE_PIPELINE,
     INFERENCE_PIPELINE,
     USER_CALLBACK_PIPELINE,
     DISPLAY_PIPELINE,
 )
-from hailo_apps_infra.gstreamer.hailo_gstreamer.gstreamer_app import (
+from hailo_apps.hailo_gstreamer.gstreamer_app import (
     GStreamerApp,
     app_callback_class,
     dummy_callback,

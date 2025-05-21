@@ -1,13 +1,23 @@
 [project]
-name = "hailo-pipeline"
-version = "0.1.0"
-description = "Pipeline logic"
+name = "hailo-apps"
+version = "0.4.0"
+description = "GStreamer and pipeline support for Hailo"
 authors = [{ name = "Hailo" }]
-dependencies = []
+readme = "README.md"
+requires-python = ">=3.7"
+dependencies = [
+    "hailo_core @ file://../hailo_core"
+]
 
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = [
+    "hailo_pipelines",
+    "hailo_gstreamer"
+]
 
 [project.scripts]
 hailo-detect = "hailo_pipelines.detection_pipeline:main"
