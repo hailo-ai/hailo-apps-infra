@@ -36,4 +36,8 @@ hailo-simple-detect = "hailo_apps_infra.hailo_apps.hailo_pipelines.detection_pip
 include = ["hailo_apps_infra*"]
 
 [tool.setuptools.package-data]
-"*" = ["*"]
+"hailo_apps_infra.hailo_cpp_postprocess" = [
+  "meson.build",
+  "compile_postprocess.sh",
+  "cpp/**/*",
+]

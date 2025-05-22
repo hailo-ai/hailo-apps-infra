@@ -71,10 +71,16 @@ def post_install():
     print(f"Resources downloaded to {os.getenv(RESOURCES_PATH_KEY, RESOURCES_PATH_DEFAULT)}")
 
     print("⚙️ Compiling post-process...")
-    compile_postprocess(os.getenv(HAILO_APPS_INFRA_PATH_KEY, REPO_ROOT))
+    compile_postprocess()
 
     print("✅ Hailo Infra Post-instllation complete.")
 
-if __name__ == "__main__":
+def main():
+    """
+    Main function to run the post-installation script.
+    """
     post_install()
+
+if __name__ == "__main__":
+    main()
     # This script is intended to be run as a post-installation step
