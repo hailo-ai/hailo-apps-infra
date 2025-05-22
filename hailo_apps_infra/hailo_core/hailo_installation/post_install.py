@@ -73,7 +73,7 @@ def post_install():
     print("⚙️ Compiling post-process...")
     compile_postprocess(os.getenv(HAILO_APPS_INFRA_PATH_KEY, REPO_ROOT))
 
-    print("✅ Hailo Infra installation complete.")
+    print("✅ Hailo Infra Post-instllation complete.")
 
 if __name__ == "__main__":
     post_install()

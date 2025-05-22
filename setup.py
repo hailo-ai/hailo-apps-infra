@@ -14,7 +14,10 @@ apps_dir = os.path.join(root_dir, 'hailo_apps_infra', 'hailo_apps')
 class CustomInstallCommand(install):
     def run(self):
         # Run the regular installation
-        install.run(self)
+        super().run()
+
+        if len(sys.argv) < 2 or sys.argv[1] != "install":
+            return
 
         # Run your post_install logic here
         print("🚀 Running post-install hook...")
@@ -55,8 +58,8 @@ setup(
         "python-dotenv",
         "pyyaml",
         # first install the two local sub‐packages:
-        f"hailo-apps @ file://{apps_dir}",
-        f"hailo-core @ file://{core_dir}",
+        #f"hailo-apps @ file://{apps_dir}",
+        #f"hailo-core @ file://{core_dir}",
 
     ],
     python_requires=">=3.7",
@@ -66,6 +69,7 @@ setup(
     },
     entry_points={
         "console_scripts": {
+            "hailo-post-install = hailo_core.hailo_installation.post_install:main",
             "hailo-detect = hailo_apps_infra.hailo_apps.hailo_pipelines.detection_pipeline:main",
             "hailo-depth = hailo_apps_infra.hailo_apps.hailo_pipelines.depth_pipeline:main",
             "hailo-pose = hailo_apps_infra.pipelines.hailo_pipelines.pose_estimation_pipeline:main",
