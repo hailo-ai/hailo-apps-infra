@@ -37,4 +37,14 @@ source "${VENV_PATH}/bin/activate"
 echo "📦 Installing package (editable + post-install)…"
 pip install -e .
 
+echo "🔧 Running post-install script…"
+POST_INSTALL_SCRIPT="${SCRIPT_DIR}/hailo_apps_infra/hailo_core/hailo_installation/post_install.py"
+if [[ ! -f "$POST_INSTALL_SCRIPT" ]]; then
+  echo "❌ Could not find post-install script at $POST_INSTALL_SCRIPT"
+  exit 1
+fi
+
+# <-- add this line to execute it:
+python3 "$POST_INSTALL_SCRIPT"
+
 echo "✅ All done! Your package is now in '${VENV_NAME}'."

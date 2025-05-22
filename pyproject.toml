@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hailo-apps-infra"
+version = "0.4.0"
+description = "Infra package to install all modular Hailo apps"
+readme = "README.md"
+requires-python = ">=3.7"
+authors = [
+    {name = "Hailo"},
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "numpy<2.0.0",
+    "setproctitle",
+    "opencv-python",
+    "python-dotenv",
+    "pyyaml",
+]
+
+[project.scripts]
+hailo-post-install = "hailo_apps_infra.hailo_core.hailo_installation.post_install:main"
+hailo-run-post-install = "hailo_apps_infra.hailo_core.hailo_installation.post_install:main"
+hailo-detect = "hailo_apps_infra.hailo_apps.hailo_pipelines.detection_pipeline:main"
+hailo-depth = "hailo_apps_infra.hailo_apps.hailo_pipelines.depth_pipeline:main"
+hailo-pose = "hailo_apps_infra.hailo_apps.hailo_pipelines.pose_estimation_pipeline:main"
+hailo-seg = "hailo_apps_infra.hailo_apps.hailo_pipelines.instance_segmentation_pipeline:main"
+hailo-simple-detect = "hailo_apps_infra.hailo_apps.hailo_pipelines.detection_pipeline_simple:main"
+
+[tool.setuptools.packages.find]
+include = ["hailo_apps_infra*"]
+
+[tool.setuptools.package-data]
+"*" = ["*"]
