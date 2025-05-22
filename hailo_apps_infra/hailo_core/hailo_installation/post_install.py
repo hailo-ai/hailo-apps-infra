@@ -23,7 +23,6 @@ from hailo_core.hailo_common.defines import (
     RESOURCES_PATH_KEY,
     RESOURCES_PATH_DEFAULT,
     REPO_ROOT,
-    HAILO_APPS_INFRA_PATH_KEY,
     RESOURCES_GROUP_DEFAULT,
     DEFAULT_CONFIG_PATH,
 )
@@ -52,11 +51,17 @@ def post_install():
         type=str,
         default=RESOURCES_GROUP_DEFAULT,
         help="HailoRT version to install"
-    )    
+    )  
+    parser.add_argument(
+        "--dotenv",
+        type=str,
+        default=str(REPO_ROOT / ".env"),
+        help="Path to the .env file"
+    )  
     args = parser.parse_args()
-    handle_dot_env()  # this loads the .env file if it exists
+    handle_dot_env(args.dotenv)  # this loads the .env file if it exists
     config = load_and_validate_config(args.config)
-    set_environment_vars(config)  # this sets env vars like HAILO_ARCH
+    set_environment_vars(config,args.dotenv)  # this sets env vars like HAILO_ARCH
 
     load_environment()  # this sets env vars like HAILO_ARCH
 
