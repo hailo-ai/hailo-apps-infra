@@ -4,8 +4,6 @@ Core helpers: arch detection, parser, buffer utils.
 import os
 from pathlib import Path
 import argparse
-import gi; gi.require_version('Gst', '1.0')
-from gi.repository import Gst
 from dotenv import load_dotenv
 
 from .installation_utils import detect_hailo_arch
@@ -79,20 +77,6 @@ def load_environment(env_file=DEFAULT_DOTENV_PATH, required_vars=None) -> bool:
         return False
     print("✅ All required environment variables loaded.")
     return True    
-
-def get_caps_from_pad(pad: Gst.Pad):
-    caps = pad.get_current_caps()
-    if caps:
-        # We can now extract information from the caps
-        structure = caps.get_structure(0)
-        if structure:
-            # Extracting some common properties
-            format = structure.get_value('format')
-            width = structure.get_value('width')
-            height = structure.get_value('height')
-            return format, width, height
-    else:
-        return None, None, None
   
 def get_default_parser():
     parser = argparse.ArgumentParser(description="Hailo App Help")
