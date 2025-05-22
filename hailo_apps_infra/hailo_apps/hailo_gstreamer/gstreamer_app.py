@@ -14,21 +14,39 @@ from gi.repository import Gst, GLib, GObject
 from .gstreamer_helper_pipelines import (
     get_source_type,
 )
-from hailo_core.hailo_common.defines import (
-    HAILO_RGB_VIDEO_FORMAT,
-    GST_AUTO_VIDEO_SINK,
-    TAPPAS_POSTPROC_PATH_KEY,
-    RESOURCES_PATH_KEY,
-    RESOURCES_ROOT_PATH_DEFAULT,
-    RESOURCES_VIDEOS_DIR_NAME,
-    BASIC_PIPELINES_VIDEO_EXAMPLE_NAME,
-    USB_CAMERA,
-    RPI_NAME_I,
-    )
 
-from hailo_core.hailo_common.camera_utils import get_usb_video_devices
-from hailo_core.hailo_common.core import load_environment
-
+try:
+    from hailo_core.hailo_common.defines import (
+        HAILO_RGB_VIDEO_FORMAT,
+        GST_AUTO_VIDEO_SINK,
+        TAPPAS_POSTPROC_PATH_KEY,
+        RESOURCES_PATH_KEY,
+        RESOURCES_ROOT_PATH_DEFAULT,
+        RESOURCES_VIDEOS_DIR_NAME,
+        BASIC_PIPELINES_VIDEO_EXAMPLE_NAME,
+        USB_CAMERA,
+        RPI_NAME_I,
+        )
+except ImportError:
+    from hailo_apps_infra.hailo_core.hailo_common.defines import (
+        HAILO_RGB_VIDEO_FORMAT,
+        GST_AUTO_VIDEO_SINK,
+        TAPPAS_POSTPROC_PATH_KEY,
+        RESOURCES_PATH_KEY,
+        RESOURCES_ROOT_PATH_DEFAULT,
+        RESOURCES_VIDEOS_DIR_NAME,
+        BASIC_PIPELINES_VIDEO_EXAMPLE_NAME,
+        USB_CAMERA,
+        RPI_NAME_I,
+        )
+try:    
+    from hailo_core.hailo_common.camera_utils import get_usb_video_devices
+except ImportError:
+    from hailo_apps_infra.hailo_core.hailo_common.camera_utils import get_usb_video_devices
+try:
+    from hailo_core.hailo_common.core import load_environment
+except ImportError:
+    from hailo_apps_infra.hailo_core.hailo_common.core import load_environment
 
 try:
     from picamera2 import Picamera2
@@ -95,7 +113,8 @@ class GStreamerApp:
         signal.signal(signal.SIGINT, self.shutdown)
 
         # Load environment variables
-        load_environment()
+        x=os.environ.get("HAILO_ENV_FILE")
+        load_environment(x)
 
         # Initialize variables
         tappas_post_process_dir = Path(os.environ.get(TAPPAS_POSTPROC_PATH_KEY, ''))

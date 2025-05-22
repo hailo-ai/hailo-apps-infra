@@ -1,7 +1,8 @@
 import os
-
-from hailo_core.hailo_common.defines import TAPPAS_POSTPROC_PATH_KEY
-
+try:
+    from hailo_core.hailo_common.defines import TAPPAS_POSTPROC_PATH_KEY
+except ImportError:
+    from hailo_apps_infra.hailo_core.hailo_common.defines import TAPPAS_POSTPROC_PATH_KEY
 def get_source_type(input_source):
     # This function will return the source type based on the input source
     # return values can be "file", "mipi" or "usb"
