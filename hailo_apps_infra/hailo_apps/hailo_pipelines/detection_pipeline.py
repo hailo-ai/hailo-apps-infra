@@ -10,12 +10,22 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 
 # ─── Common Hailo helpers ────────────────────────────────────────────────────────
-from hailo_core.hailo_common.installation_utils import detect_hailo_arch
-from hailo_core.hailo_common.core import (
+try:
+    from hailo_core.hailo_common.installation_utils import detect_hailo_arch
+except ImportError:
+    from hailo_apps_infra.hailo_core.hailo_common.installation_utils import detect_hailo_arch
+try:
+    from hailo_core.hailo_common.core import (
     get_default_parser,
     get_resource_path,
 )
-from hailo_core.hailo_common.defines import (
+except ImportError:
+    from hailo_apps_infra.hailo_core.hailo_common.core import (
+    get_default_parser,
+    get_resource_path,
+)
+try:
+    from hailo_core.hailo_common.defines import (
     DETECTION_APP_TITLE,
     DETECTION_PIPELINE,
     RESOURCES_MODELS_DIR_NAME,
@@ -23,23 +33,49 @@ from hailo_core.hailo_common.defines import (
     DETECTION_POSTPROCESS_SO_FILENAME,
     DETECTION_POSTPROCESS_FUNCTION,
 )
+except ImportError:
+    from hailo_apps_infra.hailo_core.hailo_common.defines import (
+    DETECTION_APP_TITLE,
+    DETECTION_PIPELINE,
+    RESOURCES_MODELS_DIR_NAME,
+    RESOURCES_SO_DIR_NAME,
+    DETECTION_POSTPROCESS_SO_FILENAME,
+    DETECTION_POSTPROCESS_FUNCTION,
+    )
 
 # ─── GStreamer routines (from your hailo_gstreamer package) ────────────────────
-from hailo_apps.hailo_gstreamer.gstreamer_helper_pipelines import (
-    QUEUE,
-    SOURCE_PIPELINE,
-    INFERENCE_PIPELINE,
-    INFERENCE_PIPELINE_WRAPPER,
-    TRACKER_PIPELINE,
-    USER_CALLBACK_PIPELINE,
-    DISPLAY_PIPELINE,
-)
-from hailo_apps.hailo_gstreamer.gstreamer_app import (
-    GStreamerApp,
-    app_callback_class,
-    dummy_callback,
-)
-
+try:
+    from hailo_apps.hailo_gstreamer.gstreamer_helper_pipelines import (
+        QUEUE,
+        SOURCE_PIPELINE,
+        INFERENCE_PIPELINE,
+        INFERENCE_PIPELINE_WRAPPER,
+        TRACKER_PIPELINE,
+        USER_CALLBACK_PIPELINE,
+        DISPLAY_PIPELINE,
+    )
+except ImportError:
+    from hailo_apps_infra.hailo_apps.hailo_gstreamer.gstreamer_helper_pipelines import (
+        QUEUE,
+        SOURCE_PIPELINE,
+        INFERENCE_PIPELINE,
+        INFERENCE_PIPELINE_WRAPPER,
+        TRACKER_PIPELINE,
+        USER_CALLBACK_PIPELINE,
+        DISPLAY_PIPELINE,
+    )
+try:
+    from hailo_apps.hailo_gstreamer.gstreamer_app import (
+        GStreamerApp,
+        app_callback_class,
+        dummy_callback,
+    )
+except ImportError:
+    from hailo_apps_infra.hailo_apps.hailo_gstreamer.gstreamer_app import (
+        GStreamerApp,
+        app_callback_class,
+        dummy_callback,
+    )
 
 # -----------------------------------------------------------------------------------------------
 # User Gstreamer Application

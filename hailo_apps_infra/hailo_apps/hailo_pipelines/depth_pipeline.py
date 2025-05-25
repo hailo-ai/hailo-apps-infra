@@ -7,28 +7,61 @@ import gi
 gi.require_version('Gst', '1.0')
 import setproctitle
 
-from hailo_apps.hailo_gstreamer.gstreamer_app import (
-    app_callback_class,
-    dummy_callback,
-    GStreamerApp,
-)
-from hailo_apps.hailo_gstreamer.gstreamer_helper_pipelines import (
-    DISPLAY_PIPELINE,
-    INFERENCE_PIPELINE,
-    INFERENCE_PIPELINE_WRAPPER,
-    SOURCE_PIPELINE,
-    USER_CALLBACK_PIPELINE,
-)
-from hailo_core.hailo_common.core import get_default_parser, get_resource_path
-from hailo_core.hailo_common.installation_utils import detect_hailo_arch
-from hailo_core.hailo_common.defines import (
-    DEPTH_POSTPROCESS_FUNCTION,
-    RESOURCES_SO_DIR_NAME,
-    DEPTH_POSTPROCESS_SO_FILENAME,
-    RESOURCES_MODELS_DIR_NAME,
-    DEPTH_PIPELINE,
-    DEPTH_APP_TITLE,
-)
+try:
+    from hailo_apps.hailo_gstreamer.gstreamer_app import (
+        app_callback_class,
+        dummy_callback,
+        GStreamerApp,
+    )
+except ImportError:
+    from hailo_apps_infra.hailo_apps.hailo_gstreamer.gstreamer_app import (
+        app_callback_class,
+        dummy_callback,
+        GStreamerApp,
+    )
+try:
+    from hailo_apps.hailo_gstreamer.gstreamer_helper_pipelines import (
+        DISPLAY_PIPELINE,
+        INFERENCE_PIPELINE,
+        INFERENCE_PIPELINE_WRAPPER,
+        SOURCE_PIPELINE,
+        USER_CALLBACK_PIPELINE,
+    )
+except ImportError:
+    from hailo_apps_infra.hailo_apps.hailo_gstreamer.gstreamer_helper_pipelines import (
+        DISPLAY_PIPELINE,
+        INFERENCE_PIPELINE,
+        INFERENCE_PIPELINE_WRAPPER,
+        SOURCE_PIPELINE,
+        USER_CALLBACK_PIPELINE,
+    )
+try:
+    from hailo_core.hailo_common.core import get_default_parser, get_resource_path
+except ImportError:
+    from hailo_apps_infra.hailo_core.hailo_common.core import get_default_parser, get_resource_path
+try:
+    from hailo_core.hailo_common.installation_utils import detect_hailo_arch
+except ImportError:
+    from hailo_apps_infra.hailo_core.hailo_common.installation_utils import detect_hailo_arch
+try:
+    from hailo_core.hailo_common.defines import (
+        DEPTH_POSTPROCESS_FUNCTION,
+        RESOURCES_SO_DIR_NAME,
+        DEPTH_POSTPROCESS_SO_FILENAME,
+        RESOURCES_MODELS_DIR_NAME,
+        DEPTH_PIPELINE,
+        DEPTH_APP_TITLE,
+    )
+except ImportError:
+    from hailo_apps_infra.hailo_core.hailo_common.defines import (
+        DEPTH_POSTPROCESS_FUNCTION,
+        RESOURCES_SO_DIR_NAME,
+        DEPTH_POSTPROCESS_SO_FILENAME,
+        RESOURCES_MODELS_DIR_NAME,
+        DEPTH_PIPELINE,
+        DEPTH_APP_TITLE,
+    )
+
 # User Gstreamer Application: This class inherits from the common.GStreamerApp class
 class GStreamerDepthApp(GStreamerApp):
     def __init__(self, app_callback, user_data, parser=None):

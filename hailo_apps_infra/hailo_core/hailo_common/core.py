@@ -48,20 +48,23 @@ def load_environment(env_file=DEFAULT_DOTENV_PATH, required_vars=None) -> bool:
         env_file (str): Path to the .env file.
         required_vars (list): List of required variable names to validate.
     """
+    if env_file is None:
+        env_file = DEFAULT_DOTENV_PATH
     load_dotenv(dotenv_path=env_file)
 
     # check if the virtual env is activated and has all dependencies installed
     print(f"Loading environment variables from {env_file}...")
-    if not os.path.exists(env_file):
+    env_path = Path(env_file)
+    if not os.path.exists(env_path):
         print(f"⚠️ .env file not found: {env_file}")
         return
-    if not os.access(env_file, os.R_OK):
+    if not os.access(env_path, os.R_OK):
         print(f"⚠️ .env file not readable: {env_file}")
         return
-    if not os.access(env_file, os.W_OK):
+    if not os.access(env_path, os.W_OK):
         print(f"⚠️ .env file not writable: {env_file}")
         return
-    if not os.access(env_file, os.F_OK):
+    if not os.access(env_path, os.F_OK):
         print(f"⚠️ .env file not found: {env_file}")
         return
 

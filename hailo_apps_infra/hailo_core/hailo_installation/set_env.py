@@ -5,7 +5,7 @@ import logging
 from pathlib import Path
 
 # Ensure hailo_core is importable from anywhere
-PROJECT_ROOT = Path(__file__).resolve().parents[2]  # ~/dev/hailo-apps-infra/hailo_apps_infra
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from hailo_core.hailo_common.installation_utils import (
@@ -16,33 +16,35 @@ from hailo_core.hailo_common.installation_utils import (
 from hailo_core.hailo_common.config_utils import load_and_validate_config
 from hailo_core.hailo_common.defines import *
 
-ENV_PATH = Path(DEFAULT_DOTENV_PATH)
 logger = logging.getLogger("env-setup")
 
 
-def handle_dot_env() -> None:
-    if not ENV_PATH.is_file():
-        print(f"🔧 Creating .env file at {ENV_PATH}")
-        ENV_PATH.touch()
-    os.chmod(ENV_PATH, 0o666)
+def handle_dot_env(env_path: Path = None) -> Path:
+    env_path = env_path or Path(DEFAULT_DOTENV_PATH)
+    if not Path(env_path).is_file():
+        print(f"🔧 Creating .env file at {env_path}")
+        env_path.touch()
+    os.chmod(env_path, 0o666)
+    return env_path
 
 
-def _persist_env_vars(env_vars: dict) -> None:
-    if ENV_PATH.exists() and not os.access(ENV_PATH, os.W_OK):
+def _persist_env_vars(env_vars: dict, env_path: Path) -> None:
+    if Path(env_path).exists() and not os.access(env_path, os.W_OK):
         print("⚠️ .env not writable — fixing permissions...")
         try:
-            ENV_PATH.chmod(0o666)
+            env_path.chmod(0o666)
         except Exception as e:
             print(f"❌ Failed to fix .env perms: {e}")
             sys.exit(1)
-    with open(ENV_PATH, 'w') as f:
+    with open(env_path, 'w') as f:
         for key, value in env_vars.items():
             if value is not None:
                 f.write(f"{key}={value}\n")
-    print(f"✅ Persisted environment variables to {ENV_PATH}")
+    print(f"✅ Persisted environment variables to {env_path}")
 
 
-def set_environment_vars(config):
+
+def set_environment_vars(config, env_path: Path = None) -> None:
     host_arch = config.get(HOST_ARCH_KEY, HOST_ARCH_DEFAULT)
     hailo_arch = config.get(HAILO_ARCH_KEY, HAILO_ARCH_DEFAULT)
     resources_path = config.get(RESOURCES_PATH_KEY, DEFAULT_RESOURCES_SYMLINK_PATH)
@@ -85,7 +87,7 @@ def set_environment_vars(config):
     }
 
     os.environ.update({k: v for k, v in env_vars.items() if v is not None})
-    _persist_env_vars(env_vars)
+    _persist_env_vars(env_vars, env_path)
 
 
 if __name__ == "__main__":
@@ -96,7 +98,13 @@ if __name__ == "__main__":
         default=DEFAULT_CONFIG_PATH,
         help="Path to the config file (YAML format)."
     )
+    argparse.add_argument(
+        "--env-path",
+        type=str,
+        default=DEFAULT_DOTENV_PATH,
+        help="Path to the .env file."
+    )
     logging.basicConfig(level=logging.INFO)
-    handle_dot_env()
+    handle_dot_env(env_path=Path(argparse.parse_args().env_path))
     config = load_and_validate_config(argparse.parse_args().config)
-    set_environment_vars(config)
+    set_environment_vars(config, env_path=Path(argparse.parse_args().env_path))
