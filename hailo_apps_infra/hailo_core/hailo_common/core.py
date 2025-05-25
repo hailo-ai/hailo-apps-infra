@@ -144,7 +144,7 @@ def get_resource_path(pipeline_name: str,
         model: specific filename (without extension for models)
     """
     # 1) Base resources root
-    root = Path(os.getenv(RESOURCES_PATH_KEY, RESOURCES_ROOT_PATH_DEFAULT))
+    root = Path(RESOURCES_ROOT_PATH_DEFAULT)
 
     # 2) Hailo architecture (for model directory)
     arch = os.getenv(HAILO_ARCH_KEY, detect_hailo_arch())
