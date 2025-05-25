@@ -403,3 +403,73 @@ def CROPPER_PIPELINE(
         # aggregator output
         f'{name}_agg. ! {QUEUE(name=f"{name}_output_q")} '
     )
+
+def VIDEO_STREAM_PIPELINE(port=5004, host='127.0.0.1', bitrate=2048):
+     """
+     Creates a GStreamer pipeline string portion for encoding and streaming video over UDP.
+     Args:
+         port (int): UDP port number.
+         host (str): Destination IP address.
+         bitrate (int): Target bitrate for x264enc in kbps.
+     Returns:
+         str: GStreamer pipeline string fragment.
+     """
+     # Using x264enc with zerolatency tune. Adjust encoder/params as needed.
+     # Hardware encoders (e.g., omxh264enc, v4l2h264enc, vaapih264enc) are preferable on embedded systems.
+     # Example using omxh264enc (Raspberry Pi):
+     # encoder = f'omxh264enc target-bitrate={bitrate*1000} control-rate=variable'
+     # Example using vaapih264enc (Intel):
+     # encoder = f'vaapih264enc rate-control=cbr bitrate={bitrate}' # May need caps negotiation
+     encoder = f'x264enc tune=zerolatency bitrate={bitrate} speed-preset=ultrafast'
+     return (f"videoconvert ! video/x-raw,format=I420 ! " # x264enc often prefers I420
+             f"{encoder} ! video/x-h264,profile=baseline ! " # Add profile for better compatibility potentially
+             f"rtph264pay config-interval=1 pt=96 ! "
+             f"udpsink host={host} port={port} sync=false async=false")
+
+def VIDEO_SHMSINK_PIPELINE(socket_path=None):
+    """
+    Creates a GStreamer pipeline string portion for shared memory video transfer using the shm plugins.
+    Shmsink creates a shared memory segment and socket.
+    Args:
+        socket_path (str): socket path.
+    Returns:
+        str: GStreamer pipeline string fragment.
+    """
+    return (f"videoconvert ! video/x-raw,format=RGB,width=640,height=480,framerate=30/1 ! shmsink socket-path={socket_path}")
+
+def VIDEO_SHMSRC_PIPELINE(socket_path=None):
+    """
+    Creates a GStreamer pipeline string portion for shared memory video transfer using the shm plugins.
+    Shmsrc connects to that segment and reads video frames.
+    Args:
+        socket_path (str): socket path.
+    Returns:
+        str: GStreamer pipeline string fragment.
+    """
+    return (f"shmsrc socket-path={socket_path} do-timestamp=true ! video/x-raw,format=RGB,width=640,height=480,framerate=30/1 ! videoconvert ! autovideosink")
+
+def UI_APPSINK_PIPELINE(name='ui_sink', sync='true', show_fps='false'):
+    """
+    Creates a GStreamer pipeline string for the UI appsink element.
+    This pipeline is used to send video frames to a UI application.
+    And convert the video format to JPEG for display.
+    It includes the hailooverlay plugin to draw bounding boxes and labels on the video.
+    Args:
+        name (str, optional): The prefix name for the pipeline elements. Defaults to 'ui_sink'.
+        sync (str, optional): The sync property for the appsink. Defaults to 'true'.
+    Returns:
+        str: A string representing the GStreamer pipeline for the UI appsink element.
+    """
+    # Construct the UI appsink pipeline string
+    ui_appsink_pipeline = (
+        f'{OVERLAY_PIPELINE(name=f"{name}_overlay")} ! '
+        f'{QUEUE(name=f"{name}_videoconvert_q")} ! '
+        # f'videoconvert name={name}_videoconvert n-threads=2 qos=false ! '
+        # f'encodebin name={name}_encodebin ! '
+        # f'jpegenc name={name}_jpegenc quality=100 ! '
+        # f'image/jpeg ! '
+        # f'{QUEUE(name=f"{name}_q")} ! '
+        f'video/x-raw, format=RGB ! '
+        f'appsink name={name} sync={sync} drop=true emit-signals=true '
+    )
+    return ui_appsink_pipeline

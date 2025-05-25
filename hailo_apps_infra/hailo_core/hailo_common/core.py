@@ -4,6 +4,7 @@ Core helpers: arch detection, parser, buffer utils.
 import os
 from pathlib import Path
 import argparse
+import queue
 from dotenv import load_dotenv
 
 from .installation_utils import detect_hailo_arch
@@ -32,7 +33,8 @@ from .defines import (
     INSTANCE_SEGMENTATION_MODEL_NAME_H8L,
     POSE_ESTIMATION_MODEL_NAME_H8,
     POSE_ESTIMATION_MODEL_NAME_H8L,
-    HAILO_FILE_EXTENSION
+    HAILO_FILE_EXTENSION,
+    RESOURCES_JSON_DIR_NAME,
 )
 
 
@@ -153,6 +155,8 @@ def get_resource_path(pipeline_name: str,
         return (root / RESOURCES_SO_DIR_NAME / model)
     if resource_type == RESOURCES_VIDEOS_DIR_NAME and model:
         return (root / RESOURCES_VIDEOS_DIR_NAME / model)
+    if resource_type == RESOURCES_JSON_DIR_NAME and model:
+        return (root / RESOURCES_JSON_DIR_NAME / model)
 
     # 4) Models: append architecture and .hef extension
     if resource_type == RESOURCES_MODELS_DIR_NAME:
@@ -166,3 +170,8 @@ def get_resource_path(pipeline_name: str,
 
     return None
 
+class FIFODropQueue(queue.Queue):  # helper class implementing a FIFO queue that drops the oldest item when full (leaky queue)
+    def put(self, item, block=False, timeout=None):
+        if self.full():
+            self.get_nowait()  # remove the oldest frame
+        super().put(item, block, timeout)

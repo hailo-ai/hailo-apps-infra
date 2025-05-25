@@ -9,6 +9,7 @@ import sys
 import cv2
 import numpy as np
 import time
+import queue
 gi.require_version('Gst', '1.0')
 from gi.repository import Gst, GLib, GObject
 from .gstreamer_helper_pipelines import (
@@ -28,7 +29,7 @@ from hailo_core.hailo_common.defines import (
 
 from hailo_core.hailo_common.camera_utils import get_usb_video_devices
 from hailo_core.hailo_common.core import load_environment
-
+from hailo_core.hailo_common.buffer_utils import get_caps_from_pad, get_numpy_from_buffer
 
 try:
     from picamera2 import Picamera2
@@ -142,6 +143,26 @@ class GStreamerApp:
 
         if self.options_menu.dump_dot:
             os.environ["GST_DEBUG_DUMP_DOT_DIR"] = os.getcwd()
+        
+        self.webrtc_frames_queue = None  # for appsink & GUI mode
+
+    def appsink_callback(self, appsink):
+        """
+        Callback function for the appsink element in the GStreamer pipeline.
+        This function is called when a new sample (frame) is available in the appsink (output from the pipeline).
+        """
+        sample = appsink.emit('pull-sample')
+        if sample:
+            buffer = sample.get_buffer()
+            if buffer:
+                format, width, height = get_caps_from_pad(appsink.get_static_pad("sink"))
+                frame = get_numpy_from_buffer(buffer, format, width, height)
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # convert from BGR to RGB
+                try:
+                    self.webrtc_frames_queue.put(frame)  # Add the frame to the queue (non-blocking)
+                except queue.Full:
+                    print("Frame queue is full. Dropping frame.")  # Drop the frame if the queue is full
+        return Gst.FlowReturn.OK
 
     def on_fps_measurement(self, sink, fps, droprate, avgfps):
         print(f"FPS: {fps:.2f}, Droprate: {droprate:.2f}, Avg FPS: {avgfps:.2f}")
@@ -389,6 +410,8 @@ def picamera_thread(pipeline, video_width, video_height, video_format, picamera_
             buffer.duration = buffer_duration
             # Push the buffer to appsrc
             ret = appsrc.emit('push-buffer', buffer)
+            if ret == Gst.FlowReturn.FLUSHING:
+                break
             if ret != Gst.FlowReturn.OK:
                 print("Failed to push buffer:", ret)
                 break
