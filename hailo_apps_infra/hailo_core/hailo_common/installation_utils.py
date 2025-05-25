@@ -168,16 +168,33 @@ def auto_detect_hailort_version() -> str:
         print("⚠ Could not detect HailoRT version, please install HailoRT.")
         return None
 
-
+def auto_detect_pkg_config(pkg_name: str) -> str:
+    """
+    Automatically detect the installed package using pkg-config.
+    Args:
+        pkg_name (str): The name of the package to detect.
+    Returns:
+        str: The detected package version or an empty string if not found.
+    """
+    try:
+        version = subprocess.check_output(
+            ["pkg-config", "--modversion", pkg_name],
+            stderr=subprocess.DEVNULL,
+            text=True
+        )
+        return version.strip()
+    except subprocess.CalledProcessError:
+        return ""
+    
 def auto_detect_tappas_variant() -> str:
     """
     Automatically detect the TAPPAS variant based on installed packages.
     Returns:
         str: The detected TAPPAS variant.
     """
-    if detect_pkg_installed(HAILO_TAPPAS):
+    if detect_pkg_installed(HAILO_TAPPAS) or auto_detect_pkg_config(HAILO_TAPPAS):
         return HAILO_TAPPAS
-    elif detect_pkg_installed(HAILO_TAPPAS_CORE):
+    elif detect_pkg_installed(HAILO_TAPPAS_CORE) or auto_detect_pkg_config(HAILO_TAPPAS_CORE):
         return HAILO_TAPPAS_CORE
     else:
         print("⚠ Could not detect TAPPAS variant, please install TAPPAS or TAPPAS-CORE.")
