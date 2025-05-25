@@ -20,7 +20,7 @@ logger = logging.getLogger("env-setup")
 
 
 def handle_dot_env(env_path: Path = None) -> Path:
-    env_path = env_path or Path(DEFAULT_DOTENV_PATH)
+    env_path = Path(env_path) or Path(DEFAULT_DOTENV_PATH)
     if not Path(env_path).is_file():
         print(f"🔧 Creating .env file at {env_path}")
         env_path.touch()
