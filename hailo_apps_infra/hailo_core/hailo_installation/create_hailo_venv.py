@@ -75,7 +75,6 @@ def create_hailo_virtualenv(virtual_env_name: str = VIRTUAL_ENV_NAME_DEFAULT,tap
     venv_path = Path(virtual_env_name).resolve()
     if is_virtualenv(venv_path):
         remove_virtualenv(venv_path)
-    print(auto_detect_tappas_variant())
 
     if tappas_version == AUTO_DETECT or tappas_version is None:
         tappas_version = auto_detect_tappas_version(auto_detect_tappas_variant())

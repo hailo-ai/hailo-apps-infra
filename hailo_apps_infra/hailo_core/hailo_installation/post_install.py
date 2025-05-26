@@ -3,6 +3,7 @@ import argparse
 from pathlib import Path
 import sys
 import os
+import shutil
 
 # Ensure hailo_core is importable from anywhere
 PROJECT_ROOT = Path(__file__).resolve().parents[2]  # ~/dev/hailo-apps-infra/hailo_apps_infra
@@ -68,12 +69,18 @@ def post_install():
     setup_resource_dirs()
     print("✅ Resource directories created successfully.")
 
-    print(f"🔗 Linking resources directory to {os.getenv(RESOURCES_PATH_KEY, RESOURCES_PATH_DEFAULT)}...")
-    create_symlink(RESOURCES_ROOT_PATH_DEFAULT, os.getenv(RESOURCES_PATH_KEY, RESOURCES_PATH_DEFAULT))
+    # Make sure the resources directory doesnt exist before creating a symlink
+    resources_path = Path(os.getenv(RESOURCES_PATH_KEY, RESOURCES_PATH_DEFAULT))
+    if resources_path.exists():
+        print(f"⚠️ Warning: {resources_path} already exists. Removing it...")
+        shutil.rmtree(resources_path)
+    # Create symlink for resources directory
+    print(f"🔗 Linking resources directory to {resources_path}...")
+    create_symlink(RESOURCES_ROOT_PATH_DEFAULT, resources_path)
 
     print("⬇️ Downloading resources...")
     download_resources(group=args.group)
-    print(f"Resources downloaded to {os.getenv(RESOURCES_PATH_KEY, RESOURCES_PATH_DEFAULT)}")
+    print(f"Resources downloaded to {resources_path}")
 
     print("⚙️ Compiling post-process...")
     compile_postprocess()

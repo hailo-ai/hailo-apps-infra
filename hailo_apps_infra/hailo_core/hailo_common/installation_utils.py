@@ -29,6 +29,36 @@ from .defines import (
 )
 #logger = __import__('logging').getLogger("hailo_install")
 
+def detect_pkg_config_version(pkg_name: str) -> str:
+    """
+    Get the version of a package using pkg-config.
+    Returns an empty string if the package is not found.
+    """
+    try:
+        version = subprocess.check_output(
+            ["pkg-config", "--modversion", pkg_name],
+            stderr=subprocess.DEVNULL,
+            text=True
+        )
+        return version.strip()
+    except subprocess.CalledProcessError:
+        return ""
+
+def auto_detect_pkg_config(pkg_name: str) -> bool:
+    """
+    Automatically detect the version of a package using pkg-config.
+    Returns the version if found, otherwise returns an empty string.
+    """
+    try:
+        version = subprocess.check_output(
+            ["pkg-config", "--exists", pkg_name],
+            stderr=subprocess.DEVNULL,
+            text=True
+        )
+        return True
+    except subprocess.CalledProcessError:
+        return False
+
 def detect_system_pkg_version(pkg_name: str) -> str:
     """
     Get the installed version of a system package via dpkg-query.
@@ -167,25 +197,6 @@ def auto_detect_hailort_version() -> str:
     else:
         print("⚠ Could not detect HailoRT version, please install HailoRT.")
         return None
-
-
-def auto_detect_pkg_config(pkg_name: str) -> str:
-    """
-    Automatically detect the installed package using pkg-config.
-    Args:
-        pkg_name (str): The name of the package to detect.
-    Returns:
-        str: The detected package version or an empty string if not found.
-    """
-    try:
-        version = subprocess.check_output(
-            ["pkg-config", "--modversion", pkg_name],
-            stderr=subprocess.DEVNULL,
-            text=True
-        )
-        return version.strip()
-    except subprocess.CalledProcessError:
-        return ""
     
 def auto_detect_tappas_variant() -> str:
     """
@@ -229,9 +240,9 @@ def auto_detect_tappas_version(tappas_variant: str) -> str:
         str: The detected TAPPAS version.
     """
     if tappas_variant == HAILO_TAPPAS:
-        return detect_system_pkg_version(HAILO_TAPPAS)
+        return detect_pkg_config_version(HAILO_TAPPAS)
     elif tappas_variant == HAILO_TAPPAS_CORE:
-        return detect_system_pkg_version(HAILO_TAPPAS_CORE)
+        return detect_pkg_config_version(HAILO_TAPPAS_CORE)
     else:
         print("⚠ Could not detect TAPPAS version.")
         return None
