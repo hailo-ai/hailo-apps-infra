@@ -40,6 +40,8 @@ from hailo_core.hailo_common.defines import (
         RESOURCES_VIDEOS_DIR_NAME,
         HAILO_FILE_EXTENSION,
         RESOURCES_GROUP_ALL,
+        JSON_FILE_EXTENSION,
+        RESOURCES_JSON_DIR_NAME,
     )
 
 
@@ -123,9 +125,12 @@ def download_resources(group: str = None,
                     name = Path(url).stem
                     dest = resource_root / RESOURCES_MODELS_DIR_NAME / hailo_arch / f"{name}{HAILO_FILE_EXTENSION}"
                 else:
-                    # video URL
-                    filename = Path(url).name
-                    dest = resource_root / RESOURCES_VIDEOS_DIR_NAME / filename
+                    if ext == JSON_FILE_EXTENSION:  # JSON file URL
+                        filename = Path(url).name
+                        dest = resource_root / RESOURCES_JSON_DIR_NAME / filename
+                    else:  # video URL
+                        filename = Path(url).name
+                        dest = resource_root / RESOURCES_VIDEOS_DIR_NAME / filename
             else:
                 # bare model name → construct URL
                 name = entry

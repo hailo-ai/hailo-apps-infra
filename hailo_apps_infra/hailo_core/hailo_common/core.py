@@ -35,10 +35,15 @@ from .defines import (
     POSE_ESTIMATION_MODEL_NAME_H8L,
     HAILO_FILE_EXTENSION,
     RESOURCES_JSON_DIR_NAME,
+    FACE_DETECTION_PIPELINE,
+    FACE_DETECTION_MODEL_NAME_H8,
+    FACE_DETECTION_MODEL_NAME_H8L,
+    FACE_RECOGNITION_PIPELINE,
+    FACE_RECOGNITION_MODEL_NAME_H8,
+    FACE_RECOGNITION_MODEL_NAME_H8L,
+    FACE_RECON_DIR_NAME,
+    RESOURCES_PHOTOS_DIR_NAME,
 )
-
-
-
 
 def load_environment(env_file=DEFAULT_DOTENV_PATH, required_vars=None) -> bool:
     """
@@ -128,10 +133,11 @@ def get_model_name(pipeline_name: str, arch: str) -> str:
         DETECTION_PIPELINE: DETECTION_MODEL_NAME_H8  if arch==HAILO8_ARCH  else DETECTION_MODEL_NAME_H8L,
         INSTANCE_SEGMENTATION_PIPELINE: INSTANCE_SEGMENTATION_MODEL_NAME_H8 if arch==HAILO8_ARCH else INSTANCE_SEGMENTATION_MODEL_NAME_H8L,
         POSE_ESTIMATION_PIPELINE: POSE_ESTIMATION_MODEL_NAME_H8 if arch==HAILO8_ARCH else POSE_ESTIMATION_MODEL_NAME_H8L,
+        FACE_DETECTION_PIPELINE: FACE_DETECTION_MODEL_NAME_H8 if arch==HAILO8_ARCH else FACE_DETECTION_MODEL_NAME_H8L,
+        FACE_RECOGNITION_PIPELINE: FACE_RECOGNITION_MODEL_NAME_H8 if arch==HAILO8_ARCH else FACE_RECOGNITION_MODEL_NAME_H8L
     }
     return pipeline_map[pipeline_name]
     
-
 def get_resource_path(pipeline_name: str,
                       resource_type: str,
                       model: str = None
@@ -146,7 +152,7 @@ def get_resource_path(pipeline_name: str,
         model: specific filename (without extension for models)
     """
     # 1) Base resources root
-    root = Path(os.getenv(RESOURCES_PATH_KEY, RESOURCES_ROOT_PATH_DEFAULT))
+    root = Path(RESOURCES_ROOT_PATH_DEFAULT)
 
     # 2) Hailo architecture (for model directory)
     arch = os.getenv(HAILO_ARCH_KEY, detect_hailo_arch())
@@ -158,8 +164,12 @@ def get_resource_path(pipeline_name: str,
         return (root / RESOURCES_SO_DIR_NAME / model)
     if resource_type == RESOURCES_VIDEOS_DIR_NAME and model:
         return (root / RESOURCES_VIDEOS_DIR_NAME / model)
+    if resource_type == RESOURCES_PHOTOS_DIR_NAME and model:
+        return (root / RESOURCES_PHOTOS_DIR_NAME / model)
     if resource_type == RESOURCES_JSON_DIR_NAME and model:
         return (root / RESOURCES_JSON_DIR_NAME / model)
+    if resource_type == FACE_RECON_DIR_NAME and model:
+        return (root / FACE_RECON_DIR_NAME / model)
 
     # 4) Models: append architecture and .hef extension
     if resource_type == RESOURCES_MODELS_DIR_NAME:

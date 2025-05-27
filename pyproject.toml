@@ -21,6 +21,11 @@ dependencies = [
     "opencv-python",
     "python-dotenv",
     "pyyaml",
+    "gradio",
+    "fastrtc",
+    "lancedb",
+    "matplotlib",
+    "Pillow"
 ]
 
 [project.scripts]
@@ -31,6 +36,7 @@ hailo-depth = "hailo_apps_infra.hailo_apps.hailo_pipelines.depth_pipeline:main"
 hailo-pose = "hailo_apps_infra.hailo_apps.hailo_pipelines.pose_estimation_pipeline:main"
 hailo-seg = "hailo_apps_infra.hailo_apps.hailo_pipelines.instance_segmentation_pipeline:main"
 hailo-simple-detect = "hailo_apps_infra.hailo_apps.hailo_pipelines.detection_pipeline_simple:main"
+hailo-face-recon = "hailo_apps_infra.hailo_apps.hailo_pipelines.face_recognition_pipeline:main"
 
 [tool.setuptools.packages.find]
 include = ["hailo_apps_infra*"]

@@ -3,17 +3,23 @@ default:
   - scdepthv3
   - https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/video/example.mp4
   - https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/video/example_640.mp4
+  - https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/video/face_recognition.mp4
+  - https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/configs/scrfd.json
 
 
 hailo8:
   - yolov8m
   - yolov5m_seg
   - yolov8m_pose
+  - scrfd_10g
+  - arcface_mobilefacenet
 
 hailo8l:
   - yolov8s
   - yolov5n_seg
   - yolov8s_pose
+  - https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/hefs/h8l_rpi/scrfd_2.5g.hef
+  - https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/hefs/h8l_rpi/arcface_mobilefacenet_h8l.hef
   
 all:
   - yolov8s_pose

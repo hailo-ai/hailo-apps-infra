@@ -3,3 +3,8 @@ setproctitle
 opencv-python
 python-dotenv
 pyyaml
+gradio
+fastrtc
+lancedb
+matplotlib
+Pillow

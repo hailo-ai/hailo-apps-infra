@@ -73,3 +73,63 @@ shared_library('depth_postprocess',
     install: true,
     install_dir: '/usr/local/hailo/resources/so',
 )
+
+################################################
+# FACE ALIGN SOURCES
+################################################
+face_align_post_sources = [
+    'face_align.cpp',
+]
+
+shared_library('vms_face_align',
+    face_align_post_sources,
+    dependencies : postprocess_dep,
+    gnu_symbol_visibility : 'default',
+    install: true,
+    install_dir: '/usr/local/hailo/resources/so',
+)
+
+################################################
+# SCRFD SOURCES
+################################################
+scrfd_post_sources = [
+    'scrfd.cpp',
+]
+
+shared_library('scrfd',
+    scrfd_post_sources,
+    dependencies : postprocess_dep,
+    gnu_symbol_visibility : 'default',
+    install: true,
+    install_dir: '/usr/local/hailo/resources/so',
+)
+
+################################################
+# ARCFACE SOURCES
+################################################
+arcface_post_sources = [
+    'arcface.cpp',
+]
+
+shared_library('face_recognition_post',
+    arcface_post_sources,
+    dependencies : postprocess_dep,
+    gnu_symbol_visibility : 'default',
+    install: true,
+    install_dir: '/usr/local/hailo/resources/so',
+)
+
+################################################
+# VMS CROPPERS SOURCES
+################################################
+vms_croppers_sources = [
+    'vms_croppers.cpp',
+]
+
+shared_library('vms_croppers',
+    vms_croppers_sources,
+    dependencies : postprocess_dep,
+    gnu_symbol_visibility : 'default',
+    install: true,
+    install_dir: '/usr/local/hailo/resources/so',
+)

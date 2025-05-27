@@ -48,6 +48,10 @@ try:
     from hailo_core.hailo_common.core import load_environment
 except ImportError:
     from hailo_apps_infra.hailo_core.hailo_common.core import load_environment
+try:
+    from hailo_core.hailo_common.buffer_utils import get_caps_from_pad, get_numpy_from_buffer
+except ImportError:
+    from hailo_apps_infra.hailo_core.hailo_common.buffer_utils import get_caps_from_pad, get_numpy_from_buffer
 
 try:
     from picamera2 import Picamera2

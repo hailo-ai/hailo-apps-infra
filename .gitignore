@@ -31,3 +31,6 @@ hailo_infra_venv/
 .env
 
 .pytest_cache/
+
+tmp_venv
+
