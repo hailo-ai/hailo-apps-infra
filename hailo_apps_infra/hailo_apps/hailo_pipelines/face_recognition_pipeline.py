@@ -1,6 +1,7 @@
 # region imports
 # Standard library imports
 import os
+import json
 import time
 import threading
 import queue
@@ -50,7 +51,8 @@ try:
         FACE_RECON_TRAIN_DIR_NAME,
         FACE_RECON_SAMPLES_DIR_NAME,
         RESOURCES_JSON_DIR_NAME,
-        FACE_DETECTION_JSON_NAME
+        FACE_DETECTION_JSON_NAME,
+        FACE_ALGO_PARAMS_JSON_NAME
     )
 except ImportError:
     from hailo_apps_infra.hailo_core.hailo_common.defines import (
@@ -68,7 +70,8 @@ except ImportError:
     FACE_RECON_TRAIN_DIR_NAME,
     FACE_RECON_SAMPLES_DIR_NAME,
     RESOURCES_JSON_DIR_NAME,
-    FACE_DETECTION_JSON_NAME
+    FACE_DETECTION_JSON_NAME,
+    FACE_ALGO_PARAMS_JSON_NAME
 )
 try:
     from hailo_core.hailo_common.buffer_utils import get_numpy_from_buffer, get_caps_from_pad
@@ -116,23 +119,25 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
         self.db_handler = DatabaseHandler(db_name='persons.db', table_name='persons', schema=Record)
         self.embedding_queue = multiprocessing.Queue()  # Create a queue for sending embeddings to the visualization process
 
-        # If for existing person there is a classification with those conditions - we will update the person's avg embedding with the new image:
+        # Criteria for when a candidate frame is good enough to try recognize a person from it (e.g., skip the first few frames since in them person only entered the frame and usually is blurry)
+        self.json_file = open(get_resource_path(pipeline_name=None, resource_type=RESOURCES_JSON_DIR_NAME, model=FACE_ALGO_PARAMS_JSON_NAME), "r+")
+        self.algo_params = json.load(self.json_file)
         # 1. Distance better (each person has own distance based on variability of embeddings) or at least no worse than self.embedding_distance_tolerance 
-        self.embedding_distance_tolerance = 0.1
+        self.embedding_distance_tolerance = self.algo_params['embedding_distance_tolerance']
         # 2. The new face has at least self.min_face_pixels_tolerance number of pixels
-        self.min_face_pixels_tolerance = 60000
+        self.min_face_pixels_tolerance = self.algo_params['min_face_pixels_tolerance']
         # 3. The new face is not too blurry - blurriness measurement higher (sharper image) than self.blurriness_tolerance
-        self.blurriness_tolerance = 300
+        self.blurriness_tolerance = self.algo_params['blurriness_tolerance']
         # 4. Maximum number of faces to keep in the database per person
-        self.max_faces_per_person = 3
-        # 5. Last image of a person was added to the database more than an self.last_image_sent_time ago
-        self.last_image_sent_threshold_time = 1  # 1 second
-        # 6. Ratios between landmarks ignoring translation - "Procrustes Distance"
-        self.procrustes_distance_threshold = 0.3  # lower is better
+        self.max_faces_per_person = self.algo_params['max_faces_per_person']
+        # 5. Last image of a person was added to the database more than an self.last_image_sent_time ago, in seconds
+        self.last_image_sent_threshold_time = self.algo_params['last_image_sent_threshold_time']
+        # 6. Ratios between landmarks ignoring translation - "Procrustes Distance" (lower is better)
+        self.procrustes_distance_threshold = self.algo_params['procrustes_distance_threshold']
         # Both for face detection & recognition networks
-        self.batch_size = 1
-        # How many frames to skip between detection attempts: avoid porocessing first frames since usually they are blurry since person just entered the frame 
-        self.skip_frames = 30  # see self.track_id_frame_count
+        self.batch_size = self.algo_params['batch_size']
+        # How many frames to skip between detection attempts: avoid porocessing first frames since usually they are blurry since person just entered the frame, see self.track_id_frame_count
+        self.skip_frames = self.algo_params['skip_frames']
 
         # Determine the architecture if not specified
         if self.options_menu.arch is None:
@@ -185,6 +190,8 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
         self.trac_id_to_global_id = {}  # association between tracker id and global id for tracker pipeline element
         self.track_id_frame_count = {}  # Dictionary to track frame counts for each track ID - avoid porocessing first frames since usually they are blurry since person just entered the frame 
 
+        self.visualization_process = None # Process for displaying the matplotlib embedding visualization in a separate process
+
         # region worker queue threads for saving images
         # Create a queue to hold the tasks
         self.task_queue = queue.Queue()
@@ -218,12 +225,6 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
             t.start()
             self.threads.append(t)
         # endregion
-
-        # Register the signal handler
-        signal.signal(signal.SIGINT, self.signal_handler)  # Ctrl+C
-        signal.signal(signal.SIGTSTP, self.signal_handler) # Ctrl+Z
-        signal.signal(signal.SIGHUP, self.signal_handler)  # Terminal close
-        signal.signal(signal.SIGTERM, self.signal_handler) # Closing window
         
     def get_pipeline_string(self):
         source_pipeline = SOURCE_PIPELINE(self.video_source, self.video_width, self.video_height)
@@ -309,6 +310,7 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
     @staticmethod
     def display_visualization_process(db_records, embedding_queue):
         """Run visualization in a separate process"""
+        signal.signal(signal.SIGINT, signal.SIG_IGN)  # Ignore SIGINT in child processes
         visualizer = DatabaseVisualizer()  # Create a new visualizer in this process
         visualizer.set_db_records(db_records)
         visualizer.visualize(mode='cli')  # Initialize the plot
@@ -436,29 +438,33 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
         # Crop the frame to the detection area
         return frame[y_min:y_max, x_min:x_max]
 
-    def signal_handler(self, sig, frame):
+    def shutdown(self, signum=None, frame=None):
         # Terminate the visualization process
         if hasattr(self, 'visualization_process') and self.visualization_process:
             try:
                 if self.visualization_process.is_alive():
-                    print("Terminating visualization process...")
                     self.visualization_process.terminate()
                     try:
                         self.visualization_process.join(timeout=2)  # Add timeout
-                        print("Visualization process terminated.")
                     except Exception as e:
                         print(f"Error joining visualization process: {e}")
-                else:
-                    print("Visualization process is not running.")
-                    
-                # Clear the reference to prevent multiple termination attempts
-                self.visualization_process = None
-                
+                self.visualization_process = None  # Clear the reference to prevent multiple termination attempts
             except Exception as e:
                 print(f"Error terminating visualization process: {e}")
                 self.visualization_process = None  # Clear reference anyway
 
-        self.shutdown()
+        # save self.algo_params back to the JSON file when the object is destroyed
+        try:
+            self.json_file.seek(0)  # Move the file pointer to the beginning of the file
+            json.dump(self.algo_params, self.json_file, indent=4)  # Write the updated JSON content back to the file
+            self.json_file.truncate()  # Truncate the file to remove any leftover content
+        except Exception as e:
+            print(f"Failed to save algo_params: {e}")
+        finally:
+            self.json_file.close()  # Close the file
+        
+        # Call the parent class shutdown method to clean up the GStreamer pipeline and other resources
+        super().shutdown(signum=None, frame=None)  
 
     def add_task(self, task_type, **kwargs):
         """
@@ -567,18 +573,3 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
             self.processed_files.add(self.current_file)
             return Gst.PadProbeReturn.OK  # in case of training - iterate exactly once per image
         return Gst.PadProbeReturn.OK
-
-# if __name__ == "__main__":   
-#     user_data = app_callback_class()
-#     pipeline = GStreamerFaceRecognitionApp(dummy_callback, user_data)  # appsink_callback argument provided anyway although in non UI interface where eventually not used - since here we don't have access to requested UI/CLI mode
-#     if pipeline.options_menu.mode == 'delete':  # always CLI even if mistakenly GUI mode is selected
-#         pipeline.db_handler.clear_table()
-#         print("All records deleted from the database")
-#         exit(0)
-#     elif pipeline.options_menu.mode == 'train':  # always CLI even if mistakenly GUI mode is selected
-#         pipeline.run()
-#         exit(0)
-#     elif not pipeline.options_menu.ui:  # must be then run in CLI interface
-#         pipeline.run()
-#     else:  # # must be then run in GUI interface
-#         print("Running in CLI mode, but GUI is selected. Please run with --ui option to enable GUI.")

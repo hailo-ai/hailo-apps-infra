@@ -227,6 +227,7 @@ class DatabaseHandler:
                 file_path = os.path.join(samples_dir, filename)
                 if os.path.isfile(file_path):
                     os.remove(file_path)
+        print("All records deleted from the database")
     
     def clear_unknown_labels(self) -> None:
         """

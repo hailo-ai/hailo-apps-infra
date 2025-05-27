@@ -219,6 +219,7 @@ FACE_RECON_DATABASE_DIR_NAME = "database"
 FACE_RECON_TRAIN_DIR_NAME = "train"
 FACE_RECON_SAMPLES_DIR_NAME = "samples"
 FACE_DETECTION_JSON_NAME = "scrfd.json"
+FACE_ALGO_PARAMS_JSON_NAME = "face_recon_algo_params.json"
 
 # Installation & subprocess defaults
 PIP_SHOW_TIMEOUT = 5  # seconds
