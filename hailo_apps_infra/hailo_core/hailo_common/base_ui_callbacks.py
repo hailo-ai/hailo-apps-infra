@@ -5,7 +5,7 @@ FRAME_TIMEOUT = 0.5
 
 class BaseUICallbacks:
     def __init__(self, pipeline):
-        self.FRAME_TIMEOUT = 0.5
+        self.FRAME_TIMEOUT = FRAME_TIMEOUT
         self.stop_event = threading.Event()  # create a stop event to signal threads to stop
         self.pipeline = pipeline
 
