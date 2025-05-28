@@ -122,22 +122,16 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
         # Criteria for when a candidate frame is good enough to try recognize a person from it (e.g., skip the first few frames since in them person only entered the frame and usually is blurry)
         self.json_file = open(get_resource_path(pipeline_name=None, resource_type=RESOURCES_JSON_DIR_NAME, model=FACE_ALGO_PARAMS_JSON_NAME), "r+")
         self.algo_params = json.load(self.json_file)
-        # 1. Distance better (each person has own distance based on variability of embeddings) or at least no worse than self.embedding_distance_tolerance 
-        self.embedding_distance_tolerance = self.algo_params['embedding_distance_tolerance']
-        # 2. The new face has at least self.min_face_pixels_tolerance number of pixels
+        # 1. The new face has at least self.min_face_pixels_tolerance number of pixels
         self.min_face_pixels_tolerance = self.algo_params['min_face_pixels_tolerance']
-        # 3. The new face is not too blurry - blurriness measurement higher (sharper image) than self.blurriness_tolerance
+        # 2. The new face is not too blurry - blurriness measurement higher (sharper image) than self.blurriness_tolerance
         self.blurriness_tolerance = self.algo_params['blurriness_tolerance']
-        # 4. Maximum number of faces to keep in the database per person
-        self.max_faces_per_person = self.algo_params['max_faces_per_person']
-        # 5. Last image of a person was added to the database more than an self.last_image_sent_time ago, in seconds
-        self.last_image_sent_threshold_time = self.algo_params['last_image_sent_threshold_time']
-        # 6. Ratios between landmarks ignoring translation - "Procrustes Distance" (lower is better)
+        # 3. Ratios between landmarks ignoring translation - "Procrustes Distance" (lower is better)
         self.procrustes_distance_threshold = self.algo_params['procrustes_distance_threshold']
-        # Both for face detection & recognition networks
-        self.batch_size = self.algo_params['batch_size']
-        # How many frames to skip between detection attempts: avoid porocessing first frames since usually they are blurry since person just entered the frame, see self.track_id_frame_count
+        # 4. How many frames to skip between detection attempts: avoid porocessing first frames since usually they are blurry since person just entered the frame, see self.track_id_frame_count
         self.skip_frames = self.algo_params['skip_frames']
+        # Both for face detection & recognition networks (not tunable from the UI)
+        self.batch_size = self.algo_params['batch_size']
 
         # Determine the architecture if not specified
         if self.options_menu.arch is None:
@@ -522,16 +516,23 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
             track = detection.get_objects_typed(hailo.HAILO_UNIQUE_ID)
             track_id = track[0].get_id() if track else None
             if track_id in self.trac_id_to_global_id:
-                continue  # if the track id is already associated with a global id - we already processed this detection, so add face can't be for same track id session anyway  
+                continue  # If the track ID is already associated with a global ID, this detection has already been processed and positively recognized (as a person from the database).
             if track_id not in self.track_id_frame_count:  # Initialize or increment the frame count for the track ID
                 self.track_id_frame_count[track_id] = 1
             else:
                 self.track_id_frame_count[track_id] += 1
-            if self.track_id_frame_count[track_id] < 30:  # Wait until frame number 30 for the same track ID
-                continue  # Skip processing until frame 30
             cropped_frame = self.crop_frame(frame, detection.get_bbox(), width, height)
+            if (self.track_id_frame_count[track_id] < self.skip_frames                                              or 
+                self.get_detection_num_pixels(detection.get_bbox(), width, height) < self.min_face_pixels_tolerance or 
+                self.calculate_procrustes_distance(detection, width, height) > self.procrustes_distance_threshold   or 
+                self.measure_blurriness(cropped_frame) < self.blurriness_tolerance):
+                print("Skipping frame")
+                continue  # If current frame does not meet the criteria, skip it and wait for the next frame
             embedding_vector = np.array(embedding[0].get_data())
             person = self.db_handler.search_record(embedding=embedding_vector)
+            if not person:  # If no person is found, init frame count for this track id, and give another chance to the same track id after self.skip_frames
+                self.track_id_frame_count[track_id] = 1
+                print("uknown person, init frame count 30")
             if self.options_menu.visualize:  # If visualization is active, send the embedding to the visualization process
                 try:
                     self.embedding_queue.put((embedding_vector, person['label'] if person else 'Unknown'), timeout=0.1)  # Use non-blocking put with a short timeout
