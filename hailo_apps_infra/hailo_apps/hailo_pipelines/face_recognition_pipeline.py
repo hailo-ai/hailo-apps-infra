@@ -506,43 +506,52 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
         if buffer is None:
             return Gst.PadProbeReturn.OK
         format, width, height = get_caps_from_pad(pad)
-        frame = get_numpy_from_buffer(buffer, format, width, height)
         roi = hailo.get_roi_from_buffer(buffer)
-        for detection in (d for d in roi.get_objects_typed(hailo.HAILO_DETECTION) if d.get_label() == "face"):
-            embedding = detection.get_objects_typed(hailo.HAILO_MATRIX)
-            if len(embedding) != 1:  # we will continue if new embedding exists - might be new person, or another image of existing person
-                continue  # if cropper pipeline element decided to pass the detection - it will arrive to this stage of the pipeline without face embedding. # print(f"Error: Expected 1 embedding, got {len(embedding)}")
-            detection.remove_object(embedding[0])  # in case the detection pointer tracker pipeline element (from earlier side of the pipeline) holds is the same as the one we have, remove the embedding, so embedding similarity won't be part of the decision criteria
-            track = detection.get_objects_typed(hailo.HAILO_UNIQUE_ID)
-            track_id = track[0].get_id() if track else None
-            if track_id in self.trac_id_to_global_id:
-                continue  # If the track ID is already associated with a global ID, this detection has already been processed and positively recognized (as a person from the database).
-            if track_id not in self.track_id_frame_count:  # Initialize or increment the frame count for the track ID
-                self.track_id_frame_count[track_id] = 1
-            else:
+        
+        for detection in (d for d in roi.get_objects_typed(hailo.HAILO_DETECTION) if d.get_label() == 'face'):
+            track_id = detection.get_objects_typed(hailo.HAILO_UNIQUE_ID)[0].get_id() if detection.get_objects_typed(hailo.HAILO_UNIQUE_ID) else None
+            if track_id in self.trac_id_to_global_id and self.trac_id_to_global_id[track_id][0] == 'Recognized':
+                continue  # if the track ID is already associated with a global ID, this detection has already been processed and positively recognized (as a person from the database)
+            elif track_id in self.track_id_frame_count and track_id in self.trac_id_to_global_id and self.trac_id_to_global_id[track_id][0] == 'Unknown' and self.track_id_frame_count[track_id] < self.skip_frames:
                 self.track_id_frame_count[track_id] += 1
+                continue  # track ID is already associated with an unknown person, and we are still in the skip frames period, so we skip this detection
+            
+            embedding = detection.get_objects_typed(hailo.HAILO_MATRIX)
+            if len(embedding) != 1:  # we will continue if new embedding exists
+                continue  # if cropper pipeline element decided to pass the detection - it will arrive to this stage of the pipeline without face embedding
+            detection.remove_object(embedding[0])  # in case the detection pointer tracker pipeline element (from earlier side of the pipeline) holds is the same as the one we have, remove the embedding, so embedding similarity won't be part of the decision criteria
+            
+            if self.track_id_frame_count.get(track_id, 0) < self.skip_frames:  # for new detections - process only after self.skip_frames frames
+                self.track_id_frame_count[track_id] = self.track_id_frame_count.get(track_id, 0) + 1
+                continue
+            
+            frame = get_numpy_from_buffer(buffer, format, width, height)
             cropped_frame = self.crop_frame(frame, detection.get_bbox(), width, height)
-            if (self.track_id_frame_count[track_id] < self.skip_frames                                              or 
-                self.get_detection_num_pixels(detection.get_bbox(), width, height) < self.min_face_pixels_tolerance or 
+
+            if (self.get_detection_num_pixels(detection.get_bbox(), width, height) < self.min_face_pixels_tolerance or 
                 self.calculate_procrustes_distance(detection, width, height) > self.procrustes_distance_threshold   or 
                 self.measure_blurriness(cropped_frame) < self.blurriness_tolerance):
-                print("Skipping frame")
-                continue  # If current frame does not meet the criteria, skip it and wait for the next frame
+                self.track_id_frame_count[track_id] = 0
+                continue  # If current frame does not meet the criteria, skip it and wait again self.skip_frames before processing the same track id
             embedding_vector = np.array(embedding[0].get_data())
             person = self.db_handler.search_record(embedding=embedding_vector)
-            if not person:  # If no person is found, init frame count for this track id, and give another chance to the same track id after self.skip_frames
-                self.track_id_frame_count[track_id] = 1
-                print("uknown person, init frame count 30")
-            if self.options_menu.visualize:  # If visualization is active, send the embedding to the visualization process
+            
+            if person:
+                self.trac_id_to_global_id[track_id] = (person['global_id'], 'Recognized') 
+                detection.add_object(hailo.HailoClassification(type='1', label=person['label'], confidence=(1-person['_distance'])))  # type 1 = hailo.HAILO_CLASSIFICATION, Uknown person will not be added to the tracker - because after another skip_frames it will be processed again, and might be recognized as a person from the database
+            else:  # If no person is found, init frame count for this track id, and give another chance to the same track id after self.skip_frames X 10
+                self.trac_id_to_global_id[track_id] = (uuid.uuid4(), 'Unknown')
+                self.track_id_frame_count[track_id] = -10 * self.skip_frames  
+            
+            if self.options_menu.visualize and track_id not in self.trac_id_to_global_id:  # If visualization is active, send the embedding to the visualization process - in case of new person, no plot - since the Uknown might be become later recognized in better frame after self.skip_frames try
                 try:
                     self.embedding_queue.put((embedding_vector, person['label'] if person else 'Unknown'), timeout=0.1)  # Use non-blocking put with a short timeout
                 except:
                     pass  # Ignore if queue is full or other issues
-            detection.add_object(hailo.HailoClassification(type='1', label=person['label'] if person else 'Unknown', confidence=(1-person['_distance']) if person else 0.3))  # type 1 = hailo.HAILO_CLASSIFICATION, 0.3 - default min confidence for new person 
-            self.trac_id_to_global_id[track_id] = uuid.uuid4() if person is None else person['global_id']  # so even same track id stranger will be "classified" (tracked) + for notifications - there track id is the best "classification"
-            if self.user_data.telegram_enabled:  # adding task to the worker queue ASAP because later other tasks (save image & plot) will be added too
+            
+            if self.user_data.telegram_enabled:  # adding task to the worker queue
                 self.add_task('send_notification', name=person['label'] if person else None, global_id=self.trac_id_to_global_id[track_id], distance=person['_distance'] if person else None, frame=cropped_frame)
-                
+
         return Gst.PadProbeReturn.OK
     
     def train_vector_db_callback(self, pad, info, user_data):
