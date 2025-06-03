@@ -5,7 +5,8 @@ import threading
 import multiprocessing
 from multiprocessing import Value
 import queue
-import time
+import signal
+import json
 
 # Third-party imports
 import gi
@@ -22,9 +23,25 @@ from hailo_apps_infra.hailo_core.hailo_common.db_visualizer import DatabaseVisua
 EMBEDDING_TIMEOUT = 0.5
 RESULT_QUEUE_TIMEOUT = 2
 WORKER_SLEEP_INTERVAL = 3 
-PROCESS_DETECTED_PERSONS_INTERVAL = 2
+PROCESS_UI_TEXT_MESSAGE_INTERVAL = 2
 PROCESSING_STARTED_MESSAGE = "Processing started."
 PROCESSING_STOPPED_MESSAGE = "Processing stopped."
+
+# Database Configuration
+DB_NAME = 'persons.db'
+DB_TABLE_NAME = 'persons'
+DB_SCHEMA = Record
+
+# Visualization Process
+VISUALIZATION_SLEEP_INTERVAL = 0.1  # Sleep interval for visualization loop
+EMBEDDING_QUEUE_TIMEOUT = 0.1  # Timeout for embedding queue operations
+
+# Pipeline States
+PIPELINE_PLAYING_STATE = Gst.State.PLAYING
+PIPELINE_PAUSED_STATE = Gst.State.PAUSED
+
+# Thread Configuration
+THREAD_DAEMON = False  # Daemon flag for threads
 # endregion constants
 
 class UICallbacks(BaseUICallbacks):
@@ -35,7 +52,7 @@ class UICallbacks(BaseUICallbacks):
     def __init__(self, pipeline):
         super().__init__(pipeline)
         self.latest_plot_image = None
-        self.db_handler = DatabaseHandler(db_name='persons.db', table_name='persons', schema=Record)
+        self.db_handler = DatabaseHandler(db_name=DB_NAME, table_name=DB_TABLE_NAME, schema=DB_SCHEMA)
         if self.pipeline.options_menu.visualize:
             self.start_visualization_process()
 
@@ -43,13 +60,14 @@ class UICallbacks(BaseUICallbacks):
         """Start the visualization process in a separate process."""
         db_records = self.db_handler.get_all_records()  # Get a copy of the records to avoid shared memory issues
         p = multiprocessing.Process(target=self.display_visualization_process, args=(db_records, self.pipeline.embedding_queue, self.pipeline.pipeline))
-        p.daemon = True  # Process will terminate when the main program exits
+        p.daemon = THREAD_DAEMON  # Process will terminate when the main program exits
         p.start()
-        self.visualization_process = p 
+        self.pipeline.visualization_process = p 
 
     @staticmethod
     def display_visualization_process(db_records, embedding_queue, pipeline):
         """Run visualization in a separate process and yield embeddings."""
+        signal.signal(signal.SIGINT, signal.SIG_IGN)  # Ignore SIGINT in child processes
         while True:
             if UICallbacks.is_started.value:  # Check if processing has started
                 visualizer = DatabaseVisualizer()  # Create a new visualizer in this process
@@ -57,7 +75,7 @@ class UICallbacks(BaseUICallbacks):
                 UICallbacks.plot_queue.put(visualizer.visualize(mode='ui'))  # Initialize the plot for UI mode & Enqueue the plot
                 break  # Exit after one iteration
             else:
-                time.sleep(0.1)  # Add a small pause to prevent high CPU usage
+                time.sleep(VISUALIZATION_SLEEP_INTERVAL)  # Add a small pause to prevent high CPU usage
         while UICallbacks.is_started.value:  # Append the new embeddings to the plot
             try:
                 embeddings = []
@@ -74,7 +92,7 @@ class UICallbacks(BaseUICallbacks):
                         visualizer.add_embeddings_to_existing_plot(
                             embeddings=embeddings, labels=labels, mode='ui'
                         ),
-                        timeout=0.1
+                        timeout=EMBEDDING_QUEUE_TIMEOUT
                     )
                 time.sleep(1)
             except queue.Empty:  # No embedding available in the queue
@@ -89,29 +107,29 @@ class UICallbacks(BaseUICallbacks):
             try:
                 if not self.stop_event.is_set():
                     yield UICallbacks.plot_queue.get_nowait()  # Get plot_fig from the queue
-                    time.sleep(0.1)  # when there are too many plot_figs in the queue, wait a bit before consuming more
+                    time.sleep(VISUALIZATION_SLEEP_INTERVAL)  # when there are too many plot_figs in the queue, wait a bit before consuming more
             except queue.Empty:  # No plot_fig available in the queue
-                time.sleep(0.1)  # Add a small pause to prevent high CPU usage
+                time.sleep(VISUALIZATION_SLEEP_INTERVAL)  # Add a small pause to prevent high CPU usage
             except Exception as e:
                 print(f"Error in consume_plot_queue: {e}")
-                time.sleep(0.1)  # Add a small pause to prevent high CPU usage
+                time.sleep(VISUALIZATION_SLEEP_INTERVAL)  # Add a small pause to prevent high CPU usage
 
-    def process_detected_persons(self):
+    def process_ui_text_message(self):
         self.start_processing()  # Start processing, because this responds to start button click
         while not self.stop_event.is_set():
-            yield "\n".join(self.pipeline.user_data.detected_persons)  # Format the list as a string. self.pipeline.user_data.detected_persons updated continuously in the pipeline via appcallback regardless of stop_event status
-            time.sleep(PROCESS_DETECTED_PERSONS_INTERVAL)
+            yield "\n".join(self.pipeline.user_data.ui_text_message)  # Format the list as a string. self.pipeline.user_data.ui_text_message updated continuously in the pipeline via appcallback regardless of stop_event status
+            time.sleep(PROCESS_UI_TEXT_MESSAGE_INTERVAL)
 
     def start_processing(self):
         """
         Function to start processing by clearing the stop_event flag.
         """
         if UICallbacks.is_first_start:  # Check if this is the first start
-            app_thread = threading.Thread(target=self.pipeline.run, daemon=False)
+            app_thread = threading.Thread(target=self.pipeline.run, daemon=THREAD_DAEMON)
             app_thread.start()
             UICallbacks.is_first_start = False  # Set the flag to indicate that processing has started
-        elif self.pipeline.pipeline.get_state(0)[1] != Gst.State.PLAYING:
-            self.pipeline.pipeline.set_state(Gst.State.PLAYING)
+        elif self.pipeline.pipeline.get_state(0)[1] != PIPELINE_PLAYING_STATE:
+            self.pipeline.pipeline.set_state(PIPELINE_PLAYING_STATE)
         self.stop_event.clear()  # Unset the stop_event
         UICallbacks.is_started.value = True  # Set the flag to indicate processing has started
         print(PROCESSING_STARTED_MESSAGE)
@@ -121,39 +139,37 @@ class UICallbacks(BaseUICallbacks):
         Function to stop processing by setting the stop_event flag.
         """
         self.pipeline.pipeline.send_event(Gst.Event.new_flush_start())  # Flush buffers
-        self.pipeline.pipeline.set_state(Gst.State.PAUSED)  # Set pipeline to PAUSED
+        self.pipeline.pipeline.set_state(PIPELINE_PAUSED_STATE)  # Set pipeline to PAUSED
         self.pipeline.pipeline.send_event(Gst.Event.new_flush_stop(False))  # Stop flushing
         self.stop_event.set()
         UICallbacks.is_started.value = False  # Reset the flag
         print(PROCESSING_STOPPED_MESSAGE)
 
-    def on_embedding_distance_change(self, value):
-        self.pipeline.embedding_distance_tolerance = value
-
     def on_min_face_pixels_change(self, value):
         self.pipeline.min_face_pixels_tolerance = value
+        self.pipeline.algo_params['min_face_pixels_tolerance'] = value
 
     def on_blurriness_change(self, value):
         self.pipeline.blurriness_tolerance = value
-
-    def on_max_faces_change(self, value):
-        self.pipeline.max_faces_per_person = value
-
-    def on_last_image_time_change(self, value):
-        self.pipeline.last_image_sent_threshold_time = value
+        self.pipeline.algo_params['blurriness_tolerance'] = value
 
     def on_procrustes_distance_change(self, value):
         self.pipeline.procrustes_distance_threshold = value
-    
-    def clear_queue_keep_last(self, queue):
-        """Helper function to clear all items from a queue except the last one."""
-        last_item = None
-        while not queue.empty():
-            try:
-                last_item = queue.get_nowait()  # Remove an item from the queue without blocking
-            except queue.Empty:
-                break
+        self.pipeline.algo_params['procrustes_distance_threshold'] = value
 
-        # If there was at least one item, re-add the last one to the queue
-        if last_item is not None:
-            queue.put(last_item)
+    def on_skip_frames_change(self, value):
+        self.pipeline.skip_frames = value
+        self.pipeline.algo_params['skip_frames'] = value
+
+    def save_algo_params(self):
+        """
+        Save the algorithm parameters to the JSON file.
+        """
+        try:
+            self.pipeline.json_file.seek(0)  # Move the file pointer to the beginning of the file
+            json.dump(self.pipeline.algo_params, self.pipeline.json_file, indent=4)  # Write the updated JSON content back to the file
+            self.pipeline.json_file.truncate()  # Truncate the file to remove any leftover content
+        except Exception as e:
+            print(f"Failed to save algo_params: {e}")
+        finally:
+            self.pipeline.json_file.close()  # Close the file

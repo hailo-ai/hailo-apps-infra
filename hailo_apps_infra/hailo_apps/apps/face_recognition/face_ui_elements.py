@@ -1,6 +1,12 @@
 # region imports
+# Standard library imports
+from pathlib import Path
+
 # Local application-specific imports
 from hailo_apps_infra.hailo_core.hailo_common.base_ui_elements import BaseUIElements
+from hailo_apps_infra.hailo_core.hailo_common.core import get_resource_path
+from hailo_apps_infra.hailo_core.hailo_common.defines import RESOURCES_PHOTOS_DIR_NAME, HAILO_LOGO_PHOTO_NAME
+
 # Third-party imports
 from fastrtc import WebRTC
 import gradio as gr
@@ -22,26 +28,22 @@ class UIElements(BaseUIElements):
         self.embeddings_stream = gr.Plot(label="Embeddings Plot")
 
         # Sliders
-        self.embedding_distance_tolerance = gr.Slider(
-            minimum=0.0, maximum=1.0, value=0.1, label="Embedding Distance Tolerance", elem_id="embedding-distance-slider"
-        )
         self.min_face_pixels_tolerance = gr.Slider(
-            minimum=10000, maximum=100000, value=60000, label="Min Face Pixels Tolerance", elem_id="min-face-pixels-slider"
+            minimum=10000, maximum=100000, label="Min face size in pixels", elem_id="min-face-pixels-slider"
         )
         self.blurriness_tolerance = gr.Slider(
-            minimum=0, maximum=1000, value=300, label="Blurriness Tolerance", elem_id="blurriness-slider"
-        )
-        self.max_faces_per_person = gr.Slider(
-            minimum=1, maximum=10, value=3, label="Max Faces Per Person", elem_id="max-faces-slider"
-        )
-        self.last_image_sent_threshold_time = gr.Slider(
-            minimum=0, maximum=10, value=1, label="Last Image Sent Threshold Time", elem_id="last-image-slider"
+            minimum=0, maximum=1000, label="Blurriness Tolerance (higher-sharper image)", elem_id="blurriness-slider"
         )
         self.procrustes_distance_threshold = gr.Slider(
-            minimum=0.0, maximum=1.0, value=0.3, label="Procrustes Distance Threshold", elem_id="procrustes-distance-slider"
+            minimum=0.0, maximum=1.0, label="Face landmarks ratios (lower-closer to theoretical)", elem_id="procrustes-distance-slider"
+        )
+        self.skip_frames = gr.Slider(
+            minimum=0.0, maximum=60, label="Frames to skip before trying to recognize", elem_id="skip-frames-slider"
         )
         # Text Areas
-        self.detected_persons = gr.TextArea(label="Detected Persons", interactive=False, elem_id="detected-persons-textarea")  # ID for custom styling
+        self.ui_text_message = gr.TextArea(label="Detected Persons", interactive=False, elem_id="detected-persons-textarea")  # ID for custom styling
+
+        self.save_btn = gr.Button("Save", variant="primary", elem_id="save-btn")
 
         # css
         self.ui_css = """
@@ -51,23 +53,11 @@ class UIElements(BaseUIElements):
         .fixed-size { 
             width: 480px; 
             height: 360px; 
-        } 
-        /* Ensure consistent size for video and embeddings */ 
-        .equal-size { 
-            width: 100%; 
-        } 
-        .same-height { 
-            height: 360px;  /* Set a consistent height for sliders and detected persons */ 
-        } 
-        .limited-height {
-            max-height: 600px;  /* Set a maximum height */
-            outline: none;  /* Remove the orange focus outline */
-            box-shadow: none;  /* Remove any focus-related shadow */
-        }
+        }  
         /* Enable scrolling for the detected persons TextArea */
         #detected-persons-textarea textarea {
             overflow-y: scroll;  /* Enable vertical scrolling */
-            max-height: 80px; /* Match the height of the sliders */
+            max-height: 97px; /* Match the height of the sliders */
             outline: none;  /* Remove the orange focus outline */
             box-shadow: none;  /* Remove any focus-related shadow */
         }
@@ -75,6 +65,101 @@ class UIElements(BaseUIElements):
             border: none;
         }
         """
+
+    def create_interface(self, ui_callbacks, pipeline):
+        custom_theme = CustomTheme().set(
+            loader_color="rgb(73, 175, 219)", 
+            slider_color="rgb(73, 175, 219)")
+        # UI elements to callbacks connection happens here because event listeners must be declared within gr.Blocks context
+        with gr.Blocks(css=self.ui_css, theme=custom_theme) as interface:
+            # region rendering
+            with gr.Row():
+                gr.Markdown("## Live Video Stream, Embeddings Visualization & Parameters tuning", elem_classes=["center-text"])
+            # Row for buttons
+            with gr.Row():
+                self.start_btn.render()
+                self.stop_btn.render()
+            # Row for live video stream and embeddings_stream
+            with gr.Row():
+                with gr.Column(elem_classes=["fixed-size"]):  # Apply fixed size for live_video_stream
+                    self.live_video_stream.render()
+                with gr.Column(elem_classes=["fixed-size"]):  # Apply fixed size for embeddings_stream
+                    self.embeddings_stream.render()
+            # Row for sliders and detected persons
+            with gr.Row():
+                with gr.Column():
+                    with gr.Row():
+                        with gr.Column():
+                            self.min_face_pixels_tolerance.render()
+                            self.blurriness_tolerance.render()
+                        with gr.Column():
+                            self.procrustes_distance_threshold.render()
+                            self.skip_frames.render()
+                with gr.Column():
+                    self.ui_text_message.render()
+            # Row for save algo params button
+            with gr.Row():
+                with gr.Column(scale=1, min_width=60):
+                    self.save_btn.render()
+                # Add the logo just above the footer
+                # Define the original file and the alias (symlink) paths
+                original_file = get_resource_path(pipeline_name=None, resource_type=RESOURCES_PHOTOS_DIR_NAME, model=HAILO_LOGO_PHOTO_NAME) 
+                alias_file = Path(Path(__file__).parent, HAILO_LOGO_PHOTO_NAME)
+                if not (alias_file.exists() or alias_file.is_symlink()):
+                    alias_file.symlink_to(original_file)
+                with gr.Column(scale=20):
+                    gr.HTML(
+                        f"""
+                            <img src=/gradio_api/file={Path(Path(__file__).parent, HAILO_LOGO_PHOTO_NAME)} style="display: block; margin: 0 auto; max-width: 300px;">
+                        """
+                    )
+            # endregion rendrering
+
+            # region Event handlers: must be declared within gr.Blocks context
+            self.live_video_stream.stream(  
+                fn=ui_callbacks.process_frames,
+                outputs=self.live_video_stream,
+                trigger=self.start_btn.click
+            )
+
+            self.start_btn.click(
+                fn=ui_callbacks.process_ui_text_message,
+                inputs=None,
+                outputs=self.ui_text_message
+            )
+
+            self.stop_btn.click(
+                fn=ui_callbacks.stop_processing,
+                inputs=None,
+                outputs=None
+            )
+
+            self.save_btn.click(
+                fn=ui_callbacks.save_algo_params,
+                inputs=None,
+                outputs=None
+            )
+
+            if pipeline.options_menu.visualize:
+                interface.load(
+                    fn=ui_callbacks.consume_plot_queue,
+                    inputs=None,
+                    outputs=self.embeddings_stream
+                )
+
+            # Dynamically adjust initial values for sliders from pipeline
+            self.min_face_pixels_tolerance.value = pipeline.min_face_pixels_tolerance
+            self.blurriness_tolerance.value = pipeline.blurriness_tolerance
+            self.procrustes_distance_threshold.value = pipeline.procrustes_distance_threshold
+            self.skip_frames.value = pipeline.skip_frames
+
+            self.min_face_pixels_tolerance.change(ui_callbacks.on_min_face_pixels_change, inputs=self.min_face_pixels_tolerance)
+            self.blurriness_tolerance.change(ui_callbacks.on_blurriness_change, inputs=self.blurriness_tolerance)
+            self.procrustes_distance_threshold.change(ui_callbacks.on_procrustes_distance_change, inputs=self.procrustes_distance_threshold)
+            self.skip_frames.change(ui_callbacks.on_skip_frames_change, inputs=self.skip_frames)
+            # endregion event handlers
+
+        return interface
 
 # Define a custom theme
 class CustomTheme(gr.themes.Default):

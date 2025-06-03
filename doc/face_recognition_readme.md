@@ -102,3 +102,8 @@ Please refer to the https://voxel51.com/fiftyone/ guide for more details about u
 
 ## Appendix: Brief Explanation of the Code Architecture and Design
 
+The application is under: [/hailo-apps-infra/hailo_apps_infra/hailo_apps/apps/face_recognition](../hailo_apps_infra/hailo_apps/apps/face_recognition)
+
+The pipeline is under: [hailo-apps-infra/hailo_apps_infra/hailo_apps/hailo_pipelines](../hailo_apps_infra/hailo_apps/hailo_pipelines)
+
+Additional files are under: [/hailo-apps-infra/hailo_apps_infra/hailo_core/hailo_common](../hailo_apps_infra/hailo_core/hailo_common)
