@@ -34,6 +34,8 @@ echo "🔌 Activating venv: ${VENV_NAME}"
 # shellcheck disable=SC1090
 source "${VENV_PATH}/bin/activate"
 
+python3 -m pip install --upgrade pip setuptools wheel
+
 echo "📦 Installing package (editable + post-install)…"
 pip install -e .
 
