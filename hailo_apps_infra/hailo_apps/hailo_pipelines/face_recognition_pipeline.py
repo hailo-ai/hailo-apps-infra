@@ -100,9 +100,9 @@ except ImportError:
         UI_APPSINK_PIPELINE
     )
 try:
-    from hailo_apps.hailo_gstreamer.gstreamer_app import GStreamerApp, app_callback_class, dummy_callback
+    from hailo_apps.hailo_gstreamer.gstreamer_app import GStreamerApp
 except ImportError:
-    from hailo_apps_infra.hailo_apps.hailo_gstreamer.gstreamer_app import GStreamerApp, app_callback_class, dummy_callback
+    from hailo_apps_infra.hailo_apps.hailo_gstreamer.gstreamer_app import GStreamerApp
 # endregion
 
 class GStreamerFaceRecognitionApp(GStreamerApp):
