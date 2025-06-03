@@ -39,7 +39,14 @@ def get_pip_cmd(venv_path: str = None):
 def download_wheel(url: str, dest_path: Path):
     logger.info(f"Downloading wheel from {url}")
     try:
-        urllib.request.urlretrieve(url, str(dest_path))
+        # Build a Request with a common User-Agent
+        req = urllib.request.Request(
+            url,
+            headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+        )
+        with urllib.request.urlopen(req) as resp, open(dest_path, "wb") as out_file:
+            out_file.write(resp.read())
+
         logger.info(f"✅ Downloaded: {dest_path}")
     except Exception as e:
         logger.error(f"Failed to download {url}: {e}")

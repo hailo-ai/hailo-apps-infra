@@ -33,6 +33,7 @@ try:
         auto_detect_tappas_version,
         auto_detect_tappas_variant,
         auto_detect_hailort_version,
+        detect_pkg_installed,
     )
 except ImportError:
     from ..hailo_common.installation_utils import (
@@ -42,6 +43,7 @@ except ImportError:
         auto_detect_tappas_version,
         auto_detect_tappas_variant,
         auto_detect_hailort_version,
+        detect_pkg_installed,
     )
 try:
     from hailo_core.hailo_installation.python_installation import (
@@ -75,18 +77,23 @@ def create_hailo_virtualenv(virtual_env_name: str = VIRTUAL_ENV_NAME_DEFAULT,tap
     venv_path = Path(virtual_env_name).resolve()
     if is_virtualenv(venv_path):
         remove_virtualenv(venv_path)
+    pyhailort_installed = False
+    pytappas_installed = False
+    if detect_pkg_installed("hailo-all"):
+        pyhailort_installed = True
+        pytappas_installed = True
+    else:
+        if tappas_version == AUTO_DETECT or tappas_version is None:
+            tappas_version = auto_detect_tappas_version(auto_detect_tappas_variant())
+            print(f"Detected TAPPAS version: {tappas_version}")
+        if pyhailort_version == AUTO_DETECT or pyhailort_version is None:
+            pyhailort_version = auto_detect_hailort_version()
 
-    if tappas_version == AUTO_DETECT or tappas_version is None:
-        tappas_version = auto_detect_tappas_version(auto_detect_tappas_variant())
-        print(f"Detected TAPPAS version: {tappas_version}")
-    if pyhailort_version == AUTO_DETECT or pyhailort_version is None:
-        pyhailort_version = auto_detect_hailort_version()
-
-    if not pyhailort_version or not tappas_version:
-        print("⚠️ Could not detect HailoRT or TAPPAS version, please install them manually, or with our script at hailo-apps-infra/scripts/hailo_installation_script.sh.")
-        return
-    pytappas_installed = auto_detect_installed_tappas_python_bindings()
-    pyhailort_installed = auto_detect_hailort_python_bindings()
+        if not pyhailort_version or not tappas_version:
+            print("⚠️ Could not detect HailoRT or TAPPAS version, please install them manually, or with our script at hailo-apps-infra/scripts/hailo_installation_script.sh.")
+            return
+        pytappas_installed = auto_detect_installed_tappas_python_bindings()
+        pyhailort_installed = auto_detect_hailort_python_bindings()
 
     if pytappas_installed and pyhailort_installed:
         print("⚠️ TAPPAS and HailoRT Python bindings are already installed.")
