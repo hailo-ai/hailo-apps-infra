@@ -68,3 +68,33 @@ def get_numpy_from_buffer(buffer, format, width, height):
         return handler(map_info, width, height)
     finally:
         buffer.unmap(map_info)
+
+def get_numpy_from_buffer_efficient(buffer, format, width, height):
+    """
+    Converts a GstBuffer to a numpy array based on provided format, width, and height.
+
+    Args:
+        buffer (GstBuffer): The GStreamer Buffer to convert.
+        format (str): The video format ('RGB', 'NV12', 'YUYV', etc.).
+        width (int): The width of the video frame.
+        height (int): The height of the video frame.
+
+    Returns:
+        np.ndarray: A numpy array representing the buffer's data, or a tuple of arrays for certain formats.
+    """
+    # Pre-validate the format and cache the handler
+    handler = FORMAT_HANDLERS.get(format)
+    if handler is None:
+        raise ValueError(f"Unsupported format: {format}")
+
+    # Map the buffer to access data
+    success, map_info = buffer.map(Gst.MapFlags.READ)
+    if not success:
+        raise ValueError("Buffer mapping failed")
+
+    try:
+        # Directly call the handler with the mapped data
+        return handler(map_info, width, height)
+    finally:
+        # Unmap the buffer to release resources
+        buffer.unmap(map_info)

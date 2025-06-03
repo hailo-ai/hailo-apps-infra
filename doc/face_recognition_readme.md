@@ -1,6 +1,13 @@
 # Face Recognition System
 
-This project is a face recognition system built using Python, GStreamer, LanceDB, Gradio, FastRTC and FiftyOne.
+This project is a face recognition system built using:
+
+1. Python - Application code (image post-processing in C++)
+2. GStreamer - Real-time video processing pipeline
+3. LanceDB - Embeddings database (stored in a file)
+4. Gradio - Web UI framework for AI applications
+5. FastRTC - Real-time communication streaming GStreamer video into Gradio's interactive web UI
+6. FiftyOne - Dataset inspection and analysis
 
 This project is moderately advanced and is recommended for use after gaining some experience with the "Basic Pipelines."
 
@@ -8,28 +15,25 @@ The system supports real-time face recognition using GStreamer pipelines and the
 
 It can train the known persons' catalog from a provided directory with images of persons (train mode below).
 
-The information is managed in a local database optimized for storing and indexing AI embeddings, called LanceDB. This is a significant improvement over the commonly used static string-based files, such as JSON.
-
-The system has several modes
+The information is managed in a local ("on a file") database optimized for storing and indexing AI embeddings, called LanceDB. This is a significant improvement over the commonly used static string-based files, such as JSON.
 
 The system provides an optional web interface, powered by the well-known FiftyOne platform (Python package installation required), for managing face recognition data, including visualizing embeddings and adding, updating, or deleting persons and their associated images. The web interface runs on localhost and interacts with the local LanceDB database.
 
 In addition, the db_handler.py module provides a custom API for interactions with the LanceDB database for fine-grained DB management.
 
-One of the key features of the system is the run mode with the --visualize flag, which provides a live display of the current catalog as 2D embeddings. With every new face recognition, the system adds it as a 2D embedding to the display, offering natural visibility into the recognition process and an intuitive understanding of why a face was recognized as someone or not.
+One of the key features of the system is the `--mode run` with the `-visualize` flag, which provides a live display of the current catalog as 2D embeddings. With every new face recognition, the system adds it as a 2D embedding to the display, offering natural visibility into the recognition process and an intuitive understanding of why a face was recognized as someone or not. Please note that in the current implementation, only recognized faces (e.g., pre-trained - those that appear in the database) are plotted; specifically, unrecognized faces are not plotted.
 
-For demonstration purposes, the current application demonstrates sending Telegram notifications via a bot when a person is detected. To enbale this feature, Telebot package is required but not installed by default, so you need to install it separately. Please note that a bot token and chat ID must be provided. In their absence, the function will simply do nothing. Please refer to Telegram guides on how to set up a bot.
+For demonstration purposes, the current application demonstrates sending Telegram notifications via a bot when a person (either recognized or uknown) is detected. To enbale this feature, Telebot package is required but not installed by default, so you need to install it separately. Please note that a bot token and chat ID must be provided. In their absence, the function will simply do nothing. Please refer to Telegram guides on how to set up a bot.
 
 Below is an example of the face recognition system in action:
 
-![Example](images/example_image.png "Example")
+![Example](images/example_gradio.png "Example")
 
 This image demonstrates the live visualization of embeddings during the recognition process, showcasing how the system identifies and maps faces in real-time.
 
-For each face detection, there is a confidence level, followed by another confidence level for the recognition itself. If there is a match with one of the faces in the database, the name is displayed; otherwise, the text "Unknown" is shown.
+For each face detection, there is a confidence level, followed by another confidence level for the recognition itself - in case face was recognized as someone from the Database.
 
-Face recognition confidence is per person record in the database, initiated with a default value (0.3) and can be manually modified either via the FiftyOne web interface or the db_handler.py API.
-
+Face recognition confidence is per person record in the database, initiated with a default value (0.3) and can be manually modified either via the FiftyOne web interface or the `db_handler.py` API.
 
 ## Prerequisites
 
@@ -37,12 +41,31 @@ Face recognition confidence is per person record in the database, initiated with
 - Pipenv or virtualenv for dependency management
 - Required Python libraries (see `requirements.txt`)
 - GStreamer installed on the system
-- LanceDB installed for database management
-
 
 ## Installation
 
-TODO: Based on new infra
+The application is part of the `hailo-apps-infra` package - please foll those generall installation guidelines.
+Short non-comprehesince process summary:
+```
+git clone https://github.com/hailo-ai/hailo-apps-infra.git
+# cd to the directory
+./install.sh  # install all
+source hailo_rpi_examples_venv/bin/activate  # activate python virtual enviornment
+export DISPLAY=:0  # required only if working on remote Pi with external display
+python hailo_apps_infra/hailo_core/hailo_installation/post_install.py  # post installatin procedures
+# cd to app directory
+python face_recognition.py --mode train  # first populate the DB
+
+python face_recognition.py --input rpi --mode run --ui --visualize  # run option 1 - Gradio web UI
+python face_recognition.py --input rpi --mode run --ui  # run option 2 - Gradio UI without visualization
+
+python face_recognition.py --input rpi --mode run --visualize  # run option 3 - CLI
+python face_recognition.py --input rpi --mode run  # run option 4 - CLI without visualization
+
+python face_recognition.py --input usb --mode run  # run option 5 - USB camera input, CLI without visualization
+
+python face_recognition.py --mode delete  # clear the DB
+```
 
 ## Usage
 

@@ -74,9 +74,9 @@ except ImportError:
     FACE_ALGO_PARAMS_JSON_NAME
 )
 try:
-    from hailo_core.hailo_common.buffer_utils import get_numpy_from_buffer, get_caps_from_pad
+    from hailo_core.hailo_common.buffer_utils import get_numpy_from_buffer_efficient, get_caps_from_pad
 except ImportError:
-    from hailo_apps_infra.hailo_core.hailo_common.buffer_utils import get_numpy_from_buffer, get_caps_from_pad
+    from hailo_apps_infra.hailo_core.hailo_common.buffer_utils import get_numpy_from_buffer_efficient, get_caps_from_pad
 try:
     from hailo_apps.hailo_gstreamer.gstreamer_helper_pipelines import (
         SOURCE_PIPELINE,
@@ -446,17 +446,6 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
             except Exception as e:
                 print(f"Error terminating visualization process: {e}")
                 self.visualization_process = None  # Clear reference anyway
-
-        # save self.algo_params back to the JSON file when the object is destroyed
-        try:
-            self.json_file.seek(0)  # Move the file pointer to the beginning of the file
-            json.dump(self.algo_params, self.json_file, indent=4)  # Write the updated JSON content back to the file
-            self.json_file.truncate()  # Truncate the file to remove any leftover content
-        except Exception as e:
-            print(f"Failed to save algo_params: {e}")
-        finally:
-            self.json_file.close()  # Close the file
-        
         # Call the parent class shutdown method to clean up the GStreamer pipeline and other resources
         super().shutdown(signum=None, frame=None)  
 
@@ -510,9 +499,9 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
         
         for detection in (d for d in roi.get_objects_typed(hailo.HAILO_DETECTION) if d.get_label() == 'face'):
             track_id = detection.get_objects_typed(hailo.HAILO_UNIQUE_ID)[0].get_id() if detection.get_objects_typed(hailo.HAILO_UNIQUE_ID) else None
-            if track_id in self.trac_id_to_global_id and self.trac_id_to_global_id[track_id][0] == 'Recognized':
+            if track_id in self.trac_id_to_global_id and self.trac_id_to_global_id[track_id][1] == 'Recognized':
                 continue  # if the track ID is already associated with a global ID, this detection has already been processed and positively recognized (as a person from the database)
-            elif track_id in self.track_id_frame_count and track_id in self.trac_id_to_global_id and self.trac_id_to_global_id[track_id][0] == 'Unknown' and self.track_id_frame_count[track_id] < self.skip_frames:
+            elif track_id in self.track_id_frame_count and track_id in self.trac_id_to_global_id and self.trac_id_to_global_id[track_id][1] == 'Unknown' and self.track_id_frame_count[track_id] < self.skip_frames:
                 self.track_id_frame_count[track_id] += 1
                 continue  # track ID is already associated with an unknown person, and we are still in the skip frames period, so we skip this detection
             
@@ -520,12 +509,13 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
             if len(embedding) != 1:  # we will continue if new embedding exists
                 continue  # if cropper pipeline element decided to pass the detection - it will arrive to this stage of the pipeline without face embedding
             detection.remove_object(embedding[0])  # in case the detection pointer tracker pipeline element (from earlier side of the pipeline) holds is the same as the one we have, remove the embedding, so embedding similarity won't be part of the decision criteria
-            
+            [detection.remove_object(classification) for classification in detection.get_objects_typed(hailo.HAILO_CLASSIFICATION)]  # remove all classifications from the detection, since we will add our own classification based on the embedding search result
+
             if self.track_id_frame_count.get(track_id, 0) < self.skip_frames:  # for new detections - process only after self.skip_frames frames
                 self.track_id_frame_count[track_id] = self.track_id_frame_count.get(track_id, 0) + 1
                 continue
             
-            frame = get_numpy_from_buffer(buffer, format, width, height)
+            frame = get_numpy_from_buffer_efficient(buffer, format, width, height)
             cropped_frame = self.crop_frame(frame, detection.get_bbox(), width, height)
 
             if (self.get_detection_num_pixels(detection.get_bbox(), width, height) < self.min_face_pixels_tolerance or 
@@ -543,9 +533,9 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
                 self.trac_id_to_global_id[track_id] = (uuid.uuid4(), 'Unknown')
                 self.track_id_frame_count[track_id] = -10 * self.skip_frames  
             
-            if self.options_menu.visualize and track_id not in self.trac_id_to_global_id:  # If visualization is active, send the embedding to the visualization process - in case of new person, no plot - since the Uknown might be become later recognized in better frame after self.skip_frames try
+            if self.options_menu.visualize and person:  # If visualization is active, send the embedding to the visualization process - in case of new uknown person, don't plot - since the Uknown might be become later recognized in better frame after self.skip_frames try
                 try:
-                    self.embedding_queue.put((embedding_vector, person['label'] if person else 'Unknown'), timeout=0.1)  # Use non-blocking put with a short timeout
+                    self.embedding_queue.put((embedding_vector, person['label']), timeout=0.1)  # Use non-blocking put with a short timeout
                 except:
                     pass  # Ignore if queue is full or other issues
             
@@ -561,7 +551,7 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
         if buffer is None:
             return Gst.PadProbeReturn.OK
         format, width, height = get_caps_from_pad(pad)
-        frame = get_numpy_from_buffer(buffer, format, width, height)
+        frame = get_numpy_from_buffer_efficient(buffer, format, width, height)
         roi = hailo.get_roi_from_buffer(buffer)
         for detection in (d for d in roi.get_objects_typed(hailo.HAILO_DETECTION) if d.get_label() == "face"):
             embedding = detection.get_objects_typed(hailo.HAILO_MATRIX)
