@@ -8,28 +8,51 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]  # ~/dev/hailo-apps-infra/hai
 sys.path.insert(0, str(PROJECT_ROOT))
 
 # ─── other imports ────────────────────────────────────────────────────────────
-from hailo_core.hailo_common.defines import (
+try:
+    from hailo_core.hailo_common.defines import (
     VIRTUAL_ENV_NAME_DEFAULT,
     VENV_CREATE_CMD,
     TAPPAS_VERSION_DEFAULT,
     AUTO_DETECT,
     HAILORT_VERSION_DEFAULT
-)
+    )
+except ImportError:
+    from ..hailo_common.defines import (
+    VIRTUAL_ENV_NAME_DEFAULT,
+    VENV_CREATE_CMD,
+    TAPPAS_VERSION_DEFAULT,
+    AUTO_DETECT,
+    HAILORT_VERSION_DEFAULT
+    )
 
-
-from hailo_core.hailo_common.installation_utils import (
-    auto_detect_hailort_python_bindings,
-    auto_detect_installed_tappas_python_bindings,
-    run_command,
-    auto_detect_tappas_version,
-    auto_detect_tappas_variant,
-    auto_detect_hailort_version,
-)
-
-from hailo_core.hailo_installation.python_installation import (
-    install_tappas_core,
-    install_pyhailort
-)
+try:
+    from hailo_core.hailo_common.installation_utils import (
+        auto_detect_hailort_python_bindings,
+        auto_detect_installed_tappas_python_bindings,
+        run_command,
+        auto_detect_tappas_version,
+        auto_detect_tappas_variant,
+        auto_detect_hailort_version,
+    )
+except ImportError:
+    from ..hailo_common.installation_utils import (
+        auto_detect_hailort_python_bindings,
+        auto_detect_installed_tappas_python_bindings,
+        run_command,
+        auto_detect_tappas_version,
+        auto_detect_tappas_variant,
+        auto_detect_hailort_version,
+    )
+try:
+    from hailo_core.hailo_installation.python_installation import (
+        install_tappas_core,
+        install_pyhailort
+    )
+except ImportError:
+    from ..hailo_installation.python_installation import (
+        install_tappas_core,
+        install_pyhailort
+    )
 
 def is_virtualenv(path: Path) -> bool:
     return (path / "bin" / "python").exists() and (path / "pyvenv.cfg").exists()
@@ -52,10 +75,10 @@ def create_hailo_virtualenv(virtual_env_name: str = VIRTUAL_ENV_NAME_DEFAULT,tap
     venv_path = Path(virtual_env_name).resolve()
     if is_virtualenv(venv_path):
         remove_virtualenv(venv_path)
-    print("auto_detect_tappas_variant: " + auto_detect_tappas_variant())
+
     if tappas_version == AUTO_DETECT or tappas_version is None:
         tappas_version = auto_detect_tappas_version(auto_detect_tappas_variant())
-        tappas_version = tappas_version.split('+')[0]
+        print(f"Detected TAPPAS version: {tappas_version}")
     if pyhailort_version == AUTO_DETECT or pyhailort_version is None:
         pyhailort_version = auto_detect_hailort_version()
     print("tappas_version: " + tappas_version)

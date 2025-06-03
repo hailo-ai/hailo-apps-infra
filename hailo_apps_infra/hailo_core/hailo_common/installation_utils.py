@@ -25,8 +25,39 @@ from .defines import (
     HAILO_TAPPAS_CORE_PYTHON,
     HAILO_TAPPAS,
     HAILO_TAPPAS_CORE,
+    HAILO_TAPPAS_CORE_PYTHON_NAMES,
 )
 #logger = __import__('logging').getLogger("hailo_install")
+
+def detect_pkg_config_version(pkg_name: str) -> str:
+    """
+    Get the version of a package using pkg-config.
+    Returns an empty string if the package is not found.
+    """
+    try:
+        version = subprocess.check_output(
+            ["pkg-config", "--modversion", pkg_name],
+            stderr=subprocess.DEVNULL,
+            text=True
+        )
+        return version.strip()
+    except subprocess.CalledProcessError:
+        return ""
+
+def auto_detect_pkg_config(pkg_name: str) -> bool:
+    """
+    Automatically detect the version of a package using pkg-config.
+    Returns the version if found, otherwise returns an empty string.
+    """
+    try:
+        version = subprocess.check_output(
+            ["pkg-config", "--exists", pkg_name],
+            stderr=subprocess.DEVNULL,
+            text=True
+        )
+        return True
+    except subprocess.CalledProcessError:
+        return False
 
 def detect_system_pkg_version(pkg_name: str) -> str:
     """
@@ -166,21 +197,22 @@ def auto_detect_hailort_version() -> str:
     else:
         print("⚠ Could not detect HailoRT version, please install HailoRT.")
         return None
-
-
+    
 def auto_detect_tappas_variant() -> str:
     """
     Automatically detect the TAPPAS variant based on installed packages.
     Returns:
         str: The detected TAPPAS variant.
     """
-    if detect_pkg_installed(HAILO_TAPPAS):
+    if detect_pkg_installed(HAILO_TAPPAS) or auto_detect_pkg_config(HAILO_TAPPAS):
         return HAILO_TAPPAS
-    elif detect_pkg_installed(HAILO_TAPPAS_CORE):
+    elif detect_pkg_installed(HAILO_TAPPAS_CORE) or auto_detect_pkg_config(HAILO_TAPPAS_CORE):
         return HAILO_TAPPAS_CORE
     else:
         print("⚠ Could not detect TAPPAS variant, please install TAPPAS or TAPPAS-CORE.")
-        sys.exit(1)
+        return None
+
+
 
 def auto_detect_installed_tappas_python_bindings() -> bool:
     """
@@ -189,12 +221,15 @@ def auto_detect_installed_tappas_python_bindings() -> bool:
         str: The detected TAPPAS version.
     """
     if detect_pip_package_installed(HAILO_TAPPAS):
-        return True
-    elif detect_pip_package_installed(HAILO_TAPPAS_CORE_PYTHON):
+        print("Detected TAPPAS Python bindings.")
         return True
     else:
-        print("⚠ Could not detect TAPPAS variant, please install TAPPAS or TAPPAS-CORE.")
-        return False
+        for pkg in HAILO_TAPPAS_CORE_PYTHON_NAMES:
+            if detect_pip_package_installed(pkg):
+                print(f"Detected {pkg} Python bindings.")
+                return True
+    print("⚠ Could not detect TAPPAS Python bindings, please install TAPPAS or TAPPAS-CORE.")
+    return False
 
 def auto_detect_tappas_version(tappas_variant: str) -> str:
     """
@@ -205,9 +240,9 @@ def auto_detect_tappas_version(tappas_variant: str) -> str:
         str: The detected TAPPAS version.
     """
     if tappas_variant == HAILO_TAPPAS:
-        return detect_system_pkg_version(HAILO_TAPPAS)
+        return detect_pkg_config_version(HAILO_TAPPAS)
     elif tappas_variant == HAILO_TAPPAS_CORE:
-        return detect_system_pkg_version(HAILO_TAPPAS_CORE)
+        return detect_pkg_config_version(HAILO_TAPPAS_CORE)
     else:
         print("⚠ Could not detect TAPPAS version.")
         return None

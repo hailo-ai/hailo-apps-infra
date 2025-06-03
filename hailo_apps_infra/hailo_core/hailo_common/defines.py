@@ -7,6 +7,7 @@ AUTO_DETECT = "auto"
 HAILO_TAPPAS = "hailo-tappas"
 HAILO_TAPPAS_CORE = "hailo-tappas-core"
 HAILO_TAPPAS_CORE_PYTHON = "hailo-tappas-core-python-binding"
+HAILO_TAPPAS_CORE_PYTHON_NAMES = [HAILO_TAPPAS_CORE_PYTHON, "tappas-core-python-binding" , HAILO_TAPPAS_CORE]
 HAILORT_PACKAGE = "hailort"
 HAILO_FILE_EXTENSION = ".hef"
 MODEL_ZOO_URL = "https://hailo-model-zoo.s3.eu-west-2.amazonaws.com/ModelZoo/Compiled"
@@ -256,4 +257,4 @@ BASIC_PIPELINES_VIDEO_EXAMPLE_640_NAME = "example_640.mp4"
 HAILO_LOGO_PHOTO_NAME = "logo.png"
 
 # Gstreamer pipeline defaults
-GST_AUTO_VIDEO_SINK = "autovideosink"
+GST_VIDEO_SINK = "xvimagesink"

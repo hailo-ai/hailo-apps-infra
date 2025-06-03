@@ -19,7 +19,7 @@ from .gstreamer_helper_pipelines import (
 try:
     from hailo_core.hailo_common.defines import (
         HAILO_RGB_VIDEO_FORMAT,
-        GST_AUTO_VIDEO_SINK,
+        GST_VIDEO_SINK,
         TAPPAS_POSTPROC_PATH_KEY,
         RESOURCES_PATH_KEY,
         RESOURCES_ROOT_PATH_DEFAULT,
@@ -31,7 +31,7 @@ try:
 except ImportError:
     from hailo_apps_infra.hailo_core.hailo_common.defines import (
         HAILO_RGB_VIDEO_FORMAT,
-        GST_AUTO_VIDEO_SINK,
+        GST_VIDEO_SINK,
         TAPPAS_POSTPROC_PATH_KEY,
         RESOURCES_PATH_KEY,
         RESOURCES_ROOT_PATH_DEFAULT,
@@ -143,7 +143,7 @@ class GStreamerApp:
         self.source_type = get_source_type(self.video_source)
         self.frame_rate = self.options_menu.frame_rate
         self.user_data = user_data
-        self.video_sink = GST_AUTO_VIDEO_SINK
+        self.video_sink = GST_VIDEO_SINK
         self.pipeline = None
         self.loop = None
         self.threads = []
