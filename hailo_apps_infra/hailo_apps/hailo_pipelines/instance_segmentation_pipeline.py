@@ -128,8 +128,8 @@ class GStreamerInstanceSegmentationApp(GStreamerApp):
 
         # Determine which JSON config to use based on HEF filename
         hef_name = Path(self.hef_path).name
-        if self.options_menu.config_json is not None:
-            self.config_file = Path(self.options_menu.config_json)
+        if self.options_menu.labels_json is not None:
+            self.config_file = Path(self.options_menu.labels_json)
             print(f"Using provided config file: {self.config_file}")
         else:
             if INSTANCE_SEGMENTATION_MODEL_NAME_H8 in hef_name:
