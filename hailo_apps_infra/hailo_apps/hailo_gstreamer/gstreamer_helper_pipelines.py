@@ -1,8 +1,8 @@
 import os
 try:
-    from hailo_core.hailo_common.defines import TAPPAS_POSTPROC_PATH_KEY
+    from hailo_core.hailo_common.defines import TAPPAS_POSTPROC_PATH_KEY, GST_VIDEO_SINK
 except ImportError:
-    from hailo_apps_infra.hailo_core.hailo_common.defines import TAPPAS_POSTPROC_PATH_KEY
+    from hailo_apps_infra.hailo_core.hailo_common.defines import TAPPAS_POSTPROC_PATH_KEY, GST_VIDEO_SINK
 def get_source_type(input_source):
     # This function will return the source type based on the input source
     # return values can be "file", "mipi" or "usb"
@@ -258,7 +258,7 @@ def OVERLAY_PIPELINE(name='hailo_overlay'):
 
     return overlay_pipeline
 
-def DISPLAY_PIPELINE(video_sink='xvimagesink', sync='true', show_fps='false', name='hailo_display'):
+def DISPLAY_PIPELINE(video_sink=GST_VIDEO_SINK, sync='true', show_fps='false', name='hailo_display'):
     """
     Creates a GStreamer pipeline string for displaying the video.
     It includes the hailooverlay plugin to draw bounding boxes and labels on the video.
