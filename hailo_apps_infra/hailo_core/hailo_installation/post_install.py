@@ -72,8 +72,10 @@ def post_install():
     # Make sure the resources directory doesnt exist before creating a symlink
     resources_path = Path(os.getenv(RESOURCES_PATH_KEY, RESOURCES_PATH_DEFAULT))
     if resources_path.exists():
-        # If it's a directory, use rmtree; if it's a file, unlink()
-        if resources_path.is_dir():
+        if resources_path.is_symlink():
+            print(f"⚠️ Warning: {resources_path} already exists (symlink). Removing it...")
+            resources_path.unlink()
+        elif resources_path.is_dir():
             print(f"⚠️ Warning: {resources_path} already exists (dir). Removing it...")
             shutil.rmtree(resources_path)
         else:
