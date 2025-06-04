@@ -231,4 +231,4 @@ BASIC_PIPELINES_VIDEO_EXAMPLE_NAME = "example.mp4"
 BASIC_PIPELINES_VIDEO_EXAMPLE_640_NAME = "example_640.mp4"
 
 # Gstreamer pipeline defaults
-GST_VIDEO_SINK = "xvimagesink"
+GST_VIDEO_SINK = "autovideosink"
