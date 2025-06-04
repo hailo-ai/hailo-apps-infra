@@ -105,6 +105,10 @@ def get_default_parser():
             help="Path to HEF file",
         )
     parser.add_argument(
+        "--labels-json", "-l", type=str, default=None,
+        help="Path to labels JSON file. If not provided, will use default labels."
+    )
+    parser.add_argument(
         "--disable-sync", action="store_true",
         help="Disables display sink sync, will run as fast as possible. Relevant when using file source."
     )
