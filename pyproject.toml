@@ -21,7 +21,6 @@ dependencies = [
     "opencv-python",
     "python-dotenv",
     "pyyaml",
-    "PyGObject",
 ]
 
 [project.scripts]
