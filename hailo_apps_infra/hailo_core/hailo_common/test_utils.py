@@ -24,6 +24,11 @@ def get_pipeline_args(suite="default",hef_path=None, override_usb_camera=None , 
       - "show_fps": Append the flag "--show-fps".
       - "dump_dot": Append the flag "--dump-dot".
       - "labels": Append the flag "--labels-json" followed by "resources/labels.json".
+      - "ui": Append the flag "--ui".
+      - "visualize": Append the flag "--visualize".
+      - "mode-train": Set the '--mode' argument to train.
+      - "mode-delete": Set the '--mode' argument to delete.
+      - "mode-run": Set the '--mode' argument to run.
 
     If suite is "default", returns an empty list (i.e. no extra test arguments).
     """

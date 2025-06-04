@@ -22,6 +22,7 @@ python -m hailo_apps_infra.installation.hailo_installation.download_resources --
 echo "Running tests..."
 python -m pytest --log-cli-level=INFO \
     "${TESTS_DIR}/test_sanity_check.py" \
-    "${TESTS_DIR}/test_all_pipelines.py"
+    "${TESTS_DIR}/test_all_pipelines.py" \
+    "${TESTS_DIR}/test_face_recon.py"
 
 echo "All tests completed successfully."
