@@ -40,8 +40,7 @@ from hailo_core.hailo_common.defines import (
         RESOURCES_VIDEOS_DIR_NAME,
         HAILO_FILE_EXTENSION,
         RESOURCES_GROUP_ALL,
-        JSON_FILE_EXTENSION,
-        RESOURCES_JSON_DIR_NAME,
+        RESOURCES_GROUP_RETRAIN,
     )
 
 
@@ -85,6 +84,8 @@ def download_resources(group: str = None,
     if group != RESOURCES_GROUP_DEFAULT:
         if group in RESOURCES_GROUPS_MAP:
             groups.append(group)
+            if group == RESOURCES_GROUP_ALL:
+                groups.append(RESOURCES_GROUP_RETRAIN)
         else:
             logger.warning(f"Unknown group '{group}', skipping.")
 

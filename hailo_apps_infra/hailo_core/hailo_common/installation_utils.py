@@ -206,7 +206,7 @@ def auto_detect_tappas_variant() -> str:
     """
     if detect_pkg_installed(HAILO_TAPPAS) or auto_detect_pkg_config(HAILO_TAPPAS):
         return HAILO_TAPPAS
-    elif detect_pkg_installed(HAILO_TAPPAS_CORE) or auto_detect_pkg_config(HAILO_TAPPAS_CORE):
+    elif detect_pkg_installed(HAILO_TAPPAS_CORE) or auto_detect_pkg_config(HAILO_TAPPAS_CORE) or auto_detect_pkg_config("hailo-all"):
         return HAILO_TAPPAS_CORE
     else:
         print("⚠ Could not detect TAPPAS variant, please install TAPPAS or TAPPAS-CORE.")

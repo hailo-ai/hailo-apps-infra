@@ -257,4 +257,4 @@ BASIC_PIPELINES_VIDEO_EXAMPLE_640_NAME = "example_640.mp4"
 HAILO_LOGO_PHOTO_NAME = "logo.png"
 
 # Gstreamer pipeline defaults
-GST_VIDEO_SINK = "xvimagesink"
+GST_VIDEO_SINK = "autovideosink"
