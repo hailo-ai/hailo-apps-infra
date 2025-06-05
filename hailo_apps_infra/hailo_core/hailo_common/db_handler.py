@@ -221,7 +221,7 @@ class DatabaseHandler:
         to_delete = ', '.join([f"'{record['global_id']}'" for record in self.tbl_records.search().to_list()])  # Get all records
         self.tbl_records.delete(f"global_id IN ({to_delete})")
         # Clear all files from the 'resources/samples' folder
-        samples_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources', 'samples')
+        samples_dir = get_resource_path(pipeline_name=None, resource_type=FACE_RECON_DIR_NAME, model=FACE_RECON_SAMPLES_DIR_NAME)
         if os.path.exists(samples_dir):
             for filename in os.listdir(samples_dir):
                 file_path = os.path.join(samples_dir, filename)

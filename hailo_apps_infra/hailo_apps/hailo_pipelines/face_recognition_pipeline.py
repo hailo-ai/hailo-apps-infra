@@ -142,7 +142,7 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
         else:
             self.arch = self.options_menu.arch
         
-        if not self.video_source:
+        if self.video_source == 'resources/videos/example.mp4':
             self.video_source = get_resource_path(pipeline_name=None, resource_type=RESOURCES_VIDEOS_DIR_NAME, model=FACE_RECOGNITION_VIDEO_NAME)
         
         self.train_images_dir = get_resource_path(pipeline_name=None, resource_type=FACE_RECON_DIR_NAME, model=FACE_RECON_TRAIN_DIR_NAME) 
@@ -228,15 +228,15 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
         mobile_facenet_pipeline = INFERENCE_PIPELINE(hef_path=self.hef_path_recognition, post_process_so=self.post_process_so_face_recognition, post_function_name=self.recognition_func, batch_size=self.batch_size, config_json=None, name='face_recognition_inference')
         cropper_pipeline = CROPPER_PIPELINE(inner_pipeline=(f'hailofilter so-path={self.post_process_so_face_align} '
                                                             f'name=face_align_hailofilter use-gst-buffer=true qos=false ! '
-                                                            f'queue name=detector_pos_face_align_q leaky=downstream max-size-buffers=3 max-size-bytes=0 max-size-time=0 ! '
+                                                            f'queue name=detector_pos_face_align_q max-size-buffers=3 max-size-bytes=0 max-size-time=0 ! '
                                                             f'{mobile_facenet_pipeline}'),
                                             so_path=self.post_process_so_cropper, function_name=self.cropper_func, internal_offset=True)
         vector_db_callback_pipeline = USER_CALLBACK_PIPELINE(name=self.vector_db_callback_name)  # 'identity name' - is a GStreamer element that does nothing, but allows to add a probe to it
         user_callback_pipeline = USER_CALLBACK_PIPELINE()
         display_pipeline = (f'hailooverlay name=hailo_overlay qos=false show-confidence=true local-gallery=false line-thickness=5 font-thickness=2 landmark-point-radius=8 ! '
-                            f'queue name=hailo_post_draw leaky=downstream max-size-buffers=3 max-size-bytes=0 max-size-time=0 ! '
+                            f'queue name=hailo_post_draw max-size-buffers=3 max-size-bytes=0 max-size-time=0 ! '
                             f'videoconvert n-threads=4 qos=false name=display_videoconvert qos=false ! '
-                            f'queue name=hailo_display_q_0 leaky=downstream max-size-buffers=3 max-size-bytes=0 max-size-time=0 ! '
+                            f'queue name=hailo_display_q_0 max-size-buffers=3 max-size-bytes=0 max-size-time=0 ! '
                             f'fpsdisplaysink video-sink=xvimagesink name=hailo_display sync={self.sync} text-overlay={self.show_fps}')
         if self.options_menu.ui:
             display_pipeline = UI_APPSINK_PIPELINE(name='ui_appsink')
@@ -257,7 +257,7 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
             f'{vector_db_callback_pipeline} ! '
             f'{user_callback_pipeline} ! '
             f'{display_pipeline}'
-        ).replace("leaky=no", "leaky=downstream")
+        )
     
     def run(self):
         if self.options_menu.mode == 'run':
@@ -556,7 +556,7 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
         for detection in (d for d in roi.get_objects_typed(hailo.HAILO_DETECTION) if d.get_label() == "face"):
             embedding = detection.get_objects_typed(hailo.HAILO_MATRIX)
             if len(embedding) != 1:  # we will continue if new embedding exists - might be new person, or another image of existing person
-                continue  # if cropper pipeline element decided to pass the detection - it will arrive to this stage of the pipeline without face embedding. # print(f"Error: Expected 1 embedding, got {len(embedding)}")
+                continue  # if cropper pipeline element decided to pass the detection - it will arrive to this stage of the pipeline without face embedding.
             detection.remove_object(embedding[0])  # in case the detection pointer tracker pipeline element (from earlier side of the pipeline) holds is the same as the one we have, remove the embedding, so embedding similarity won't be part of the decision criteria
             cropped_frame = self.crop_frame(frame, detection.get_bbox(), width, height)
             embedding_vector = np.array(embedding[0].get_data())

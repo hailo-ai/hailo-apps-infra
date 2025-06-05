@@ -4,7 +4,6 @@ import datetime
 from datetime import datetime
 import threading
 from pathlib import Path
-import sys
 
 # Third-party imports
 import gi
@@ -13,7 +12,6 @@ from gi.repository import Gst
 
 # Local application-specific imports
 import hailo
-
 try:
     from hailo_apps.hailo_gstreamer.gstreamer_app import app_callback_class
 except ImportError:
@@ -34,8 +32,15 @@ try:
 except ImportError:
     from hailo_apps_infra.hailo_core.hailo_common.defines import HAILO_LOGO_PHOTO_NAME
 
-from face_ui_callbacks import UICallbacks
-from face_ui_elements import UIElements
+try:
+    from hailo_apps.apps.face_recognition.face_ui_callbacks import UICallbacks
+except ImportError:
+    from hailo_apps_infra.hailo_apps.apps.face_recognition.face_ui_callbacks import UICallbacks
+
+try:
+    from hailo_apps.apps.face_recognition.face_ui_elements import UIElements
+except ImportError:
+    from hailo_apps_infra.hailo_apps.apps.face_recognition.face_ui_elements import UIElements
 # endregion
 
 # region Constants

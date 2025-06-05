@@ -41,6 +41,8 @@ from hailo_core.hailo_common.defines import (
         HAILO_FILE_EXTENSION,
         RESOURCES_GROUP_ALL,
         RESOURCES_GROUP_RETRAIN,
+        JSON_FILE_EXTENSION,
+        RESOURCES_JSON_DIR_NAME,
     )
 
 

@@ -197,5 +197,5 @@ class CustomTheme(gr.themes.Default):
         self.button_primary_border_radius = "5px"
 
         # Add hover styles for buttons
-        self.button_primary_background_fill_hover = "linear-gradient(90deg, {SECONDARY_HUE_COLOR} 0%, {PRIMARY_HUE_COLOR} 100%)"
+        self.button_primary_background_fill_hover = f"linear-gradient(90deg, {SECONDARY_HUE_COLOR} 0%, {PRIMARY_HUE_COLOR} 100%)"
         self.button_primary_text_color_hover = BUTTON_PRIMARY_TEXT_COLOR
