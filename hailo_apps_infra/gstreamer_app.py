@@ -96,7 +96,6 @@ class GStreamerApp:
                 self.video_source = self.video_source[0]
         self.source_type = get_source_type(self.video_source)
         self.user_data = user_data
-        self.video_sink = "autovideosink"
         self.pipeline = None
         self.loop = None
         self.threads = []
@@ -113,6 +112,12 @@ class GStreamerApp:
 
         # Set user data parameters
         user_data.use_frame = self.options_menu.use_frame
+
+        # Set status display
+        if self.options_menu.display_off == True:
+            self.video_sink = "fakevideosink"
+        else:
+            self.video_sink = "autovideosink"
 
         self.sync = "false" if (self.options_menu.disable_sync or self.source_type != "file") else "true"
         self.show_fps = self.options_menu.show_fps
