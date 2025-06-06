@@ -280,15 +280,41 @@ def FILE_SINK_PIPELINE(output_file='output.mkv', name='file_sink', bitrate=5000)
     """
     # Construct the file sink pipeline string
     file_sink_pipeline = (
-        f'{QUEUE(name=f"{name}_videoconvert_q")} ! '
-        f'videoconvert name={name}_videoconvert n-threads=2 qos=false ! '
-        f'{QUEUE(name=f"{name}_encoder_q")} ! '
+        f'{OVERLAY_PIPELINE(name=f"{name}_overlay")} ! '
+        f'tee name={name}_splitter ! '
+        f'queue ! '
+        f'videoconvert n-threads=2 qos=false name={name}_videoconvert ! '
+        f'queue ! '
         f'x264enc tune=zerolatency bitrate={bitrate} ! '
         f'matroskamux ! '
-        f'filesink location={output_file} '
+        f'filesink location={output_file} sync=false '
     )
 
     return file_sink_pipeline
+
+def RTP_SINK_PIPELINE(name='rtp_sink', bitrate=5000):
+    """
+    Creates a GStreamer pipeline string for streaming straight from the camera feed.
+    Args:
+        name (str, optional): The prefix name for the pipeline elements. Defaults to 'file_sink'.
+        bitrate (int, optional): The bitrate for the encoder. Defaults to 5000.
+
+    Returns:
+        str: A string representing the GStreamer pipeline for streaming..
+    """
+    # Construct the file sink pipeline string
+    rtp_sink_pipeline = (
+        f'{OVERLAY_PIPELINE(name=f"{name}_overlay")} ! '
+        f'tee name={name}_splitter ! '
+        f'queue ! '
+        f'videoconvert n-threads=2 qos=false name={name}_videoconvert ! '
+        f'queue ! '
+	    f'x264enc tune=zerolatency bitrate={bitrate} ! '
+        f'rtph264pay config-interval=1 pt=96 ! '
+        f'udpsink host=127.0.0.1 port=5000 sync=false'
+    )
+
+    return rtp_sink_pipeline
 
 def USER_CALLBACK_PIPELINE(name='identity_callback'):
     """
