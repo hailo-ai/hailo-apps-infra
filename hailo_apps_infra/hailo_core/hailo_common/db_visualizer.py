@@ -32,7 +32,7 @@ class DatabaseVisualizer:
         ax.set_facecolor("white")  # Set the background color to white
         ax.text(
             0.5, 0.5,  # Position the text in the center
-            "No embeddings found.\nRun in 'save' or 'train' mode first to populate the database with samples.",
+            "No embeddings found.\nRun in 'train' mode first to populate the database with samples.",
             fontsize=12,
             color="black",
             ha="center",  # Horizontal alignment
