@@ -124,7 +124,6 @@ def SOURCE_PIPELINE(video_source, video_width=640, video_height=640,
         f'videoscale name={name}_videoscale n-threads=2 ! '
         f'{QUEUE(name=f"{name}_convert_q")} ! '
         f'videoconvert n-threads=3 name={name}_convert qos=false ! '
-        # f'{QUEUE(name=f"{name}_video_rate_leaky_source", leaky="downstream")} ! ' TODO: Consider only if source_type != file
         f'video/x-raw, pixel-aspect-ratio=1/1, format={video_format}, '
         f'width={video_width}, height={video_height} ! '
         f'videorate name={name}_videorate ! capsfilter name={name}_fps_caps caps="{fps_caps}" '
