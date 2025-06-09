@@ -1,5 +1,14 @@
 # Face Recognition System
 
+## Quick Start:
+
+```
+python face_recognition.py --mode train
+python face_recognition.py
+```
+
+## Documentation
+
 This project is a face recognition system built using:
 
 1. Python - Application code (image post-processing in C++)

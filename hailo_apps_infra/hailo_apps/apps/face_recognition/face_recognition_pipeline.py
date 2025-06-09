@@ -86,7 +86,8 @@ try:
         USER_CALLBACK_PIPELINE,
         DISPLAY_PIPELINE,
         CROPPER_PIPELINE,
-        UI_APPSINK_PIPELINE
+        UI_APPSINK_PIPELINE,
+        QUEUE
     )
 except ImportError:
     from hailo_apps_infra.hailo_apps.hailo_gstreamer.gstreamer_helper_pipelines import (
@@ -97,7 +98,8 @@ except ImportError:
         USER_CALLBACK_PIPELINE,
         DISPLAY_PIPELINE,
         CROPPER_PIPELINE,
-        UI_APPSINK_PIPELINE
+        UI_APPSINK_PIPELINE,
+        QUEUE
     )
 try:
     from hailo_apps.hailo_gstreamer.gstreamer_app import GStreamerApp
@@ -221,23 +223,18 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
         # endregion
         
     def get_pipeline_string(self):
-        source_pipeline = SOURCE_PIPELINE(self.video_source, self.video_width, self.video_height)
+        source_pipeline = SOURCE_PIPELINE(self.video_source, self.video_width, self.video_height, frame_rate=self.frame_rate, sync=self.sync)
         detection_pipeline = INFERENCE_PIPELINE(hef_path=self.hef_path_detection, post_process_so=self.post_process_so_scrfd, post_function_name=self.detection_func, batch_size=self.batch_size, config_json=get_resource_path(pipeline_name=None, resource_type=RESOURCES_JSON_DIR_NAME, model=FACE_DETECTION_JSON_NAME))
         detection_pipeline_wrapper = INFERENCE_PIPELINE_WRAPPER(detection_pipeline)
         tracker_pipeline = TRACKER_PIPELINE(class_id=-1, kalman_dist_thr=0.7, iou_thr=0.8, init_iou_thr=0.9, keep_new_frames=2, keep_tracked_frames=6, keep_lost_frames=8, keep_past_metadata=True, name='hailo_face_tracker')
         mobile_facenet_pipeline = INFERENCE_PIPELINE(hef_path=self.hef_path_recognition, post_process_so=self.post_process_so_face_recognition, post_function_name=self.recognition_func, batch_size=self.batch_size, config_json=None, name='face_recognition_inference')
         cropper_pipeline = CROPPER_PIPELINE(inner_pipeline=(f'hailofilter so-path={self.post_process_so_face_align} '
                                                             f'name=face_align_hailofilter use-gst-buffer=true qos=false ! '
-                                                            f'queue name=detector_pos_face_align_q max-size-buffers=3 max-size-bytes=0 max-size-time=0 ! '
+                                                            f'{QUEUE(name="detector_pos_face_align_q")} ! '
                                                             f'{mobile_facenet_pipeline}'),
                                             so_path=self.post_process_so_cropper, function_name=self.cropper_func, internal_offset=True)
         vector_db_callback_pipeline = USER_CALLBACK_PIPELINE(name=self.vector_db_callback_name)  # 'identity name' - is a GStreamer element that does nothing, but allows to add a probe to it
         user_callback_pipeline = USER_CALLBACK_PIPELINE()
-        display_pipeline = (f'hailooverlay name=hailo_overlay qos=false show-confidence=true local-gallery=false line-thickness=5 font-thickness=2 landmark-point-radius=8 ! '
-                            f'queue name=hailo_post_draw max-size-buffers=3 max-size-bytes=0 max-size-time=0 ! '
-                            f'videoconvert n-threads=4 qos=false name=display_videoconvert qos=false ! '
-                            f'queue name=hailo_display_q_0 max-size-buffers=3 max-size-bytes=0 max-size-time=0 ! '
-                            f'fpsdisplaysink video-sink=xvimagesink name=hailo_display sync={self.sync} text-overlay={self.show_fps}')
         if self.options_menu.ui:
             display_pipeline = UI_APPSINK_PIPELINE(name='ui_appsink')
         else:

@@ -29,15 +29,15 @@ dependencies = [
 ]
 
 [project.scripts]
-hailo-post-install = "hailo_apps_infra.hailo_core.hailo_installation.post_install:main"
-hailo-set-env = "hailo_apps_infra.hailo_core.hailo_installation.set_env:main"
-hailo-download-resources = "hailo_apps_infra.hailo_core.hailo_installation.download_resources:main"
-hailo-detect = "hailo_apps_infra.hailo_apps.hailo_pipelines.detection_pipeline:main"
-hailo-depth = "hailo_apps_infra.hailo_apps.hailo_pipelines.depth_pipeline:main"
-hailo-pose = "hailo_apps_infra.hailo_apps.hailo_pipelines.pose_estimation_pipeline:main"
-hailo-seg = "hailo_apps_infra.hailo_apps.hailo_pipelines.instance_segmentation_pipeline:main"
-hailo-simple-detect = "hailo_apps_infra.hailo_apps.hailo_pipelines.detection_pipeline_simple:main"
-hailo-face-recon = "hailo_apps_infra.hailo_apps.apps.face_recognition.face_recognition:main"
+hailo-post-install =        "hailo_apps_infra.hailo_core.hailo_installation.post_install:main"
+hailo-set-env =             "hailo_apps_infra.hailo_core.hailo_installation.set_env:main"
+hailo-download-resources =  "hailo_apps_infra.hailo_core.hailo_installation.download_resources:main"
+hailo-detect =              "hailo_apps_infra.hailo_apps.hailo_pipelines.detection_pipeline:main"
+hailo-depth =               "hailo_apps_infra.hailo_apps.hailo_pipelines.depth_pipeline:main"
+hailo-pose =                "hailo_apps_infra.hailo_apps.hailo_pipelines.pose_estimation_pipeline:main"
+hailo-seg =                 "hailo_apps_infra.hailo_apps.hailo_pipelines.instance_segmentation_pipeline:main"
+hailo-simple-detect =       "hailo_apps_infra.hailo_apps.hailo_pipelines.detection_pipeline_simple:main"
+hailo-face-recon =          "hailo_apps_infra.hailo_apps.apps.face_recognition.face_recognition:main"
 
 [tool.setuptools.packages.find]
 include = ["hailo_apps_infra*"]
