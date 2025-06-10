@@ -222,6 +222,13 @@ FACE_RECON_SAMPLES_DIR_NAME = "samples"
 FACE_DETECTION_JSON_NAME = "scrfd.json"
 FACE_ALGO_PARAMS_JSON_NAME = "face_recon_algo_params.json"
 
+# Multisource pipeline defaults
+MULTISOURCE_APP_TITLE = "Hailo Multisource App"
+MULTISOURCE_PIPELINE = "multisource"
+MULTISOURCE_POSTPROCESS_SO_FILENAME = "libdepth_postprocess.so"
+MULTISOURCE_POSTPROCESS_FUNCTION = "filter_scdepth"
+MULTISOURCE_MODEL_NAME = "scdepthv3"
+
 # Installation & subprocess defaults
 PIP_SHOW_TIMEOUT = 5  # seconds
 INSTALL_LOG = "env_setup.log"
