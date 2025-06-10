@@ -43,6 +43,7 @@ from .defines import (
     FACE_RECOGNITION_MODEL_NAME_H8L,
     FACE_RECON_DIR_NAME,
     RESOURCES_PHOTOS_DIR_NAME,
+    DEFAULT_LOCAL_RESOURCES_PATH,
 )
 
 def load_environment(env_file=DEFAULT_DOTENV_PATH, required_vars=None) -> bool:
@@ -170,6 +171,8 @@ def get_resource_path(pipeline_name: str,
         return (root / RESOURCES_JSON_DIR_NAME / model)
     if resource_type == FACE_RECON_DIR_NAME and model:
         return (root / FACE_RECON_DIR_NAME / model)
+    if resource_type == DEFAULT_LOCAL_RESOURCES_PATH and model:
+        return (root / DEFAULT_LOCAL_RESOURCES_PATH / model)
 
     # 4) Models: append architecture and .hef extension
     if resource_type == RESOURCES_MODELS_DIR_NAME:

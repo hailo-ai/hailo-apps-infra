@@ -5,7 +5,7 @@ from pathlib import Path
 # Local application-specific imports
 from hailo_apps_infra.hailo_core.hailo_common.base_ui_elements import BaseUIElements
 from hailo_apps_infra.hailo_core.hailo_common.core import get_resource_path
-from hailo_apps_infra.hailo_core.hailo_common.defines import RESOURCES_PHOTOS_DIR_NAME, HAILO_LOGO_PHOTO_NAME
+from hailo_apps_infra.hailo_core.hailo_common.defines import DEFAULT_LOCAL_RESOURCES_PATH, HAILO_LOGO_PHOTO_NAME
 
 # Third-party imports
 from fastrtc import WebRTC
@@ -120,7 +120,7 @@ class UIElements(BaseUIElements):
                     self.save_btn.render()
                 # Add the logo just above the footer
                 # Define the original file and the alias (symlink) paths
-                original_file = get_resource_path(pipeline_name=None, resource_type=RESOURCES_PHOTOS_DIR_NAME, model=HAILO_LOGO_PHOTO_NAME) 
+                original_file = get_resource_path(pipeline_name=None, resource_type=DEFAULT_LOCAL_RESOURCES_PATH, model=HAILO_LOGO_PHOTO_NAME) 
                 alias_file = Path(Path(__file__).parent, HAILO_LOGO_PHOTO_NAME)
                 if not (alias_file.exists() or alias_file.is_symlink()):
                     alias_file.symlink_to(original_file)
