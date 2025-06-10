@@ -344,11 +344,10 @@ class DatabaseHandler:
         Returns:
             Dict[str, Any]: The record record.
         """
-        result = self.tbl_records.search().where(f"label = '{label}'").to_list()[0]
-        if result:
-            result['samples_json'] = json.loads(result['samples_json'])
-            return result
-        return None
+        results = self.tbl_records.search().where(f"label = '{label}'").to_list()
+        if not results:  # Check if the list is empty
+            return None  # Return None if no records are found
+        return results[0]  # Return the first record if it exists
 
     def get_records_num_samples(self, global_id: str) -> int:
         """
@@ -479,6 +478,7 @@ if __name__ == "__main__":
     # usage example
     database_handler = DatabaseHandler(db_name='persons.db', table_name='persons', schema=Record)
     all_records = database_handler.get_all_records()
+    alice = database_handler.get_record_by_label(label='Alice')
     db_visualizer = DatabaseVisualizer()
     db_visualizer.set_db_records(all_records)
     db_visualizer.visualize(mode='cli')

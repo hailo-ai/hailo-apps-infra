@@ -38,7 +38,6 @@ class UIElements(BaseUIElements):
         super().__init__()
         # Buttons
         self.start_btn = gr.Button("Start", variant="primary", elem_id="start-btn")
-        self.stop_btn = gr.Button("Stop", variant="primary", elem_id="stop-btn")
         # Video Stream
         self.live_video_stream = WebRTC(modality="video", mode="receive", height="480px")
 
@@ -95,8 +94,8 @@ class UIElements(BaseUIElements):
                 gr.Markdown("## Live Video Stream, Embeddings Visualization & Parameters tuning", elem_classes=["center-text"])
             # Row for buttons
             with gr.Row():
-                self.start_btn.render()
-                self.stop_btn.render()
+                with gr.Column(scale=1, min_width=300):
+                    self.start_btn.render()
             # Row for live video stream and embeddings_stream
             with gr.Row():
                 with gr.Column(elem_classes=["fixed-size"]):  # Apply fixed size for live_video_stream
@@ -144,12 +143,6 @@ class UIElements(BaseUIElements):
                 fn=ui_callbacks.process_ui_text_message,
                 inputs=None,
                 outputs=self.ui_text_message
-            )
-
-            self.stop_btn.click(
-                fn=ui_callbacks.stop_processing,
-                inputs=None,
-                outputs=None
             )
 
             self.save_btn.click(
