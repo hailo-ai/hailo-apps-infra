@@ -272,6 +272,8 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
         print(f"Training on images from {self.train_images_dir}")
         for person_name in os.listdir(self.train_images_dir):  # Iterate over subfolders in the training directory
             person_folder = os.path.join(self.train_images_dir, person_name)
+            if self.db_handler.get_record_by_label(label=person_name):  # Ensure the person exists in the database, or create a new record
+                continue
             if not os.path.isdir(person_folder):  # Skip if not a directory
                 continue
             print(f"Processing person: {person_name}")
