@@ -27,7 +27,7 @@ For demonstration purposes, the current application demonstrates sending Telegra
 
 Below is an example of the face recognition system in action:
 
-![Example](images/example_gradio.png "Example")
+![Example](../local_resources/example_gradio.png "Example")
 
 This image demonstrates the live visualization of embeddings during the recognition process, showcasing how the system identifies and maps faces in real-time.
 
@@ -59,12 +59,11 @@ Another parameter appearing in the JSON file but not directly tunable from the U
 Theory Point: What is face recognition algorithm & pipeline
 Below is a schematic conceptual oversimplified diagram, just for the sake of basic concept understanding. Blue - Pipeline elements, green - algorithms, orange - logic code.
 
-![pipeline_overview](images/pipeline_overview.png "pipeline_overview")
+![pipeline_overview](../local_resources/pipeline_overview.png "pipeline_overview")
 
 ## Prerequisites
 
-- Python 3.8+
-- Pipenv or virtualenv for dependency management
+- Python
 - Required Python libraries (see `requirements.txt`)
 - GStreamer installed on the system
 
@@ -97,7 +96,7 @@ python face_recognition.py --mode delete  # clear the DB
 
 ### Face Recognition Options Flow
 
-![Face Recognition Options Flow](images/face_detection.png "Face Recognition Architecture")
+![Face Recognition Options Flow](../local_resources/face_detection.png "Face Recognition Architecture")
 
 ## Web Interface
 
