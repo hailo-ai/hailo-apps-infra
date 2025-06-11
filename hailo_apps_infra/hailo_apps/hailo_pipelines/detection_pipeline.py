@@ -86,11 +86,7 @@ class GStreamerDetectionApp(GStreamerApp):
     def __init__(self, app_callback, user_data, parser=None):
         if parser == None:
             parser = get_default_parser()
-        parser.add_argument(
-            "--labels-json",
-            default=None,
-            help="Path to costume labels JSON file",
-        )
+
         # Call the parent class constructor
         super().__init__(parser, user_data)
         # Additional initialization code can be added here

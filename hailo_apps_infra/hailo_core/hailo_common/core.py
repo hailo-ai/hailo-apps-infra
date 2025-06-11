@@ -42,6 +42,7 @@ from .defines import (
     FACE_RECOGNITION_MODEL_NAME_H8,
     FACE_RECOGNITION_MODEL_NAME_H8L,
     FACE_RECON_DIR_NAME,
+    HAILO10H_ARCH,
     RESOURCES_PHOTOS_DIR_NAME,
 )
 
@@ -103,14 +104,14 @@ def get_default_parser():
     parser.add_argument(
             "--arch",
             default=None,
-            choices=['hailo8', 'hailo8l'],
-            help="Specify the Hailo architecture (hailo8 or hailo8l). Default is None , app will run check.",
-        )
+            choices=['hailo8', 'hailo8l', 'hailo10h'],
+            help="Specify the Hailo architecture (hailo8 or hailo8l or hailo10h). Default is None , app will run check.",
+    )
     parser.add_argument(
             "--hef-path",
             default=None,
             help="Path to HEF file",
-        )
+    )
     parser.add_argument(
         "--disable-sync", action="store_true",
         help="Disables display sink sync, will run as fast as possible. Relevant when using file source."
@@ -124,19 +125,39 @@ def get_default_parser():
         "--frame-rate", "-r", type=int, default=30,
         help="Frame rate of the video source. Default is 30."
     )
+    parser.add_argument(
+        "--labels-json",
+        default=None,
+        help="Path to costume labels JSON file",
+    )
     return parser
 
 def get_model_name(pipeline_name: str, arch: str) -> str:
+    # treat both Hailo-8 and Hailo-10H the same
+    is_h8 = arch in (HAILO8_ARCH, HAILO10H_ARCH)
+
     pipeline_map = {
         DEPTH_PIPELINE: DEPTH_MODEL_NAME,
         SIMPLE_DETECTION_PIPELINE: SIMPLE_DETECTION_MODEL_NAME,
-        DETECTION_PIPELINE: DETECTION_MODEL_NAME_H8  if arch==HAILO8_ARCH  else DETECTION_MODEL_NAME_H8L,
-        INSTANCE_SEGMENTATION_PIPELINE: INSTANCE_SEGMENTATION_MODEL_NAME_H8 if arch==HAILO8_ARCH else INSTANCE_SEGMENTATION_MODEL_NAME_H8L,
-        POSE_ESTIMATION_PIPELINE: POSE_ESTIMATION_MODEL_NAME_H8 if arch==HAILO8_ARCH else POSE_ESTIMATION_MODEL_NAME_H8L,
-        FACE_DETECTION_PIPELINE: FACE_DETECTION_MODEL_NAME_H8 if arch==HAILO8_ARCH else FACE_DETECTION_MODEL_NAME_H8L,
-        FACE_RECOGNITION_PIPELINE: FACE_RECOGNITION_MODEL_NAME_H8 if arch==HAILO8_ARCH else FACE_RECOGNITION_MODEL_NAME_H8L
+
+        DETECTION_PIPELINE:
+            DETECTION_MODEL_NAME_H8 if is_h8 else DETECTION_MODEL_NAME_H8L,
+
+        INSTANCE_SEGMENTATION_PIPELINE:
+            INSTANCE_SEGMENTATION_MODEL_NAME_H8 if is_h8 else INSTANCE_SEGMENTATION_MODEL_NAME_H8L,
+
+        POSE_ESTIMATION_PIPELINE:
+            POSE_ESTIMATION_MODEL_NAME_H8 if is_h8 else POSE_ESTIMATION_MODEL_NAME_H8L,
+
+        FACE_DETECTION_PIPELINE:
+            FACE_DETECTION_MODEL_NAME_H8 if is_h8 else FACE_DETECTION_MODEL_NAME_H8L,
+
+        FACE_RECOGNITION_PIPELINE:
+            FACE_RECOGNITION_MODEL_NAME_H8 if is_h8 else FACE_RECOGNITION_MODEL_NAME_H8L,
     }
+
     return pipeline_map[pipeline_name]
+
     
 def get_resource_path(pipeline_name: str,
                       resource_type: str,

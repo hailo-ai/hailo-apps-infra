@@ -26,6 +26,8 @@ from .defines import (
     HAILO_TAPPAS,
     HAILO_TAPPAS_CORE,
     HAILO_TAPPAS_CORE_PYTHON_NAMES,
+    HAILO10H_ARCH_CAPS,
+    HAILO10H_ARCH,
 )
 #logger = __import__('logging').getLogger("hailo_install")
 
@@ -99,6 +101,8 @@ def detect_hailo_arch() -> str | None:
                 return HAILO8L_ARCH
             if HAILO8_ARCH_CAPS in line:
                 return HAILO8_ARCH
+            if HAILO10H_ARCH_CAPS in line:
+                return HAILO10H_ARCH
     except Exception:
         return None
     return None

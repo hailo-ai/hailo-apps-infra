@@ -95,10 +95,6 @@ class GStreamerInstanceSegmentationApp(GStreamerApp):
 
         if parser is None:
             parser = get_default_parser()
-        parser.add_argument(
-        "--labels-json", "-l", type=str, default=None,
-        help="Path to labels JSON file. If not provided, will use default labels."
-        )
         super().__init__(parser, user_data)
 
         # Hailo parameters

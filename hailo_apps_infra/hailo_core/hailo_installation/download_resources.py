@@ -33,6 +33,7 @@ from hailo_core.hailo_common.defines import (
         RESOURCES_GROUP_DEFAULT,
         HAILO8_ARCH,
         HAILO8L_ARCH,
+        HAILO10H_ARCH,
         RESOURCES_GROUP_HAILO8,
         RESOURCES_GROUP_HAILO8L,
         RESOURCES_ROOT_PATH_DEFAULT,
@@ -61,13 +62,19 @@ def download_file(url: str, dest_path: Path):
     logger.info(f"✅ Downloaded to {dest_path}")
 
 def download_resources(group: str = None,
-                       resource_config_path: str = None):
+                       resource_config_path: str = None, arch: str = None):
     # 1) Load your YAML config (expects a mapping: group -> [entries])
     cfg_path = Path(resource_config_path or DEFAULT_RESOURCES_CONFIG_PATH)
     config = load_config(cfg_path)
 
     # 2) Detect architecture & version
-    hailo_arch = os.getenv(HAILO_ARCH_KEY) or detect_hailo_arch()
+    if not arch:
+        hailo_arch = os.getenv(HAILO_ARCH_KEY) or detect_hailo_arch()
+    else:
+        print(f"Using architecture from command line: {arch}")
+        hailo_arch = arch
+         
+    
     if not hailo_arch:
         print("❌ Hailo architecture could not be detected.")
         hailo_arch = HAILO8_ARCH
@@ -91,17 +98,19 @@ def download_resources(group: str = None,
         else:
             logger.warning(f"Unknown group '{group}', skipping.")
 
+    if hailo_arch == HAILO8_ARCH:
+        groups.append(RESOURCES_GROUP_HAILO8)
+        print(f"Detected Hailo architecture: {hailo_arch} → adding Hailo8 resources")
+    elif hailo_arch == HAILO8L_ARCH:
+        groups.append(RESOURCES_GROUP_HAILO8L)
+        print(f"Detected Hailo architecture: {hailo_arch} → adding Hailo8L resources")
+    elif hailo_arch == HAILO10H_ARCH:
+        print(f"Detected Hailo architecture: {hailo_arch} → adding Hailo10H resources")
+        groups.append(RESOURCES_GROUP_HAILO8)
     else:
-        if hailo_arch == HAILO8_ARCH:
-            groups.append(RESOURCES_GROUP_HAILO8)
-            print(f"Detected Hailo architecture: {hailo_arch} → adding Hailo8 resources")
-        elif hailo_arch == HAILO8L_ARCH:
-            groups.append(RESOURCES_GROUP_HAILO8L)
-            print(f"Detected Hailo architecture: {hailo_arch} → adding Hailo8L resources")
-        else:
-            print(f"Unknown architecture: {hailo_arch}, only default resources will be downloaded")
+        print(f"Unknown architecture: {hailo_arch}, only default resources will be downloaded")
 
-                
+            
 
     # 4) Flatten + dedupe
     seen = set()
@@ -137,7 +146,10 @@ def download_resources(group: str = None,
             else:
                 # bare model name → construct URL
                 name = entry
-                url = f"{base_url}/{model_zoo_version}/{hailo_arch}/{name}{HAILO_FILE_EXTENSION}"
+                if hailo_arch == HAILO10H_ARCH:
+                    url = f"{base_url}/{model_zoo_version}/{"hailo15h"}/{name}{HAILO_FILE_EXTENSION}"
+                else:
+                    url = f"{base_url}/{model_zoo_version}/{hailo_arch}/{name}{HAILO_FILE_EXTENSION}"
                 dest = resource_root / RESOURCES_MODELS_DIR_NAME / hailo_arch / f"{name}{HAILO_FILE_EXTENSION}"
         else:
             # mapping { name: url }
@@ -151,6 +163,7 @@ def download_resources(group: str = None,
 
         logger.info(f"Downloading {url} → {dest}")
         download_file(url, dest)
+        
 def main():
     parser = argparse.ArgumentParser(
         description="Install and download Hailo resources"
@@ -172,6 +185,12 @@ def main():
         default=DEFAULT_RESOURCES_CONFIG_PATH,
         help="Path to the resources config file"
     )
+    parser.add_argument(
+        "--arch",
+        type=str,
+        default=None,
+        help="Hailo architecture to use (e.g. hailo8, hailo8l, hailo10h). If not specified, it will be auto-detected."
+    )
     args = parser.parse_args()
 
     if args.all:
@@ -179,7 +198,7 @@ def main():
 
     # Populate env defaults
     load_environment()
-    download_resources(group=args.group, resource_config_path=args.config)
+    download_resources(group=args.group, resource_config_path=args.config, arch=args.arch)
     logger.info("✅ All resources downloaded successfully.")
 
 

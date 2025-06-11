@@ -3,6 +3,7 @@ from pathlib import Path
 # Base Defaults
 HAILO8_ARCH = "hailo8"
 HAILO8L_ARCH = "hailo8l"
+HAILO10H_ARCH = "hailo10h"
 AUTO_DETECT = "auto"
 HAILO_TAPPAS = "hailo-tappas"
 HAILO_TAPPAS_CORE = "hailo-tappas-core"
@@ -19,6 +20,7 @@ X86_POSSIBLE_NAME = ["x86", "amd64", "x86_64"]
 RPI_POSSIBLE_NAME = ["rpi", "raspberrypi", "pi"]
 HAILO8_ARCH_CAPS = "HAILO8"
 HAILO8L_ARCH_CAPS = "HAILO8L"
+HAILO10H_ARCH_CAPS = "HAILO15H"
 HAILO_FW_CONTROL_CMD = "hailortcli fw-control identify"
 X86_NAME_I = "x86"
 RPI_NAME_I = "rpi"
@@ -77,7 +79,7 @@ VALID_HAILORT_VERSION = [AUTO_DETECT, "4.20.0", "4.21.0", "4.22.0"]
 VALID_TAPPAS_VERSION = [AUTO_DETECT, "3.30.0", "3.31.0", "3.32.0"]
 VALID_MODEL_ZOO_VERSION = ["v2.13.0", "v2.14.0", "v2.15.0"]
 VALID_HOST_ARCH = [AUTO_DETECT, "x86", "rpi", "arm"]
-VALID_HAILO_ARCH = [AUTO_DETECT, "hailo8", "hailo8l"]
+VALID_HAILO_ARCH = [AUTO_DETECT, HAILO8_ARCH, HAILO8L_ARCH, HAILO10H_ARCH]
 VALID_SERVER_URL = ["http://dev-public.hailo.ai/2025_01"]
 VALID_TAPPAS_VARIANT = [AUTO_DETECT, HAILO_TAPPAS, HAILO_TAPPAS_CORE]
 
