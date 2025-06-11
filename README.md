@@ -378,6 +378,44 @@ For detailed development guidelines, check out our Development Guide.
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for complete details.
 
+## Troubleshooting and Getting Help
+
+If you run into problems, head over to the [Hailo Community Forum](https://community.hailo.ai/) and open a ticket. The forum is packed with helpful information and solutions from other users who've likely faced similar issues.
+
+### Common Issues You Might Encounter
+
+### Frame Buffer Performance Problems
+Some models are simply too demanding to run at 30FPS. When this happens, you'll need to dial back the frame rate using the `--set-fps` flag to get smooth performance.
+
+### The Dreaded DEVICE_IN_USE() Error
+This error pops up when the Hailo device (typically `/dev/hailo0`) is already being used by another process or got stuck from a previous session that didn't shut down properly.
+
+**Quick Fix:**
+The easiest solution is to run our cleanup script:
+```bash
+../scripts/kill_first_hailo.sh
+```
+
+**Manual Fix (For the Curious):**
+If you want to understand what's happening under the hood, here's how to troubleshoot it yourself:
+
+1. **Double-check your device path** - Make sure `/dev/hailo0` is actually your Hailo device (it usually is, but worth confirming).
+
+2. **Find the culprit process** - Use this command to see what's hogging your device:
+   ```bash
+   sudo lsof /dev/hailo0
+   ```
+   This will show you exactly which processes are using the device and their Process IDs (PIDs).
+
+3. **Kill the blocking process** - Once you have the PID, terminate it with:
+   ```bash
+   sudo kill -9 <PID>
+   ```
+   Just replace `<PID>` with the actual process ID from step 2.
+
+That should free up your Hailo device and get you back to running your models smoothly!
+
+
 ## Support
 
 ### Getting Help

@@ -1,70 +1,99 @@
+# Pipeline Usage Guide
 
-## 🧪 Context: Example Target
-Let’s assume you want to run:
+This guide covers how to run  AI pipelines in the Hailo Apps Infrastructure repository. The repo contains 6 main computer vision applications that can be executed through various methods.
 
-```python
-hailo_apps_infra/pipelines/hailo_pipelines/detection_pipeline.py
-```
+## Available Pipelines
 
----
+The repository provides the following AI applications:
 
-# 🧰 ALL OPTIONS TO RUN THE PIPELINE FROM ROOT
+| CLI Command | Pipeline Type | Purpose |
+|-------------|---------------|---------|
+| `hailo-detect` | Object Detection | Standard object detection with tracking |
+| `hailo-simple-detect` | Simple Detection | Simplified detection without tracking |
+| `hailo-pose` | Pose Estimation | Human pose keypoint detection |
+| `hailo-seg` | Instance Segmentation | Pixel-level object segmentation |
+| `hailo-depth` | Depth Estimation | Monocular depth estimation |
+| `hailo-face-recon` | Face Recognition | Face detection and recognition |
 
----
+## Running Pipelines
 
-## ✅ 1. Using `python -m` (Best for installed packages)
-### Command:
+### Method 1: CLI Commands (Recommended for End Users)
+
+After installing with `pip install -e .` from the repository root, all pipelines are available as CLI commands:
+
 ```bash
-python -m hailo_apps_infra.pipelines.hailo_pipelines.detection_pipeline
-```
-
-### ✅ Why it works:
-- You installed the package with `pip install -e ./hailo_apps_infra/pipelines`
-- Python treats this as a proper package hierarchy (`import hailo_apps_infra.pipelines...`)
-- Imports and relative modules will resolve correctly
-
-### 🔥 Best for: Production, development, test runners
-
----
-
-## ✅ 2. Using `PYTHONPATH` to run the file directly
-### Command:
-```bash
-PYTHONPATH=./hailo_apps_infra python hailo_apps_infra/pipelines/hailo_pipelines/detection_pipeline.py
-```
-
-### ✅ Why it works:
-- You’re telling Python explicitly: “treat `hailo_apps_infra` as the top of your module tree”
-- Works even if the package isn’t installed
-
-### 🔥 Best for: quick local debugging and script runs
-
----
-
-## ✅ 3. Using `pip install -e` + entry point in `pyproject.toml`
-### Command (after setup):
-```bash
+# Object Detection
 hailo-detect
+
+# Simple Detection (no tracking)
+hailo-simple-detect
+
+# Pose Estimation
+hailo-pose
+
+# Instance Segmentation
+hailo-seg
+
+# Depth Estimation
+hailo-depth
+
+# Face Recognition
+hailo-face-recon
 ```
 
-### You would define it like this in `pyproject.toml` (in `pipelines`):
-```toml
-[project.scripts]
-hailo-detect = "hailo_pipelines.detection_pipeline:main"
+**Best for:** Production deployment and end-user applications
+
+### Method 2: Python Module Execution (Recommended for Development)
+
+```bash
+# Object Detection
+python -m hailo_apps_infra.hailo_apps.hailo_pipelines.detection_pipeline
+
+# Simple Detection
+python -m hailo_apps_infra.hailo_apps.hailo_pipelines.detection_pipeline_simple
+
+# Pose Estimation
+python -m hailo_apps_infra.hailo_apps.hailo_pipelines.pose_estimation_pipeline
+
+# Instance Segmentation
+python -m hailo_apps_infra.hailo_apps.hailo_pipelines.instance_segmentation_pipeline
+
+# Depth Estimation
+python -m hailo_apps_infra.hailo_apps.hailo_pipelines.depth_pipeline
+
+# Face Recognition
+python -m hailo_apps_infra.hailo_apps.apps.face_recognition.face_recognition
 ```
 
-### ✅ Why it works:
-- Exposes your pipeline as a CLI command
-- `main()` function becomes the entrypoint
+**Best for:** Development, testing, and CI/CD pipelines
 
-### 🔥 Best for: end users and CLI interface
+### Method 3: Direct Script Execution with PYTHONPATH (Quick Debugging)
 
----
+```bash
+# Object Detection
+PYTHONPATH=. python hailo_apps_infra/hailo_apps/hailo_pipelines/detection_pipeline.py
 
-## ✅ 4. Run a dedicated script that imports and runs the pipeline
-### Create a file like `run_detection.py`:
+# Simple Detection
+PYTHONPATH=. python hailo_apps_infra/hailo_apps/hailo_pipelines/detection_pipeline_simple.py
+
+# Pose Estimation
+PYTHONPATH=. python hailo_apps_infra/hailo_apps/hailo_pipelines/pose_estimation_pipeline.py
+
+# Instance Segmentation
+PYTHONPATH=. python hailo_apps_infra/hailo_apps/hailo_pipelines/instance_segmentation_pipeline.py
+
+# Depth Estimation
+PYTHONPATH=. python hailo_apps_infra/hailo_apps/hailo_pipelines/depth_pipeline.py
+```
+
+**Best for:** Local debugging and quick script execution
+
+### Method 4: Custom Script Wrapper
+
+Create a wrapper script (e.g., `run_detection.py`):
+
 ```python
-from hailo_apps_infra.pipelines.hailo_pipelines import detection_pipeline
+from hailo_apps_infra.hailo_apps.hailo_pipelines import detection_pipeline
 
 detection_pipeline.main()
 ```
@@ -74,38 +103,51 @@ Then run:
 python run_detection.py
 ```
 
-### ✅ Why it works:
-- Keeps top-level runner file for each pipeline
-- Simplifies launching for users or testing
+**Best for:** Jupyter notebooks, simplified testing, and custom integrations
 
-### 🔥 Best for: training notebooks, simplified scripts, testing
+## What Doesn't Work
 
----
+These approaches will fail with `ModuleNotFoundError` or broken imports:
 
-## ❌ What *Doesn’t* Work
-
-### ❌ This:
 ```bash
-python -m hailo_pipelines.detection_pipeline
+# ❌ Wrong - missing PYTHONPATH
+python hailo_apps_infra/hailo_apps/hailo_pipelines/detection_pipeline.py
+
+# ❌ Wrong - old package structure
+python -m hailo_apps_infra.pipelines.hailo_pipelines.detection_pipeline
 ```
 
-### ❌ And this:
-```bash
-python hailo_apps_infra/pipelines/hailo_pipelines/detection_pipeline.py
-```
+## Pipeline Features
 
-Both will break with:
-- `ModuleNotFoundError`
-- Broken relative imports
+### Object Detection Pipeline
+- **Features:** Tracking, configurable NMS thresholds, custom labels
+- **Models:** YOLOv8m (Hailo-8), YOLOv8s (Hailo-8L)
 
----
+### Simple Detection Pipeline
+- **Features:** No tracking, simplified pipeline, custom labels
+- **Models:** YOLOv6n
 
-## 🧠 TL;DR: What Should You Use?
+### Pose Estimation Pipeline
+- **Features:** Human pose keypoints, higher resolution (1280x720), person tracking
+- **Models:** YOLOv8m_pose (Hailo-8), YOLOv8s_pose (Hailo-8L)
 
-| Use Case | Recommended Option |
-|----------|--------------------|
-| Production CLI | `python -m hailo_apps_infra.pipelines.hailo_pipelines.detection_pipeline` |
-| Local debugging | `PYTHONPATH=./hailo_apps_infra python hailo_apps_infra/pipelines/hailo_pipelines/detection_pipeline.py` |
-| User-friendly CLI | `hailo-detect` via `pyproject.toml` |
-| Notebook/testing | Small `run_*.py` wrappers |
+### Instance Segmentation Pipeline
+- **Features:** Pixel-level segmentation, automatic config selection
+- **Models:** YOLOv5m_seg (Hailo-8), YOLOv5n_seg (Hailo-8L)
 
+### Depth Estimation Pipeline
+- **Features:** Monocular depth estimation, simplified pipeline
+- **Models:** SCDepthv3
+
+## Quick Reference
+
+| Use Case | Best Method | Example |
+|----------|-------------|---------|
+| **Production/End Users** | CLI Commands | `hailo-detect` |
+| **Development/Testing** | Python Module | `python -m hailo_apps_infra.hailo_apps.hailo_pipelines.detection_pipeline` |
+| **Quick Debugging** | PYTHONPATH + Direct | `PYTHONPATH=. python hailo_apps_infra/hailo_apps/hailo_pipelines/detection_pipeline.py` |
+| **Custom Integration** | Import + Call main() | Custom wrapper scripts |
+
+## Notes
+
+All pipelines follow consistent patterns with proper `main()` function entry points and support common arguments like `--input`, `--arch`, `--hef-path`, plus pipeline-specific options. The framework provides flexibility for different deployment scenarios while maintaining ease of use.
