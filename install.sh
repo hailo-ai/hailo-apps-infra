@@ -5,7 +5,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CREATE_SCRIPT="${SCRIPT_DIR}/hailo_apps_infra/hailo_core/hailo_installation/create_hailo_venv.py"
-
+DOWNLOAD_GROUP="default"
 # Capture any --venv-name / -n flags (so we can re-source the right dir later)
 VENV_NAME="hailo_infra_venv"
 while [[ $# -gt 0 ]]; do
@@ -14,12 +14,17 @@ while [[ $# -gt 0 ]]; do
       VENV_NAME="$2"
       shift 2
       ;;
+    --all)
+      DOWNLOAD_GROUP="all"
+      shift
+      ;;
     *)
-      # pass through anything else to the create script
       shift
       ;;
   esac
 done
+
+sudo apt-get install meson
 
 echo "🌱 Running venv-creation script…"
 python3 "$CREATE_SCRIPT" --virtualenv "$VENV_NAME"
@@ -47,6 +52,6 @@ if [[ ! -f "$POST_INSTALL_SCRIPT" ]]; then
 fi
 
 # <-- add this line to execute it:
-python3 "$POST_INSTALL_SCRIPT"
+python3 "$POST_INSTALL_SCRIPT"  --group "$DOWNLOAD_GROUP"
 
 echo "✅ All done! Your package is now in '${VENV_NAME}'."

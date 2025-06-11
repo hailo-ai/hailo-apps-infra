@@ -22,7 +22,12 @@ from hailo_core.hailo_common.defines import (
     RESOURCE_STORAGE_DIR_NAME,
 )
 
-DOWNLOAD_DIR = Path(RESOURCES_ROOT_PATH_DEFAULT) / RESOURCE_STORAGE_DIR_NAME
+DOWNLOAD_DIR_CANDIDATE = Path(RESOURCES_ROOT_PATH_DEFAULT) / RESOURCE_STORAGE_DIR_NAME
+if DOWNLOAD_DIR_CANDIDATE.exists():
+    DOWNLOAD_DIR = DOWNLOAD_DIR_CANDIDATE
+else:
+    DOWNLOAD_DIR = Path.cwd() / ".download_dir"
+    DOWNLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
