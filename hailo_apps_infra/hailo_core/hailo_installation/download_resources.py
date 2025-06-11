@@ -147,7 +147,7 @@ def download_resources(group: str = None,
                 # bare model name → construct URL
                 name = entry
                 if hailo_arch == HAILO10H_ARCH:
-                    url = f"{base_url}/{model_zoo_version}/{"hailo15h"}/{name}{HAILO_FILE_EXTENSION}"
+                    url = f"{base_url}/{model_zoo_version}/{'hailo15h'}/{name}{HAILO_FILE_EXTENSION}"
                 else:
                     url = f"{base_url}/{model_zoo_version}/{hailo_arch}/{name}{HAILO_FILE_EXTENSION}"
                 dest = resource_root / RESOURCES_MODELS_DIR_NAME / hailo_arch / f"{name}{HAILO_FILE_EXTENSION}"
