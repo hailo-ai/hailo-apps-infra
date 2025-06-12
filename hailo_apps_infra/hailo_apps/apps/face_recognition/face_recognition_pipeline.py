@@ -543,7 +543,7 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
                     pass  # Ignore if queue is full or other issues
             
             if self.user_data.telegram_enabled:  # adding task to the worker queue
-                self.add_task('send_notification', name=person['label'] if person else None, global_id=self.trac_id_to_global_id[track_id], distance=person['_distance'] if person else None, frame=cropped_frame)
+                self.add_task('send_notification', name=person['label'] if person else None, global_id=self.trac_id_to_global_id[track_id], distance=person['_distance'] if person else None, frame=frame)
 
         return Gst.PadProbeReturn.OK
     
