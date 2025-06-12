@@ -26,7 +26,7 @@ class Record(LanceModel):
     last_sample_recieved_time: int  # epoch timestamp: In case the last sample removed - not maintend to previous sample time...
     samples_json: str  # Store samples as a JSON string  # [{"embedding", "sample_path", "id"}] (path to sample)
     # optional fields, but default values are set
-    classificaiton_confidence_threshold: float = 0.3  # initial default value
+    classificaiton_confidence_threshold: float = 0.35  # initial default value
     value: float = 0.0  # in some cases numeric value might be relevant 
 
 class DatabaseHandler:
