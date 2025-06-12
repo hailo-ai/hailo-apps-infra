@@ -52,7 +52,8 @@ try:
         FACE_RECON_SAMPLES_DIR_NAME,
         RESOURCES_JSON_DIR_NAME,
         FACE_DETECTION_JSON_NAME,
-        FACE_ALGO_PARAMS_JSON_NAME
+        FACE_ALGO_PARAMS_JSON_NAME,
+        DEFAULT_LOCAL_RESOURCES_PATH
     )
 except ImportError:
     from hailo_apps_infra.hailo_core.hailo_common.defines import (
@@ -71,7 +72,8 @@ except ImportError:
     FACE_RECON_SAMPLES_DIR_NAME,
     RESOURCES_JSON_DIR_NAME,
     FACE_DETECTION_JSON_NAME,
-    FACE_ALGO_PARAMS_JSON_NAME
+    FACE_ALGO_PARAMS_JSON_NAME,
+    DEFAULT_LOCAL_RESOURCES_PATH
 )
 try:
     from hailo_core.hailo_common.buffer_utils import get_numpy_from_buffer_efficient, get_caps_from_pad
@@ -122,7 +124,7 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
         self.embedding_queue = multiprocessing.Queue()  # Create a queue for sending embeddings to the visualization process
 
         # Criteria for when a candidate frame is good enough to try recognize a person from it (e.g., skip the first few frames since in them person only entered the frame and usually is blurry)
-        self.json_file = open(get_resource_path(pipeline_name=None, resource_type=RESOURCES_JSON_DIR_NAME, model=FACE_ALGO_PARAMS_JSON_NAME), "r+")
+        self.json_file = open(get_resource_path(pipeline_name=None, resource_type=DEFAULT_LOCAL_RESOURCES_PATH, model=FACE_ALGO_PARAMS_JSON_NAME), "r+")
         self.algo_params = json.load(self.json_file)
         # 1. The new face has at least self.min_face_pixels_tolerance number of pixels
         self.min_face_pixels_tolerance = self.algo_params['min_face_pixels_tolerance']
@@ -527,7 +529,7 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
             
             if person:
                 self.trac_id_to_global_id[track_id] = person['global_id']
-                detection.add_object(hailo.HailoClassification(type='1', label=person['label'], confidence=(1-person['_distance'])))  # type 1 = hailo.HAILO_CLASSIFICATION, Uknown person will not be added to the tracker - because after another skip_frames it will be processed again, and might be recognized as a person from the database
+                detection.add_object(hailo.HailoClassification(type='face_recon', label=person['label'], confidence=(1-person['_distance'])))  # type 1 = hailo.HAILO_CLASSIFICATION, Uknown person will not be added to the tracker - because after another skip_frames it will be processed again, and might be recognized as a person from the database
             else:  # If no person is found, init frame count for this track id, and give another chance to the same track id after self.skip_frames X 10
                 self.trac_id_to_global_id[track_id] = uuid.uuid4()
             

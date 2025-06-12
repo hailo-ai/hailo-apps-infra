@@ -1,0 +1,7 @@
+{
+    "min_face_pixels_tolerance": 12000,
+    "blurriness_tolerance": 300,
+    "procrustes_distance_threshold": 0.3,
+    "skip_frames": 30,
+    "batch_size": 1
+}
