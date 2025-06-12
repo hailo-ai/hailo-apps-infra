@@ -16,6 +16,22 @@ except ImportError:
 
 # Local application/library imports
 from db_handler import DatabaseHandler, Record
+try:
+    from hailo_core.hailo_common.core import get_resource_path
+except ImportError:
+    from hailo_apps_infra.hailo_core.hailo_common.core import get_resource_path
+try:
+    from hailo_core.hailo_common.defines import (
+        FACE_RECON_DIR_NAME,
+        FACE_RECON_SAMPLES_DIR_NAME,
+        FACE_RECON_DATABASE_DIR_NAME
+    )
+except ImportError:
+    from hailo_apps_infra.hailo_core.hailo_common.defines import (
+    FACE_RECON_DIR_NAME,
+    FACE_RECON_SAMPLES_DIR_NAME,
+    FACE_RECON_DATABASE_DIR_NAME
+)
 # endregion imports
 
 def visualize_embeddings(db_handler):
@@ -104,5 +120,9 @@ def save_fiftyone_changes_to_lancedb(dataset, db_handler):
             db_handler.update_record_label(global_id, sample_data["name"])
 
 if __name__ == "__main__":
-    db_handler = DatabaseHandler(db_name='persons.db', table_name='persons', schema=Record)
+    db_handler = DatabaseHandler(db_name='persons.db', 
+                                 table_name='persons', 
+                                 schema=Record, threshold=0.35,
+                                 database_dir=get_resource_path(pipeline_name=None, resource_type=FACE_RECON_DIR_NAME, model=FACE_RECON_DATABASE_DIR_NAME),
+                                 samples_dir = get_resource_path(pipeline_name=None, resource_type=FACE_RECON_DIR_NAME, model=FACE_RECON_SAMPLES_DIR_NAME))
     visualize_embeddings(db_handler)

@@ -15,7 +15,6 @@ from gi.repository import Gst
         
 # Local application-specific imports
 from hailo_apps_infra.hailo_core.hailo_common.base_ui_callbacks import BaseUICallbacks
-from hailo_apps_infra.hailo_core.hailo_common.db_handler import DatabaseHandler, Record
 from hailo_apps_infra.hailo_core.hailo_common.db_visualizer import DatabaseVisualizer
 # endregion imports
 
@@ -25,11 +24,6 @@ RESULT_QUEUE_TIMEOUT = 2
 WORKER_SLEEP_INTERVAL = 3 
 PROCESS_UI_TEXT_MESSAGE_INTERVAL = 2
 PROCESSING_STARTED_MESSAGE = "Processing started."
-
-# Database Configuration
-DB_NAME = 'persons.db'
-DB_TABLE_NAME = 'persons'
-DB_SCHEMA = Record
 
 # Visualization Process
 VISUALIZATION_SLEEP_INTERVAL = 0.1  # Sleep interval for visualization loop
@@ -51,13 +45,12 @@ class UICallbacks(BaseUICallbacks):
     def __init__(self, pipeline):
         super().__init__(pipeline)
         self.latest_plot_image = None
-        self.db_handler = DatabaseHandler(db_name=DB_NAME, table_name=DB_TABLE_NAME, schema=DB_SCHEMA)
         if self.pipeline.options_menu.visualize:
             self.start_visualization_process()
 
     def start_visualization_process(self):
         """Start the visualization process in a separate process."""
-        db_records = self.db_handler.get_all_records()  # Get a copy of the records to avoid shared memory issues
+        db_records = self.pipeline.db_handler.get_all_records()  # Get a copy of the records to avoid shared memory issues
         p = multiprocessing.Process(target=self.display_visualization_process, args=(db_records, self.pipeline.embedding_queue, self.pipeline.pipeline))
         p.daemon = THREAD_DAEMON  # Process will terminate when the main program exits
         p.start()

@@ -53,7 +53,8 @@ try:
         RESOURCES_JSON_DIR_NAME,
         FACE_DETECTION_JSON_NAME,
         FACE_ALGO_PARAMS_JSON_NAME,
-        DEFAULT_LOCAL_RESOURCES_PATH
+        DEFAULT_LOCAL_RESOURCES_PATH,
+        FACE_RECON_DATABASE_DIR_NAME
     )
 except ImportError:
     from hailo_apps_infra.hailo_core.hailo_common.defines import (
@@ -73,7 +74,8 @@ except ImportError:
     RESOURCES_JSON_DIR_NAME,
     FACE_DETECTION_JSON_NAME,
     FACE_ALGO_PARAMS_JSON_NAME,
-    DEFAULT_LOCAL_RESOURCES_PATH
+    DEFAULT_LOCAL_RESOURCES_PATH,
+    FACE_RECON_DATABASE_DIR_NAME
 )
 try:
     from hailo_core.hailo_common.buffer_utils import get_numpy_from_buffer_efficient, get_caps_from_pad
@@ -119,8 +121,6 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
         parser.add_argument("--ui", action="store_true", help="Whether display the Gradio UI or just CLI")
         super().__init__(parser, user_data)
 
-        # Initialize the database and table
-        self.db_handler = DatabaseHandler(db_name='persons.db', table_name='persons', schema=Record)
         self.embedding_queue = multiprocessing.Queue()  # Create a queue for sending embeddings to the visualization process
 
         # Criteria for when a candidate frame is good enough to try recognize a person from it (e.g., skip the first few frames since in them person only entered the frame and usually is blurry)
@@ -136,6 +136,14 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
         self.skip_frames = self.algo_params['skip_frames']
         # Both for face detection & recognition networks (not tunable from the UI)
         self.batch_size = self.algo_params['batch_size']
+
+        # Initialize the database and table
+        self.db_handler = DatabaseHandler(db_name='persons.db', 
+                                          table_name='persons', 
+                                          schema=Record, 
+                                          threshold=self.algo_params['lance_db_vector_search_classificaiton_confidence_threshold'],
+                                          database_dir=get_resource_path(pipeline_name=None, resource_type=FACE_RECON_DIR_NAME, model=FACE_RECON_DATABASE_DIR_NAME),
+                                          samples_dir = get_resource_path(pipeline_name=None, resource_type=FACE_RECON_DIR_NAME, model=FACE_RECON_SAMPLES_DIR_NAME))
 
         # Determine the architecture if not specified
         if self.options_menu.arch is None:
@@ -510,9 +518,9 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
             cropped_frame = self.crop_frame(frame, detection.get_bbox(), width, height)
 
             # after self.skip_frames - check the frame, If current frame does not meet the criteria, skip it and wait again self.skip_frames before processing the same track id
-            if (self.get_detection_num_pixels(detection.get_bbox(), width, height) >= self.min_face_pixels_tolerance and 
-                self.calculate_procrustes_distance(detection, width, height) <= self.procrustes_distance_threshold and 
-                self.measure_blurriness(cropped_frame) >= self.blurriness_tolerance):
+            if (self.get_detection_num_pixels(detection.get_bbox(), width, height) < self.min_face_pixels_tolerance or 
+                self.calculate_procrustes_distance(detection, width, height) > self.procrustes_distance_threshold   or 
+                self.measure_blurriness(cropped_frame) < self.blurriness_tolerance):
                 self.track_id_frame_count[track_id] = 0
                 continue  
 
@@ -526,7 +534,7 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
             [detection.remove_object(classification) for classification in detection.get_objects_typed(hailo.HAILO_CLASSIFICATION)]  # remove all classifications from the detection, since we will add our own classification based on the embedding search result
             embedding_vector = np.array(embedding[0].get_data())
             person = self.db_handler.search_record(embedding=embedding_vector)  # most time consuming operation - search the database for the person with the closest embedding
-            
+
             if person:
                 self.trac_id_to_global_id[track_id] = person['global_id']
                 detection.add_object(hailo.HailoClassification(type='face_recon', label=person['label'], confidence=(1-person['_distance'])))  # type 1 = hailo.HAILO_CLASSIFICATION, Uknown person will not be added to the tracker - because after another skip_frames it will be processed again, and might be recognized as a person from the database

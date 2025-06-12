@@ -25,34 +25,36 @@ class Record(LanceModel):
     avg_embedding: Vector(512) # type: ignore the warning
     last_sample_recieved_time: int  # epoch timestamp: In case the last sample removed - not maintend to previous sample time...
     samples_json: str  # Store samples as a JSON string  # [{"embedding", "sample_path", "id"}] (path to sample)
+    classificaiton_confidence_threshold: float
     # optional fields, but default values are set
-    classificaiton_confidence_threshold: float = 0.35  # initial default value
     value: float = 0.0  # in some cases numeric value might be relevant 
 
 class DatabaseHandler:
-    def __init__(self, db_name, table_name, schema):
-        self.db = self.__init_database(db_name = db_name)
+    def __init__(self, db_name, table_name, schema, threshold, database_dir, samples_dir):
+        self.db = self.__init_database(db_name=db_name, database_dir=database_dir, samples_dir=samples_dir)
         self.tbl_records = self.__init_table(
             self.db,
             table_name=table_name,
             schema=schema,
             indexes=[('global_id', 'BTREE'), ('label', 'BTREE')]
         )
+        self.classificaiton_confidence_threshold = threshold  # Default classification confidence threshold
 
-    def __init_database(self, db_name: str):
+    def __init_database(self, db_name: str, database_dir: str, samples_dir: str):
         """
         Initializes the LanceDB database.
 
         Args:
             db_name (str): The name of the database file.
+            database_dir (str): The directory where the database file will be stored.
+            samples_dir (str): The directory where sample files will be stored.
 
         Returns:
             lancedb.LanceDB: The connected database instance.
         """
-        database_dir = get_resource_path(pipeline_name=None, resource_type=FACE_RECON_DIR_NAME, model=FACE_RECON_DATABASE_DIR_NAME)
         os.makedirs(database_dir, exist_ok=True)  # Create the directory if it doesn't exist
         db = lancedb.connect(uri=os.path.join(database_dir, db_name))  # Connect to the database
-        self.samples_dir = get_resource_path(pipeline_name=None, resource_type=FACE_RECON_DIR_NAME, model=FACE_RECON_SAMPLES_DIR_NAME)
+        self.samples_dir = samples_dir
         return db
 
     def __init_table(self, db, table_name: str, schema=None, indexes=None):
@@ -101,9 +103,10 @@ class DatabaseHandler:
                         label=label, 
                         avg_embedding=embedding.tolist(),
                         last_sample_recieved_time=timestamp, 
-                        samples_json = json.dumps([{"embedding": embedding.tolist(), 
-                                                    "sample_path": sample, 
-                                                    "id": str(uuid.uuid4())}]))
+                        samples_json=json.dumps([{"embedding": embedding.tolist(),
+                                                  "sample_path": sample,
+                                                  "id": str(uuid.uuid4())}]),
+                        classificaiton_confidence_threshold=self.classificaiton_confidence_threshold)
         self.tbl_records.add([record])
         if len(self.tbl_records.search().to_list()) > 256:
             self.tbl_records.create_index(vector_column_name='embedding', metric="cosine", replace=True)
