@@ -343,7 +343,6 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
         Returns:
             float: The variance of the Laplacian, which indicates the blurriness of the image.
         """
-        return 400  # dummy implementation
         gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         laplacian = cv2.Laplacian(gray_image, cv2.CV_64F)
         variance_of_laplacian = laplacian.var()
@@ -517,11 +516,13 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
             frame = get_numpy_from_buffer_efficient(buffer, format, width, height)
             cropped_frame = self.crop_frame(frame, detection.get_bbox(), width, height)
 
-            if (self.get_detection_num_pixels(detection.get_bbox(), width, height) < self.min_face_pixels_tolerance or 
-                self.calculate_procrustes_distance(detection, width, height) > self.procrustes_distance_threshold   or 
-                self.measure_blurriness(cropped_frame) < self.blurriness_tolerance):
+            # If current frame does not meet the criteria, skip it and wait again self.skip_frames before processing the same track id
+            if (self.get_detection_num_pixels(detection.get_bbox(), width, height) >= self.min_face_pixels_tolerance and 
+                self.calculate_procrustes_distance(detection, width, height) <= self.procrustes_distance_threshold and 
+                self.measure_blurriness(cropped_frame) >= self.blurriness_tolerance):
                 self.track_id_frame_count[track_id] = 0
-                continue  # If current frame does not meet the criteria, skip it and wait again self.skip_frames before processing the same track id
+                continue  
+            
             embedding_vector = np.array(embedding[0].get_data())
             person = self.db_handler.search_record(embedding=embedding_vector)
             
