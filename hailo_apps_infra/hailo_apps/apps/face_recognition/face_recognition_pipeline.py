@@ -54,7 +54,8 @@ try:
         FACE_DETECTION_JSON_NAME,
         FACE_ALGO_PARAMS_JSON_NAME,
         DEFAULT_LOCAL_RESOURCES_PATH,
-        FACE_RECON_DATABASE_DIR_NAME
+        FACE_RECON_DATABASE_DIR_NAME,
+        TRACKER_UPDATE_POSTPROCESS_SO_FILENAME
     )
 except ImportError:
     from hailo_apps_infra.hailo_core.hailo_common.defines import (
@@ -75,7 +76,8 @@ except ImportError:
     FACE_DETECTION_JSON_NAME,
     FACE_ALGO_PARAMS_JSON_NAME,
     DEFAULT_LOCAL_RESOURCES_PATH,
-    FACE_RECON_DATABASE_DIR_NAME
+    FACE_RECON_DATABASE_DIR_NAME,
+    TRACKER_UPDATE_POSTPROCESS_SO_FILENAME
 )
 try:
     from hailo_core.hailo_common.buffer_utils import get_numpy_from_buffer_efficient, get_caps_from_pad
@@ -171,12 +173,14 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
             self.detection_func = "scrfd_2_5g_letterbox"
         self.recognition_func = "filter"
         self.cropper_func = "face_recognition"
+        self.tracker_update_func = "filter"
 
         # Set the post-processing shared object file
         self.post_process_so_scrfd = get_resource_path(pipeline_name=None, resource_type=RESOURCES_SO_DIR_NAME, model=FACE_DETECTION_POSTPROCESS_SO_FILENAME)
         self.post_process_so_face_recognition = get_resource_path(pipeline_name=None, resource_type=RESOURCES_SO_DIR_NAME, model=FACE_RECOGNITION_POSTPROCESS_SO_FILENAME)
         self.post_process_so_face_align = get_resource_path(pipeline_name=None, resource_type=RESOURCES_SO_DIR_NAME, model=FACE_ALIGN_POSTPROCESS_SO_FILENAME)
         self.post_process_so_cropper = get_resource_path(pipeline_name=None, resource_type=RESOURCES_SO_DIR_NAME, model=FACE_CROP_POSTPROCESS_SO_FILENAME)
+        self.post_process_so_tracker_update = get_resource_path(pipeline_name=None, resource_type=RESOURCES_SO_DIR_NAME, model=TRACKER_UPDATE_POSTPROCESS_SO_FILENAME)
         
         # Callbacks: bindings between the C++ & Python code
         self.app_callback = app_callback
@@ -244,6 +248,7 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
                                                             f'{mobile_facenet_pipeline}'),
                                             so_path=self.post_process_so_cropper, function_name=self.cropper_func, internal_offset=True)
         vector_db_callback_pipeline = USER_CALLBACK_PIPELINE(name=self.vector_db_callback_name)  # 'identity name' - is a GStreamer element that does nothing, but allows to add a probe to it
+        update_tracker = f"hailofilter so-path={self.post_process_so_tracker_update} function-name={self.tracker_update_func} name=update_tracker "
         user_callback_pipeline = USER_CALLBACK_PIPELINE()
         if self.options_menu.ui:
             display_pipeline = UI_APPSINK_PIPELINE(name='ui_appsink')
@@ -262,6 +267,7 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
             f'{tracker_pipeline} ! '
             f'{cropper_pipeline} ! '
             f'{vector_db_callback_pipeline} ! '
+            f'{update_tracker} ! '
             f'{user_callback_pipeline} ! '
             f'{display_pipeline}'
         )
@@ -356,6 +362,7 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
         gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         laplacian = cv2.Laplacian(gray_image, cv2.CV_64F)
         variance_of_laplacian = laplacian.var()
+        # print(f"Blurriness: {variance_of_laplacian}")
         return variance_of_laplacian
 
     def calculate_procrustes_distance(self, detection, width, height):
@@ -414,12 +421,13 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
 
         # Compute the Procrustes distance
         distance = np.linalg.norm(detected_landmarks - DEST_VECTOR)
-
+        # print(f"Procrustes distance: {distance}")
         return distance
 
     def get_detection_num_pixels(self, bbox, frame_width, frame_height):
         bbox_width_pixels = int(bbox.width() * frame_width)
         bbox_height_pixels = int(bbox.height() * frame_height)
+        # print(f"num pixels: {bbox_width_pixels * bbox_height_pixels}")
         return bbox_width_pixels * bbox_height_pixels
     
     def crop_frame(self, frame, bbox, width, height):
@@ -540,6 +548,7 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
                 detection.add_object(hailo.HailoClassification(type='face_recon', label=person['label'], confidence=(1-person['_distance'])))  # type 1 = hailo.HAILO_CLASSIFICATION, Uknown person will not be added to the tracker - because after another skip_frames it will be processed again, and might be recognized as a person from the database
             else:  # If no person is found, init frame count for this track id, and give another chance to the same track id after self.skip_frames X 10
                 self.trac_id_to_global_id[track_id] = uuid.uuid4()
+                print("stranger")
             
             # anyway re-process for "double-check" after self.skip_frames X 3
             self.track_id_frame_count[track_id] = -3 * self.skip_frames  

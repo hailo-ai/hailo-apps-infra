@@ -133,3 +133,17 @@ shared_library('vms_croppers',
     install: true,
     install_dir: '/usr/local/hailo/resources/so',
 )
+
+################################################
+# TRACKER UPDATE SOURCES
+################################################
+tracker_update_sources = [
+    'tracker_update.cpp',
+]
+shared_library('tracker_update',
+    tracker_update_sources,
+    dependencies : postprocess_dep,
+    gnu_symbol_visibility : 'default',
+    install: true,
+    install_dir: '/usr/local/hailo/resources/so',
+)
