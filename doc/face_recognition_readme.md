@@ -2,7 +2,7 @@
 
 ## Quick Start:
 
-Assumin Hailo Apps Infra installed, this wil take the sample training dataset and sample video to play.
+This uses the sample training dataset and sample video for demonstration purposes:
 ```
 python face_recognition.py --mode train
 python face_recognition.py
