@@ -183,7 +183,14 @@ class DatabaseHandler:
             search_result[0]['samples_json'] = json.loads(search_result[0]['samples_json'])
             if (1 - search_result[0]['_distance']) > search_result[0]['classificaiton_confidence_threshold']:  # if search_result[0]['_distance']>1 the condition is false by default (1-1.1=-0.1) because default value if 0.3
                 return search_result[0]
-        return None
+        # No match from DB
+        return {'global_id': str(uuid.uuid4()),
+                'label': 'Unknown', 
+                'avg_embedding': None,
+                'last_sample_recieved_time': None, 
+                'samples_json': None,
+                'classificaiton_confidence_threshold': None,
+                '_distance': 0.0}
 
     def update_record_label(self, global_id: str, label: str = 'Unknown') -> None:
         """

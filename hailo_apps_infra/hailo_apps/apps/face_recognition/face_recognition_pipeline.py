@@ -195,7 +195,6 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
                 app_sink.connect('new-sample', self.appsink_callback)
         else:  # train
             self.connect_train_vector_db_callback()
-        self.trac_id_to_global_id = {}  # association between tracker id and global id for tracker pipeline element
         self.track_id_frame_count = {}  # Dictionary to track frame counts for each track ID - avoid porocessing first frames since usually they are blurry since person just entered the frame 
 
         self.visualization_process = None # Process for displaying the matplotlib embedding visualization in a separate process
@@ -219,7 +218,7 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
                     user_data.send_notification(
                         name=task['name'],
                         global_id=task['global_id'],
-                        distance=task['distance'],
+                        confidence=task['confidence'],
                         frame=task['frame']
                     )
                 self.task_queue.task_done()
@@ -455,34 +454,35 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
             # after self.skip_frames  
             frame = get_numpy_from_buffer_efficient(buffer, format, width, height)
             embedding = detection.get_objects_typed(hailo.HAILO_MATRIX)  # face recognition embedding
-            if len(embedding) == 0:  # we will continue if new embedding exists
+            if len(embedding) == 0:
                 continue  # if cropper pipeline element decided to pass the detection - it will arrive to this stage of the pipeline without face embedding
             if len(embedding) > 1:
                 print(f"Warning: Multiple embeddings found for track ID {track_id}. Using the first one.") 
                 detection.remove_object(embedding[0])
-            
-            [detection.remove_object(classification) for classification in detection.get_objects_typed(hailo.HAILO_CLASSIFICATION)]  # remove all classifications from the detection, since we will add our own classification based on the embedding search result
+                continue
+            # exactly single embedding is expected, so we can safely remove it from the detection
             embedding_vector = np.array(embedding[0].get_data())
             person = self.db_handler.search_record(embedding=embedding_vector)  # most time consuming operation - search the database for the person with the closest embedding
-
-            if person:
-                self.trac_id_to_global_id[track_id] = person['global_id']
-                detection.add_object(hailo.HailoClassification(type='face_recon', label=person['label'], confidence=(1-person['_distance'])))
-            else:  # If no person is found
-                self.trac_id_to_global_id[track_id] = uuid.uuid4()
-                detection.add_object(hailo.HailoClassification(type='face_recon', label='Unknown person', confidence=0))
+            new_confidence = (1-person['_distance'])
+            classification = detection.get_objects_typed(hailo.HAILO_CLASSIFICATION)
+            if classification:
+                if classification[0].get_confidence() < new_confidence:  # ensuring always there is exactly one classification object in the detection - the one with the highest confidence
+                    detection.remove_object(classification[0])
+                    detection.add_object(hailo.HailoClassification(type='face_recon', label=person['label'], confidence=new_confidence))
+            else:
+                detection.add_object(hailo.HailoClassification(type='face_recon', label=person['label'], confidence=new_confidence))
             
             # anyway re-process for "double-check" after self.skip_frames X 3
             self.track_id_frame_count[track_id] = -3 * self.skip_frames  
             
-            if self.options_menu.visualize and person:  # If visualization is active, send the embedding to the visualization process - in case of new uknown person, don't plot - since the Uknown might be become later recognized in better frame after self.skip_frames try
+            if self.options_menu.visualize and person['label'] != 'Unknown':  # If visualization is active, send the embedding to the visualization process - in case of new uknown person, don't plot - since the Uknown might be become later recognized in better frame after self.skip_frames try
                 try:
                     self.embedding_queue.put((embedding_vector, person['label']), timeout=0.1)  # Use non-blocking put with a short timeout
                 except:
                     pass  # Ignore if queue is full or other issues
             
             if self.user_data.telegram_enabled:  # adding task to the worker queue
-                self.add_task('send_notification', name=person['label'] if person else None, global_id=self.trac_id_to_global_id[track_id], distance=person['_distance'] if person else None, frame=frame)
+                self.add_task('send_notification', name=person['label'], global_id=track_id, confidence=new_confidence, frame=frame)
 
         return Gst.PadProbeReturn.OK
     

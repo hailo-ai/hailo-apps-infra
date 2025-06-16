@@ -68,7 +68,7 @@ class user_callbacks_class(app_callback_class):
             self.telegram_handler = TelegramHandler(self.telegram_token, self.telegram_chat_id)
 
     # region Core application functions that are part of the main program logic and are called directly during pipeline execution, but are not GStreamer callback handlers themselves
-    def send_notification(self, name, global_id, distance, frame):
+    def send_notification(self, name, global_id, confidence, frame):
         """
         Check if Telegram is enabled and send a notification via the TelegramHandler.
         """
@@ -77,7 +77,7 @@ class user_callbacks_class(app_callback_class):
 
         # Check if the notification should be sent
         if self.telegram_handler.should_send_notification(global_id):
-            self.telegram_handler.send_notification(name, global_id, distance, frame)
+            self.telegram_handler.send_notification(name, global_id, confidence, frame)
     # endregion
 
 def app_callback(pad, info, user_data):
@@ -99,7 +99,7 @@ def app_callback(pad, info, user_data):
             classifications = detection.get_objects_typed(hailo.HAILO_CLASSIFICATION)
             if len(classifications) > 0:
                 for classification in classifications:
-                    if classification.get_label() == 'Unknown person':
+                    if classification.get_label() == 'Unknown':
                         string_to_print += 'Unknown person detected'
                     else:
                         string_to_print += f'Person recognition: {classification.get_label()} (Confidence: {classification.get_confidence():.1f})'

@@ -39,7 +39,7 @@ class TelegramHandler:
             return True
         return False
 
-    def send_notification(self, name, global_id, distance, frame):
+    def send_notification(self, name, global_id, confidence, frame):
         """
         Send a notification via Telegram with the given details.
         """
@@ -51,9 +51,9 @@ class TelegramHandler:
             caption = "🚨 Unknown person detected!"
         else:
             if name == 'Unknown':
-                caption = f"Detected {global_id} (confidence: {(1 - distance):.2f})"
+                caption = f"Detected {global_id} (confidence: {confidence:.2f})"
             else:
-                caption = f"Detected {name} (confidence: {(1 - distance):.2f})"
+                caption = f"Detected {name} (confidence: {confidence:.2f})"
 
         # Convert the frame to an image and send it
         image = Image.fromarray(frame)
