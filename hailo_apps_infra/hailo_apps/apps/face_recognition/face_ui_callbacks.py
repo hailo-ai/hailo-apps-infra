@@ -51,13 +51,13 @@ class UICallbacks(BaseUICallbacks):
     def start_visualization_process(self):
         """Start the visualization process in a separate process."""
         db_records = self.pipeline.db_handler.get_all_records()  # Get a copy of the records to avoid shared memory issues
-        p = multiprocessing.Process(target=self.display_visualization_process, args=(db_records, self.pipeline.embedding_queue, self.pipeline.pipeline))
+        p = multiprocessing.Process(target=self.display_visualization_process, args=(db_records, self.pipeline.embedding_queue))
         p.daemon = THREAD_DAEMON  # Process will terminate when the main program exits
         p.start()
         self.pipeline.visualization_process = p 
 
     @staticmethod
-    def display_visualization_process(db_records, embedding_queue, pipeline):
+    def display_visualization_process(db_records, embedding_queue):
         """Run visualization in a separate process and yield embeddings."""
         signal.signal(signal.SIGINT, signal.SIG_IGN)  # Ignore SIGINT in child processes
         while True:
@@ -78,7 +78,6 @@ class UICallbacks(BaseUICallbacks):
                     embedding_vector, label = embedding_queue.get_nowait()
                     embeddings.append(embedding_vector)
                     labels.append(label)
-
                 if embeddings:  # Only update the plot if there are new embeddings
                     UICallbacks.plot_queue.put(
                         visualizer.add_embeddings_to_existing_plot(
@@ -126,17 +125,11 @@ class UICallbacks(BaseUICallbacks):
         UICallbacks.is_started.value = True  # Set the flag to indicate processing has started
         print(PROCESSING_STARTED_MESSAGE)
 
-    def on_min_face_pixels_change(self, value):
-        self.pipeline.min_face_pixels_tolerance = value
-        self.pipeline.algo_params['min_face_pixels_tolerance'] = value
-
-    def on_blurriness_change(self, value):
-        self.pipeline.blurriness_tolerance = value
-        self.pipeline.algo_params['blurriness_tolerance'] = value
-
-    def on_procrustes_distance_change(self, value):
-        self.pipeline.procrustes_distance_threshold = value
-        self.pipeline.algo_params['procrustes_distance_threshold'] = value
+    def on_lance_db_vector_search_classificaiton_confidence_threshold_change(self, value):
+        self.pipeline.lance_db_vector_search_classificaiton_confidence_threshold = value
+        self.pipeline.db_handler.classificaiton_confidence_threshold = value
+        self.pipeline.db_handler.update_classification_confidence_threshold_for_all(value)
+        self.pipeline.algo_params['lance_db_vector_search_classificaiton_confidence_threshold'] = value
 
     def on_skip_frames_change(self, value):
         self.pipeline.skip_frames = value

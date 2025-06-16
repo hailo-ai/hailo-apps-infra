@@ -2,6 +2,7 @@
 
 ## Quick Start:
 
+Assumin Hailo Apps Infra installed, this wil take the sample training dataset and sample video to play.
 ```
 python face_recognition.py --mode train
 python face_recognition.py
@@ -55,20 +56,27 @@ and are also tunable via UI sliders (don't forget to save the selection).
 In other words - each frame should pass those image-wise quality thresholds in order to continue the evaluation flow (search in the LanceDB etc.).
 
 The parameters are:
-Min face size in pixels: The face size in pixels as resulted from the face detection must be prominent (large) enough within the frame. E.g., if a person stands too far away from the camera and the face occupies only several pixels - that's not a good input for the face classification system.
 
-Blurriness Tolerance - see method measure_blurriness. Blurry images are also not a good input for the face classification system.
+Classification Confidence Threshold - Tuned here as a global parameter for all persons in the database (can be modified for each person independently via the DB API or the 51 web interface - see below). This is the inverse of vector distance. The database calculates the distance between the current embedding and the ones saved in the database, and returns the closest match (lowest distance). The value (1 - distance) represents the confidence level, and a positive classification means the confidence level is above the threshold.
 
-Face landmarks ratios - see method calculate_procrustes_distance. In simple abstract words, practically this ensures the person is front-facing the camera as directly as possible.
+Important Note - Every time this value is modified, it will be applied immediately to all existing records in the database without the need to press "save." When clicking "save," the value will also be stored in the JSON file as the new default for future records added to the database.
 
-Frames to skip before trying to recognize - avoid processing the first frames since usually they are blurry as the person just entered the scene. Please note - from all the parameters, our internal tests revealed this one is the most influential on the overall system performance.
+Frames to Skip Before Trying to Recognize - Avoid processing the first frames, as they are usually blurry when the person has just entered the scene. Please note that, among all the parameters, our internal tests revealed this one to be the most influential on the overall system performance.
 
 Another parameter appearing in the JSON file but not directly tunable from the UI is the batch size, both for face detection & recognition networks.
 
 Theory Point: What is face recognition algorithm & pipeline
-Below is a schematic conceptual oversimplified diagram, just for the sake of basic concept understanding. Blue - Pipeline elements, green - algorithms, orange - logic code.
+Below is a schematic conceptual oversimplified diagram, just for the sake of basic concept understanding.
 
 ![pipeline_overview](../local_resources/pipeline_overview.png "pipeline_overview")
+
+The logic in the cropper element is based on the following parameters, that can be tuned directly via the C++ code (requires re-installing the package for compilation).
+
+Min face size in pixels: The face size in pixels as resulted from the face detection must be prominent (large) enough within the frame. E.g., if a person stands too far away from the camera and the face occupies only several pixels - that's not a good input for the face classification system.
+
+Blurriness Tolerance - Blurry images are also not a good input for the face classification system.
+
+Face landmarks ratios - In simple abstract words, practically this ensures the person is front-facing the camera as directly as possible.
 
 ## Prerequisites
 
@@ -106,6 +114,13 @@ python face_recognition.py --mode delete  # clear the DB
 ### Face Recognition Options Flow
 
 ![Face Recognition Options Flow](../local_resources/face_detection.png "Face Recognition Architecture")
+
+## Gradio web interface
+
+Please visit Gradio's & FastRTC documentation below for more details.
+
+The face_ui_elements.py code provides the "frontend" part, while the face_ui_callbacks.py code provides the "backend" part. Similar to the CLI option, there is logic to handle the matplotlib embedding visualization. When adjusting the sliders and clicking "save," the new values will be saved to the JSON file `face_recon_algo_params.json`.
+The log window will record only the first appearance of the same person. If the person remains in front of the camera for an extended period, the system might classify them again, but they will appear in the log only once—unless they leave the frame and reappear later (with a new "track ID").
 
 ## Web Interface
 

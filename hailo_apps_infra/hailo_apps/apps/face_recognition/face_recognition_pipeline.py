@@ -1,6 +1,7 @@
 # region imports
 # Standard library imports
 import os
+import shutil
 import json
 import time
 import threading
@@ -14,7 +15,6 @@ import multiprocessing
 import gi
 gi.require_version('Gst', '1.0')
 from gi.repository import Gst
-import cv2
 import numpy as np
 from PIL import Image
 import matplotlib
@@ -55,7 +55,8 @@ try:
         FACE_ALGO_PARAMS_JSON_NAME,
         DEFAULT_LOCAL_RESOURCES_PATH,
         FACE_RECON_DATABASE_DIR_NAME,
-        TRACKER_UPDATE_POSTPROCESS_SO_FILENAME
+        TRACKER_UPDATE_POSTPROCESS_SO_FILENAME,
+        FACE_RECON_LOCAL_SAMPLES_DIR_NAME
     )
 except ImportError:
     from hailo_apps_infra.hailo_core.hailo_common.defines import (
@@ -77,7 +78,8 @@ except ImportError:
     FACE_ALGO_PARAMS_JSON_NAME,
     DEFAULT_LOCAL_RESOURCES_PATH,
     FACE_RECON_DATABASE_DIR_NAME,
-    TRACKER_UPDATE_POSTPROCESS_SO_FILENAME
+    TRACKER_UPDATE_POSTPROCESS_SO_FILENAME,
+    FACE_RECON_LOCAL_SAMPLES_DIR_NAME
 )
 try:
     from hailo_core.hailo_common.buffer_utils import get_numpy_from_buffer_efficient, get_caps_from_pad
@@ -128,14 +130,10 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
         # Criteria for when a candidate frame is good enough to try recognize a person from it (e.g., skip the first few frames since in them person only entered the frame and usually is blurry)
         self.json_file = open(get_resource_path(pipeline_name=None, resource_type=DEFAULT_LOCAL_RESOURCES_PATH, model=FACE_ALGO_PARAMS_JSON_NAME), "r+")
         self.algo_params = json.load(self.json_file)
-        # 1. The new face has at least self.min_face_pixels_tolerance number of pixels
-        self.min_face_pixels_tolerance = self.algo_params['min_face_pixels_tolerance']
-        # 2. The new face is not too blurry - blurriness measurement higher (sharper image) than self.blurriness_tolerance
-        self.blurriness_tolerance = self.algo_params['blurriness_tolerance']
-        # 3. Ratios between landmarks ignoring translation - "Procrustes Distance" (lower is better)
-        self.procrustes_distance_threshold = self.algo_params['procrustes_distance_threshold']
-        # 4. How many frames to skip between detection attempts: avoid porocessing first frames since usually they are blurry since person just entered the frame, see self.track_id_frame_count
+        # 1. How many frames to skip between detection attempts: avoid porocessing first frames since usually they are blurry since person just entered the frame, see self.track_id_frame_count
         self.skip_frames = self.algo_params['skip_frames']
+        # 2. Confidence threshold for face classification: if the confidence is below this value, the face will not be recognized
+        self.lance_db_vector_search_classificaiton_confidence_threshold = self.algo_params['lance_db_vector_search_classificaiton_confidence_threshold']
         # Both for face detection & recognition networks (not tunable from the UI)
         self.batch_size = self.algo_params['batch_size']
 
@@ -143,7 +141,7 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
         self.db_handler = DatabaseHandler(db_name='persons.db', 
                                           table_name='persons', 
                                           schema=Record, 
-                                          threshold=self.algo_params['lance_db_vector_search_classificaiton_confidence_threshold'],
+                                          threshold=self.lance_db_vector_search_classificaiton_confidence_threshold,
                                           database_dir=get_resource_path(pipeline_name=None, resource_type=FACE_RECON_DIR_NAME, model=FACE_RECON_DATABASE_DIR_NAME),
                                           samples_dir = get_resource_path(pipeline_name=None, resource_type=FACE_RECON_DIR_NAME, model=FACE_RECON_SAMPLES_DIR_NAME))
 
@@ -282,9 +280,22 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
 
     def run_training(self):
         """
-        Iterates over the training folder structured with subfolders (person names),
+        Iterate over the training folder structured with subfolders (person names),
         generates embeddings for each image, and stores them in the database with the person's name.
+        In case training folder is empty - copy from the defaukt local resources folder the exmpale training images.
         """
+        # Check if the directory is empty
+        if not os.listdir(self.train_images_dir):
+            print(f"Training directory {self.train_images_dir} is empty. Copying default training images from local resources.")
+            source_dir = get_resource_path(pipeline_name=None, resource_type=DEFAULT_LOCAL_RESOURCES_PATH, model=FACE_RECON_LOCAL_SAMPLES_DIR_NAME)
+            for item in os.listdir(source_dir):
+                source_path = os.path.join(source_dir, item)
+                destination_path = os.path.join(self.train_images_dir, item)
+                if os.path.isdir(source_path):
+                    shutil.copytree(source_path, destination_path)
+                else:
+                    shutil.copy2(source_path, destination_path)
+
         print(f"Training on images from {self.train_images_dir}")
         for person_name in os.listdir(self.train_images_dir):  # Iterate over subfolders in the training directory
             person_folder = os.path.join(self.train_images_dir, person_name)
@@ -348,87 +359,6 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
     def save_image_file(self, frame, image_path):
         image = Image.fromarray(frame)  # Convert the frame to an image
         image.save(image_path, format="JPEG", quality=85)  # Save as a compressed JPEG with quality 85
-    
-    def measure_blurriness(self, image):
-        """
-        Measures the blurriness of an image using the variance of the Laplacian method.
-
-        Args:
-            image (np.ndarray): The input image.
-
-        Returns:
-            float: The variance of the Laplacian, which indicates the blurriness of the image.
-        """
-        gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        laplacian = cv2.Laplacian(gray_image, cv2.CV_64F)
-        variance_of_laplacian = laplacian.var()
-        # print(f"Blurriness: {variance_of_laplacian}")
-        return variance_of_laplacian
-
-    def calculate_procrustes_distance(self, detection, width, height):
-        """
-        Calculates the Procrustes distance between detected landmarks and a predefined destination vector.
-
-        Args:
-            detection: The detection object containing landmarks and bounding box.
-            width (int): The width of the frame.
-            height (int): The height of the frame.
-
-        Returns:
-            float: The Procrustes distance.
-
-        The Procrustes distance is a measure of similarity between two sets of points, often used in shape analysis. 
-        When applied to face recognition landmarks (e.g., eyes, nose, and mouth), 
-        it quantifies how similar the relative positions of these landmarks are between two faces, 
-        after accounting for differences in scale, translation, and rotation.
-        """
-        # Extract landmarks
-        landmarks = detection.get_objects_typed(hailo.HAILO_LANDMARKS)
-        if not landmarks or len(landmarks) != 1:
-            return float('inf')  # Return a large value if landmarks are not available
-
-        points = landmarks[0].get_points()
-        bbox = detection.get_bbox()
-
-        # Normalize detected landmarks to the same scale as DEST_VECTOR
-        detected_landmarks = np.array([
-            [
-                int((point.x() * bbox.width() + bbox.xmin()) * width),
-                int((point.y() * bbox.height() + bbox.ymin()) * height)
-            ]
-            for point in points
-        ])
-
-        # Define the destination vector - magic numbers from the algorithm
-        DEST_VECTOR = np.array([
-            [38.2946, 51.6963],
-            [73.5318, 51.5014],
-            [56.0252, 71.7366],
-            [41.5493, 92.3655],
-            [70.7299, 92.2041]
-        ])
-
-        # Ensure detected_landmarks is a float array
-        detected_landmarks = detected_landmarks.astype(np.float64)
-
-        # Center the landmarks
-        detected_landmarks -= np.mean(detected_landmarks, axis=0)
-        DEST_VECTOR -= np.mean(DEST_VECTOR, axis=0)
-
-        # Scale the landmarks
-        detected_landmarks /= np.linalg.norm(detected_landmarks)
-        DEST_VECTOR /= np.linalg.norm(DEST_VECTOR)
-
-        # Compute the Procrustes distance
-        distance = np.linalg.norm(detected_landmarks - DEST_VECTOR)
-        # print(f"Procrustes distance: {distance}")
-        return distance
-
-    def get_detection_num_pixels(self, bbox, frame_width, frame_height):
-        bbox_width_pixels = int(bbox.width() * frame_width)
-        bbox_height_pixels = int(bbox.height() * frame_height)
-        # print(f"num pixels: {bbox_width_pixels * bbox_height_pixels}")
-        return bbox_width_pixels * bbox_height_pixels
     
     def crop_frame(self, frame, bbox, width, height):
         # Retrieve the bounding box of the detection to save only the cropped area - useful in case there are more than 1 person in the frame
@@ -521,17 +451,9 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
             if self.track_id_frame_count.get(track_id, 0) < self.skip_frames:
                 self.track_id_frame_count[track_id] = self.track_id_frame_count.get(track_id, 0) + 1
                 continue
-                        
+            
+            # after self.skip_frames  
             frame = get_numpy_from_buffer_efficient(buffer, format, width, height)
-            cropped_frame = self.crop_frame(frame, detection.get_bbox(), width, height)
-
-            # after self.skip_frames - check the frame, If current frame does not meet the criteria, skip it and wait again self.skip_frames before processing the same track id
-            if (self.get_detection_num_pixels(detection.get_bbox(), width, height) < self.min_face_pixels_tolerance or 
-                self.calculate_procrustes_distance(detection, width, height) > self.procrustes_distance_threshold   or 
-                self.measure_blurriness(cropped_frame) < self.blurriness_tolerance):
-                self.track_id_frame_count[track_id] = 0
-                continue  
-
             embedding = detection.get_objects_typed(hailo.HAILO_MATRIX)  # face recognition embedding
             if len(embedding) == 0:  # we will continue if new embedding exists
                 continue  # if cropper pipeline element decided to pass the detection - it will arrive to this stage of the pipeline without face embedding
@@ -545,10 +467,10 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
 
             if person:
                 self.trac_id_to_global_id[track_id] = person['global_id']
-                detection.add_object(hailo.HailoClassification(type='face_recon', label=person['label'], confidence=(1-person['_distance'])))  # type 1 = hailo.HAILO_CLASSIFICATION, Uknown person will not be added to the tracker - because after another skip_frames it will be processed again, and might be recognized as a person from the database
-            else:  # If no person is found, init frame count for this track id, and give another chance to the same track id after self.skip_frames X 10
+                detection.add_object(hailo.HailoClassification(type='face_recon', label=person['label'], confidence=(1-person['_distance'])))
+            else:  # If no person is found
                 self.trac_id_to_global_id[track_id] = uuid.uuid4()
-                print("stranger")
+                detection.add_object(hailo.HailoClassification(type='face_recon', label='Unknown person', confidence=0))
             
             # anyway re-process for "double-check" after self.skip_frames X 3
             self.track_id_frame_count[track_id] = -3 * self.skip_frames  
@@ -588,7 +510,7 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
                 print(f"Adding face to: {name}")
             else: 
                 person = self.db_handler.create_record(embedding=embedding_vector, sample=image_path, timestamp=int(time.time()), label=name)
-                print(f"New person added: {person['global_id']}")
+                print(f"New person added with ID: {person['global_id']}")
                 self.processed_names.add((name, person['global_id']))
             self.processed_files.add(self.current_file)
             return Gst.PadProbeReturn.OK  # in case of training - iterate exactly once per image

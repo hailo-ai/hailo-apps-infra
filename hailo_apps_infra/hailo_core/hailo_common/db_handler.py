@@ -205,6 +205,23 @@ class DatabaseHandler:
         """
         self.tbl_records.update(where=f"global_id = '{global_id}'", values={'classificaiton_confidence_threshold': classificaiton_confidence_threshold})
 
+    def update_classification_confidence_threshold_for_all(self, new_threshold: float) -> None:
+        """
+        Updates the classification_confidence_threshold for all records in the LanceDB table.
+
+        Args:
+            new_threshold (float): The new confidence threshold value to set for all records.
+        """
+        # Get all records from the database
+        records = self.get_all_records()
+        # Iterate through each record and update the classification_confidence_threshold
+        for record in records:
+            global_id = record['global_id']  # Assuming each record has a unique global_id
+            self.tbl_records.update(
+                where=f"global_id = '{global_id}'",
+                values={'classificaiton_confidence_threshold': new_threshold}
+            )
+
     def delete_record(self, global_id: str) -> None:
         """
         Deletes a record from the LanceDB table.
@@ -376,7 +393,7 @@ class DatabaseHandler:
             float: The classificaiton confidence threshold.
         """
         return self.get_record_by_id(global_id)['classificaiton_confidence_threshold']
-
+    
     def get_records_last_sample_recieved_time(self, global_id: str) -> int:
         """
         Gets the last sample recieved time associated with a record.
@@ -479,7 +496,13 @@ class DatabaseHandler:
     
 if __name__ == "__main__":
     # usage example
-    database_handler = DatabaseHandler(db_name='persons.db', table_name='persons', schema=Record)
+    database_handler = DatabaseHandler(
+        db_name='persons.db', 
+        table_name='persons', 
+        schema=Record, 
+        threshold=0.5,
+        database_dir=get_resource_path(pipeline_name=None, resource_type=FACE_RECON_DIR_NAME, model=FACE_RECON_DATABASE_DIR_NAME),
+        samples_dir = get_resource_path(pipeline_name=None, resource_type=FACE_RECON_DIR_NAME, model=FACE_RECON_SAMPLES_DIR_NAME))
     all_records = database_handler.get_all_records()
     alice = database_handler.get_record_by_label(label='Alice')
     db_visualizer = DatabaseVisualizer()

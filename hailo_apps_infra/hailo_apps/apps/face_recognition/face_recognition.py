@@ -99,7 +99,10 @@ def app_callback(pad, info, user_data):
             classifications = detection.get_objects_typed(hailo.HAILO_CLASSIFICATION)
             if len(classifications) > 0:
                 for classification in classifications:
-                    string_to_print += f'Person recognition: {classification.get_label()} (Confidence: {classification.get_confidence():.1f})'
+                    if classification.get_label() == 'Unknown person':
+                        string_to_print += 'Unknown person detected'
+                    else:
+                        string_to_print += f'Person recognition: {classification.get_label()} (Confidence: {classification.get_confidence():.1f})'
                     if track_id > user_data.latest_track_id:
                         user_data.latest_track_id = track_id
                         if len(user_data.ui_text_message) >= MAX_UI_TEXT_MESSAGES:
