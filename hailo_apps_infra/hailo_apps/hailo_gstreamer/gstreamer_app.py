@@ -331,7 +331,7 @@ class GStreamerApp:
                 identity_pad.add_probe(Gst.PadProbeType.BUFFER, self.app_callback, self.user_data)
 
         hailo_display = self.pipeline.get_by_name("hailo_display")
-        if hailo_display is None and not self.options_menu.ui:
+        if hailo_display is None and not getattr(self.options_menu, 'ui', False):
             print("Warning: hailo_display element not found, add <fpsdisplaysink name=hailo_display> to your pipeline to support fps display.")
 
         # Disable QoS to prevent frame drops
