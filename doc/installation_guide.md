@@ -1,227 +1,188 @@
-# Hailo Apps Infrastructure Installation Guide
-
-This comprehensive guide describes how to install and configure the Hailo Apps Infrastructure repository. It covers installation methods, configuration, and post-installation steps.
+# Installation Guide
 
 ## Table of Contents
 
-- [Hailo Apps Infrastructure Installation Guide](#hailo-apps-infrastructure-installation-guide)
+- [Installation Guide](#installation-guide)
   - [Table of Contents](#table-of-contents)
   - [Prerequisites](#prerequisites)
-  - [Installation Methods](#installation-methods)
-    - [1. Automated Installation (`install.sh`)](#1-automated-installation-installsh)
-  - [Core Installation Components](#core-installation-components)
-    - [Post-Installation Setup](#post-installation-setup)
-      - [Purpose](#purpose)
-      - [Usage](#usage)
-      - [Steps](#steps)
-    - [Environment Variable Management](#environment-variable-management)
-      - [Purpose](#purpose-1)
-      - [Key Variables Written](#key-variables-written)
-      - [Usage](#usage-1)
-    - [Configuration Validation](#configuration-validation)
-      - [Purpose](#purpose-2)
-      - [Usage](#usage-2)
-    - [Resource Downloading](#resource-downloading)
-      - [Purpose](#purpose-3)
-      - [Usage](#usage-3)
-    - [C++ Post-Processing Compilation](#c-post-processing-compilation)
-      - [Purpose](#purpose-4)
-      - [Usage](#usage-4)
-  - [Integration in Other Repositories](#integration-in-other-repositories)
+  - [Installation Options](#installation-options)
+    - [Option 1: Quick Start (Recommended)](#option-1-quick-start-recommended)
+    - [Option 2: Install as a Python Package](#option-2-install-as-a-python-package)
+    - [Option 3: Manual Installation](#option-3-manual-installation)
+  - [Configuration](#configuration)
+  - [Verification](#verification)
+  - [Uninstallation](#uninstallation)
+  - [Installation Flow Diagram](#installation-flow-diagram)
+
+---
 
 ## Prerequisites
 
-- **Linux** with `bash` and Python 3.8-3.11 for x86 or 3.10 and 3.11 for rpi
-- `sudo` privileges (for installing system directories and packages)
-- `virtualenv` (bundled with Python 3 `venv` module)
-- Internet access (to download wheels, models, videos)
+Before you begin, ensure you have the following:
 
-## Installation Methods
+* **Operating System:**
+
+  * Ubuntu 20.04 or later (recommended)
+  * Any Linux distribution with the `apt` package manager
+* **Languages & Runtimes:**
+
+  * Python 3.10 or 3.11
+* **Package Managers:**
+
+  * `pip`
+  * `apt`
+* **Hardware Requirements:**
+
+  * Hailo8 or Hailo10 device on x86 or Raspberry Pi
+* **System Packages:**
+
+  * `meson` (build system)
+  * `git`
+  * `python3-venv`
+
+---
+
+## Installation Options
+
+Choose the method that best fits your needs.
+
+### Option 1: Quick Start (Recommended)
+
+Our automated script handles everything for you:
+
+```bash
+# Run the installer
+./install.sh
+
+# Download all available models
+./install.sh --all
+
+# Use a custom virtual environment name
+./install.sh --venv-name my_custom_env
+```
+
+The script will:
+
+1. Create a Python virtual environment
+2. Install dependencies
+3. Download required model files
+4. Configure your environment
+
+### Option 2: Install as a Python Package
+
+Install directly from GitHub:
+
+```bash
+pip install git+https://github.com/hailo-ai/hailo-apps-infra.git
+hailo-post-install
+```
+
+### Option 3: Manual Installation
+
+If you need full control or are troubleshooting:
+
+1. **Create & activate a virtual environment**
+
+   ```bash
+   python3 -m venv your_venv_name --system-site-packages
+   source your_venv_name/bin/activate
+   ```
+2. **Check for Hailo packages**
+
+   ```bash
+   pip list | grep hailo
+   ```
+3. **If missing, install Hailo Python packages**
+
+   ```bash
+   ./scripts/hailo_python_installation.sh
+   ```
+4. **Upgrade pip and install dependencies**
+
+   ```bash
+   pip install --upgrade pip setuptools wheel
+   ```
+5. **Install the repository in editable mode**
+
+   ```bash
+   pip install -e .
+   ```
+6. **Run the post-install setup**
+
+   ```bash
+   hailo-post-install
+   ```
 
 ---
 
-### 1. Automated Installation (`install.sh`)
+## Configuration
 
-**Purpose**  
-Automates environment setup for Hailo Infra: detects system architecture, checks/install required system and Python packages, sets up resource directories, configures a Python virtual environment, installs core and optional Hailo modules, handles shared dependencies, and runs final setup.
-
-**Usage**  
-```bash
-sudo ./install.sh 
-```
-
-**What It Does**  
-1. **Architecture Detection:**  
-   Detects if the host is ARM (RPi) or x86 and chooses the correct system and Python packages.
-2. **Resource Directory Creation:**  
-   Creates `/usr/local/hailo/resources/{models/hailo8,models/hailo8l,videos,so}` with appropriate user permissions.
-3. **System Package Check:**  
-   Verifies system packages are installed (`hailo-all` for ARM, `hailort-pcie-driver` for x86, plus Hailo Tappas). Exits if not found.
-4. **Python Package Check:**  
-   Checks for required pip packages (`hailort` and tappas-core binding for your architecture). Flags missing ones for install inside the venv.
-5. **Virtual Environment:**  
-   Uses the `VENV_NAME` environment variable (defaults to `hailo_infra_venv`). Creates or activates the venv.  
-   - Chooses to include or isolate system packages as needed.
-6. **.env File Setup:**  
-   Ensures a writable `.env` file exists at the repo root.
-7. **Module Installation:**  
-   Upgrades `pip`, `setuptools`, `wheel`. Installs core Hailo modules (`common`, `config`, `installation`). Installs optional modules (`gstreamer`, `pipelines`) based on flags.
-8. **Requirements Install:**  
-   Installs Python dependencies from `requirements.txt`.
-9. **Post-Install:**  
-   Runs the final post-install setup (`python3 -m hailo_installation.post_install`).
-
-
-**Location in Repo**  
-`install.sh` — found at the repository root.
+| Flag                  | Description                               | Example                        |
+| --------------------- | ----------------------------------------- | ------------------------------ |
+| `--all`               | Download every available model resource   | `./install.sh --all`           |
+| `--venv-name` or `-n` | Specify a custom virtual environment name | `./install.sh --venv-name env` |
 
 ---
-## Core Installation Components
 
-### Post-Installation Setup
+## Verification
 
-**Location:** `hailo_installation` package (`post_install.py`)
+Make sure everything is installed correctly:
 
-#### Purpose
+1. **Activate your environment**
 
-Finalizes installation by linking resources, validating config, setting environment vars, downloading models/videos, and compiling C++ post-processing code.
+   ```bash
+   source hailo_infra_venv/bin/activate
+   ```
+2. **Check installed Hailo packages**
 
-#### Usage
+   ```bash
+   pip list | grep hailo
+   ```
 
-```bash
-# Typically invoked by install.sh
-python3 -m hailo_installation.post_install
-```
+   You should see packages like `hailort`, `hailo-tappas-core`, and `hailo-apps-infra`.
+3. **Verify the Hailo device connection**
 
-#### Steps
+   ```bash
+   hailortcli fw-control identify
+   ```
+4. **Run a demo detection**
 
-1. **Validate config:** Loads `config.yaml` and runs `validate_config`
-2. **Set environment:** Applies `set_environment_vars` to generate/update `.env`
-3. **Symlink resources:** Points `./resources` to the configured `resources_path`
-4. **Download resources:** Fetches default model/video assets via `download_resources(group="default")`
-5. **Compile C++:** Runs `compile_postprocess()` to build post-processing binaries
+   ```bash
+   hailo-detect
+   ```
 
-### Environment Variable Management
+   A video window with live detections should appear.
 
-**Location:** `hailo_installation` package (`set_env.py`)
+---
 
-#### Purpose
+## Uninstallation
 
-Reads the loaded config and persists environment variables into `.env`, making them available for scripts and runtime.
-
-#### Key Variables Written
-
-- `HOST_ARCH`, `HAILO_ARCH`
-- `RESOURCES_PATH`, `TAPPAS_POST_PROC_DIR`, `MODEL_DIR`
-- `MODEL_ZOO_VERSION`, `HAILORT_VERSION`, `TAPPAS_VERSION`, `APPS_INFRA_VERSION`
-- `VIRTUAL_ENV_NAME`, `SERVER_URL`, `DEB_WHL_DIR`, `TAPPAS_VARIANT`
-
-#### Usage
+To remove everything:
 
 ```bash
-python3 hailo_installation/set_env.py
+# Deactivate the virtual environment if active
+deactivate
+
+# Delete project files and logs
+sudo rm -rf hailo_infra_venv/ resources hailort.log .env hailo_apps_infra.egg-info
 ```
 
-Or in your code:
+---
 
-```python
-from hailo_installation.set_env import set_environment_vars
-from hailo_common.get_config_values import load_config
+## Installation Flow Diagram
 
-config = load_config("path/to/config.yaml")
-set_environment_vars(config)
+```mermaid
+flowchart TD
+    Start((Start)) --> Step1['1. Run install.sh']
+    Step1 --> Step2['2. Install Meson<br>sudo apt-get install meson']
+    Step2 --> Step3['3. Create venv via<br>create_hailo_venv.py --system-site-packages']
+    Step3 --> Step4['4. Check Hailo packages<br>install if missing']
+    Step4 --> Step5['5. Activate venv & upgrade<br>pip, setuptools, wheel']
+    Step5 --> Step6['6. Install package in editable mode<br>pip install -e .']
+    Step6 --> Step7['7. Run post_install.py to:<br>• generate/validate .env<br>• export env vars']
+    Step7 --> Step8['8. Link resources, download assets,<br>compile post-process components']
+    Step8 --> Done((✅ Installation Complete))
+
+    style Start fill:#e1f5fe,stroke:#333,stroke-width:1px
+    style Done fill:#c8e6c9,stroke:#333,stroke-width:1px
 ```
-
-### Configuration Validation
-
-**Location:** `hailo_installation` package (`validate_config.py`)
-
-#### Purpose
-
-Checks that `config.yaml` contains all required keys and that optional keys are valid. Prints a summary and exits on errors.
-
-#### Usage
-
-```bash
-python3 hailo_installation/validate_config.py
-```
-
-### Resource Downloading
-
-**Location:** `hailo_installation` package (`download_resources.py`)
-
-#### Purpose
-
-Downloads model `.hef` files and example videos based on `resources_config.yaml` and the current `HAILO_ARCH`.
-
-#### Usage
-
-```bash
-# Default (combined + arch-specific):
-python3 hailo_installation/download_resources.py
-
-# Specific group (e.g. all, hailo8, hailo8l):
-python3 hailo_installation/download_resources.py --group all
-```
-
-Or in your code:
-
-```python
-from hailo_installation.download_resources import download_resources
-
-download_resources(group="default")
-```
-
-### C++ Post-Processing Compilation
-
-**Location:** `hailo_installation` package (`compile_cpp.py`)
-
-#### Purpose
-
-Invokes the shell script `scripts/compile_postprocess.sh` to build C++ post-processing libraries.
-
-#### Usage
-
-```bash
-python3 hailo_installation/compile_cpp.py [release|debug|clean]
-```
-
-- Default: `release`
-- `debug`: build debug binaries
-- `clean`: remove build artifacts
-
-Or in your code:
-
-```python
-from hailo_installation.compile_cpp import compile_postprocess
-
-# Release build:
-compile_postprocess()
-
-# Debug build:
-compile_postprocess(mode="debug")
-```
-
-## Integration in Other Repositories
-
-To integrate Hailo's installation process into your own repository:
-
-1. Add `hailo_installation` as a dependency
-2. Import the required modules:
-   - `set_environment_vars` (from `set_env`)
-   - `compile_postprocess` (from `compile_cpp`)
-   - `download_resources` (from `download_resources`)
-   - `post_install` (to tie together the installation steps)
-3. Create and configure your own YAML configuration file
-4. Invoke the installation process in your setup script or CI/CD pipeline
-
-Example Integration:
-
-```python
-from hailo_installation.post_install import post_install
-
-if __name__ == "__main__":
-    post_install()
-```
-
-For further customization and advanced options, refer to the docstrings at the top of each script file or inspect `config/config/hailo_config/config.yaml` in the `hailo_apps_infra` directory.

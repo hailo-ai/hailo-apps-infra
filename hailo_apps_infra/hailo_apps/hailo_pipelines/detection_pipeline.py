@@ -86,6 +86,21 @@ class GStreamerDetectionApp(GStreamerApp):
     def __init__(self, app_callback, user_data, parser=None):
         if parser == None:
             parser = get_default_parser()
+        parser.add_argument(
+            "--labels-json",
+            default=None,
+            help="Path to costume labels JSON file",
+        )
+        parser.add_argument(
+            "--so-path",
+            default=None,
+            help="Path to the shared object file for post-processing",
+        )
+        parser.add_argument(
+            "--pp-function",
+            default=None,
+            help="Name of the post-processing function in the shared object file",
+        )
 
         # Call the parent class constructor
         super().__init__(parser, user_data)
@@ -112,11 +127,19 @@ class GStreamerDetectionApp(GStreamerApp):
         else:
             self.hef_path = get_resource_path(DETECTION_PIPELINE, RESOURCES_MODELS_DIR_NAME)
 
-        # Set the post-processing shared object file
-        self.post_process_so = get_resource_path(
-            DETECTION_PIPELINE, RESOURCES_SO_DIR_NAME, DETECTION_POSTPROCESS_SO_FILENAME
-        )
-        self.post_function_name = DETECTION_POSTPROCESS_FUNCTION
+        if self.options_menu.so_path is not None:
+            self.post_process_so = self.options_menu.so_path
+        else:
+            # Set the post-processing shared object file
+            self.post_process_so = get_resource_path(
+                DETECTION_PIPELINE, RESOURCES_SO_DIR_NAME, DETECTION_POSTPROCESS_SO_FILENAME
+            )
+
+         
+        if self.options_menu.pp_function is not None:
+            self.post_function_name = self.options_menu.pp_function
+        else:   
+            self.post_function_name = DETECTION_POSTPROCESS_FUNCTION
         # User-defined label JSON file
         self.labels_json = self.options_menu.labels_json
 

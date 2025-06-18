@@ -90,7 +90,7 @@ def create_hailo_virtualenv(virtual_env_name: str = VIRTUAL_ENV_NAME_DEFAULT,tap
             pyhailort_version = auto_detect_hailort_version()
 
         if not pyhailort_version or not tappas_version:
-            print("⚠️ Could not detect HailoRT or TAPPAS version, please install them manually, or with our script at hailo-apps-infra/scripts/hailo_installation_script.sh.")
+            print("⚠️ Could not detect HailoRT or TAPPAS version, please install them manually, or with our script at hailo-apps-infra/scripts/hailo_installer.sh")
             return
         pytappas_installed = auto_detect_installed_tappas_python_bindings()
         pyhailort_installed = auto_detect_hailort_python_bindings()

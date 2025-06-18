@@ -1,6 +1,9 @@
 # Pipeline Usage Guide
 
-This guide covers how to run  AI pipelines in the Hailo Apps Infrastructure repository. The repo contains 6 main computer vision applications that can be executed through various methods.
+This guide covers how to run  AI pipelines in the Hailo Apps Infrastructure repository.
+
+These pipelines are meant to be used as a building block for youre final project, For more info [development guide](app_development.md)
+
 
 ## Available Pipelines
 
@@ -17,9 +20,8 @@ The repository provides the following AI applications:
 
 ## Running Pipelines
 
-### Method 1: CLI Commands (Recommended for End Users)
+### Method 1: CLI Commands 
 
-After installing with `pip install -e .` from the repository root, all pipelines are available as CLI commands:
 
 ```bash
 # Object Detection
@@ -38,83 +40,25 @@ hailo-seg
 hailo-depth
 
 # Face Recognition
-hailo-face-recon
+hailo-face-recon # beta version
 ```
 
-**Best for:** Production deployment and end-user applications
-
-### Method 2: Python Module Execution (Recommended for Development)
-
+### Method 2: Direct Script Execution 
 ```bash
 # Object Detection
-python -m hailo_apps_infra.hailo_apps.hailo_pipelines.detection_pipeline
-
-# Simple Detection
-python -m hailo_apps_infra.hailo_apps.hailo_pipelines.detection_pipeline_simple
-
-# Pose Estimation
-python -m hailo_apps_infra.hailo_apps.hailo_pipelines.pose_estimation_pipeline
-
-# Instance Segmentation
-python -m hailo_apps_infra.hailo_apps.hailo_pipelines.instance_segmentation_pipeline
-
-# Depth Estimation
-python -m hailo_apps_infra.hailo_apps.hailo_pipelines.depth_pipeline
-
-# Face Recognition
-python -m hailo_apps_infra.hailo_apps.apps.face_recognition.face_recognition
-```
-
-**Best for:** Development, testing, and CI/CD pipelines
-
-### Method 3: Direct Script Execution with PYTHONPATH (Quick Debugging)
-
-```bash
-# Object Detection
-PYTHONPATH=. python hailo_apps_infra/hailo_apps/hailo_pipelines/detection_pipeline.py
-
-# Simple Detection
-PYTHONPATH=. python hailo_apps_infra/hailo_apps/hailo_pipelines/detection_pipeline_simple.py
-
-# Pose Estimation
-PYTHONPATH=. python hailo_apps_infra/hailo_apps/hailo_pipelines/pose_estimation_pipeline.py
-
-# Instance Segmentation
-PYTHONPATH=. python hailo_apps_infra/hailo_apps/hailo_pipelines/instance_segmentation_pipeline.py
-
-# Depth Estimation
-PYTHONPATH=. python hailo_apps_infra/hailo_apps/hailo_pipelines/depth_pipeline.py
-```
-
-**Best for:** Local debugging and quick script execution
-
-### Method 4: Custom Script Wrapper
-
-Create a wrapper script (e.g., `run_detection.py`):
-
-```python
-from hailo_apps_infra.hailo_apps.hailo_pipelines import detection_pipeline
-
-detection_pipeline.main()
-```
-
-Then run:
-```bash
-python run_detection.py
-```
-
-**Best for:** Jupyter notebooks, simplified testing, and custom integrations
-
-## What Doesn't Work
-
-These approaches will fail with `ModuleNotFoundError` or broken imports:
-
-```bash
-# ❌ Wrong - missing PYTHONPATH
 python hailo_apps_infra/hailo_apps/hailo_pipelines/detection_pipeline.py
 
-# ❌ Wrong - old package structure
-python -m hailo_apps_infra.pipelines.hailo_pipelines.detection_pipeline
+# Simple Detection
+python hailo_apps_infra/hailo_apps/hailo_pipelines/detection_pipeline_simple.py
+
+# Pose Estimation
+python hailo_apps_infra/hailo_apps/hailo_pipelines/pose_estimation_pipeline.py
+
+# Instance Segmentation
+python hailo_apps_infra/hailo_apps/hailo_pipelines/instance_segmentation_pipeline.py
+
+# Depth Estimation
+python hailo_apps_infra/hailo_apps/hailo_pipelines/depth_pipeline.py
 ```
 
 ## Pipeline Features
@@ -139,15 +83,60 @@ python -m hailo_apps_infra.pipelines.hailo_pipelines.detection_pipeline
 - **Features:** Monocular depth estimation, simplified pipeline
 - **Models:** SCDepthv3
 
-## Quick Reference
 
-| Use Case | Best Method | Example |
-|----------|-------------|---------|
-| **Production/End Users** | CLI Commands | `hailo-detect` |
-| **Development/Testing** | Python Module | `python -m hailo_apps_infra.hailo_apps.hailo_pipelines.detection_pipeline` |
-| **Quick Debugging** | PYTHONPATH + Direct | `PYTHONPATH=. python hailo_apps_infra/hailo_apps/hailo_pipelines/detection_pipeline.py` |
-| **Custom Integration** | Import + Call main() | Custom wrapper scripts |
+## Configuration Options
 
-## Notes
 
-All pipelines follow consistent patterns with proper `main()` function entry points and support common arguments like `--input`, `--arch`, `--hef-path`, plus pipeline-specific options. The framework provides flexibility for different deployment scenarios while maintaining ease of use.
+
+| Flag(s)              | Description                                                                                                                                                                                                                                    |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--input`, `-i`      | Input source. Can be a file, USB (webcam), RPi camera (CSI module), or XImage. For RPi camera use `-i rpi`. For automatic USB detection use `-i usb`. For specific USB device use `-i /dev/video<X>`. Defaults to application-specific source. |
+| `--use-frame`, `-u`  | Use the video frame directly from the callback function instead of the default sink behavior.                                                                                                                                                  |
+| `--show-fps`, `-f`   | Print the current FPS on the display sink.                                                                                                                                                                                                     |
+| `--arch`             | Hailo architecture to target. Choices: `hailo8`, `hailo8l`, `hailo10h`. If unset, the app will auto-detect.                                                                                                                                    |
+| `--hef-path`         | Path to a compiled HEF file to load for inference.                                                                                                                                                                                             |
+| `--disable-sync`     | Disable display sink synchronization; runs as fast as possible (useful for file sources).                                                                                                                                                      |
+| `--disable-callback` | Disable the user-defined callback in the pipeline; runs without custom post-processing logic.                                                                                                                                                  |
+| `--dump-dot`         | Dump the pipeline graph to `pipeline.dot` for visualization.                                                                                                                                                                                   |
+| `--frame-rate`, `-r` | Frame rate of the video source in frames per second (default: 30).                                                                                                                                                                             |
+
+## Pipeline-Specific CLI Options & General Flow
+
+### 1. Detection (`detection_pipeline.py`)
+
+| Flag            | Description                                                            |
+| --------------- | ---------------------------------------------------------------------- |
+| `--so-path`     | Path to the shared object file (`.so`) used for post-processing.       |
+| `--pp-function` | Name of the function inside the post-processing shared object to call. |
+| `--labels-json` | Path to a custom labels JSON file for detection/classification.        |
+
+### 2. Simple Detection (`detection_pipeline_simple.py`)
+
+| Flag            | Description                                                     |
+| --------------- | --------------------------------------------------------------- |
+| `--so-path`     | Path to the shared object file for detection post-processing.   |
+| `--pp-function` | Name of the function inside the `.so` to invoke.                |
+| `--labels-json` | Path to a custom labels JSON file for detection/classification. |
+
+
+## Basic Pipeline Flow
+
+Below is a high-level overview of how frames move through a Hailo GStreamer pipeline:
+
+```mermaid
+flowchart LR
+    Source  --> Inference
+    Inference --> Tracker
+    Tracker --> Callback
+    Callback --> Display
+```
+
+1. **Source**: Captures or reads video frames (file, USB, RPi camera, etc.).
+2. **Inference**: Runs the Hailo HEF model and applies post-processing logic.
+3. **Tracker** *(optional)*: Associates detections across consecutive frames.
+4. **Callback**: Executes any user-defined Python callback for custom per-frame processing.
+5. **Display**: Renders the final output, including overlays, FPS, and other visuals.
+
+---
+
+

@@ -6,23 +6,44 @@ The **hailo-apps-infra** repository provides foundational infrastructure and reu
 
 ## Table of Contents
 
-- [Overview](#overview)
-- [Features](#features)
-- [Requirements](#requirements)
-- [Installation](#installation)
-  - [Quick Start (Automated)](#quick-start-automated)
-  - [Manual Installation](#manual-installation)
-  - [Install as Python Package](#install-as-python-package)
-- [Usage](#usage)
-  - [Command Line Interface](#command-line-interface)
-  - [Basic Examples](#basic-examples)
-- [Configuration](#configuration)
-- [Command Line Arguments](#command-line-arguments)
-- [Project Structure](#project-structure)
-- [Testing](#testing)
-- [Contributing](#contributing)
-- [License](#license)
-- [Support](#support)
+- [Hailo Applications Infrastructure](#hailo-applications-infrastructure)
+  - [Table of Contents](#table-of-contents)
+  - [Overview](#overview)
+    - [Ready-to-Use AI Pipelines](#ready-to-use-ai-pipelines)
+  - [Features](#features)
+    - [Available Pipelines](#available-pipelines)
+    - [Utility Commands](#utility-commands)
+  - [Requirements](#requirements)
+    - [System Requirements](#system-requirements)
+    - [Dependencies](#dependencies)
+  - [Installation](#installation)
+    - [Quick Start (Automated)](#quick-start-automated)
+    - [Install as Python Package](#install-as-python-package)
+  - [Usage](#usage)
+    - [Basic Examples](#basic-examples)
+    - [Command Line Interface](#command-line-interface)
+      - [Main Application Commands](#main-application-commands)
+      - [Utility Commands](#utility-commands-1)
+  - [Configuration](#configuration)
+  - [Command Line Arguments](#command-line-arguments)
+    - [Input Source Options](#input-source-options)
+    - [Hardware Configuration](#hardware-configuration)
+    - [Display and Performance](#display-and-performance)
+    - [Development and Debugging](#development-and-debugging)
+    - [Example Usage with Arguments](#example-usage-with-arguments)
+  - [Project Structure](#project-structure)
+  - [Testing](#testing)
+  - [Contributing](#contributing)
+    - [Development Setup](#development-setup)
+  - [License](#license)
+  - [Troubleshooting and Getting Help](#troubleshooting-and-getting-help)
+    - [Common Issues You Might Encounter](#common-issues-you-might-encounter)
+    - [Frame Buffer Performance Problems](#frame-buffer-performance-problems)
+    - [The Dreaded DEVICE\_IN\_USE() Error](#the-dreaded-device_in_use-error)
+  - [Support](#support)
+    - [Getting Help](#getting-help)
+    - [Reporting Issues](#reporting-issues)
+    - [Additional Resources](#additional-resources)
 
 ## Overview
 
@@ -65,14 +86,6 @@ Whether you're a researcher, developer, or hobbyist, this toolkit provides every
 | `hailo-set-env` | Configure environment variables |
 | `hailo-download-resources` | Download model files and resources |
 
-### Key Features
-
-- ✅ **One-command installation** - Automated setup with `./install.sh`
-- ✅ **Multiple input sources** - Camera (USB/RPi), video files, images
-- ✅ **Cross-platform support** - Works on x86, ARM, and Raspberry Pi
-- ✅ **Flexible configuration** - YAML-based configuration system
-- ✅ **Python package support** - Install via pip for easy integration
-- ✅ **Development-ready** - Extensible for custom applications
 
 ## Requirements
 
@@ -120,40 +133,41 @@ The installation script will:
 3. Download necessary model files
 4. Configure the environment
 
-### Manual Installation
-
-For custom setups or troubleshooting:
-
-```bash
-# 1. Create and activate virtual environment
-python3 -m venv your_venv_name --system-site-packages
-source your_venv_name/bin/activate
-
-# 2. Verify Hailo packages are available
-pip list | grep hailo
-
-# 3. If Hailo packages are missing, install them
-./scripts/hailo_python_installation.sh
-
-# 4. Update pip and install dependencies
-pip install --upgrade pip setuptools wheel
-
-# 5. Install the package in development mode
-pip install -e .
-
-# 6. Run post-installation setup
-hailo-post-install
-```
-
 ### Install as Python Package
 
 You can also install directly from GitHub as a Python package:
 
 ```bash
 pip install git+https://github.com/hailo-ai/hailo-apps-infra.git
+
+source hailo_infra_venv/bin/activate
+
+hailo-post-install
 ```
 
+For more info about installation please check out : [Installation Guide](/hailo-apps-infra/doc/installation_guide.md)
 ## Usage
+
+### Basic Examples
+
+Here are some common usage patterns: 
+
+```bash
+# Real-time object detection from webcam
+hailo-detect --input usb --show-fps
+
+# Process default video file
+hailo-detect 
+
+# Use Raspberry Pi camera for pose estimation
+hailo-pose --input rpi --frame-rate 30
+
+# Run segmentation without display sync (fastest processing)
+hailo-seg --input /path/to/video.mp4 --disable-sync
+
+# Run depth on default video
+hailo-depth 
+```
 
 ### Command Line Interface
 
@@ -191,23 +205,7 @@ hailo-set-env
 hailo-post-install
 ```
 
-### Basic Examples
 
-Here are some common usage patterns:
-
-```bash
-# Real-time object detection from webcam
-hailo-detect --input usb --show-fps
-
-# Process a video file
-hailo-detect --input input_video.mp4
-
-# Use Raspberry Pi camera for pose estimation
-hailo-pose --input rpi --frame-rate 30
-
-# Run segmentation without display sync (fastest processing)
-hailo-seg --input /path/to/video.mp4 --disable-sync
-```
 
 ## Configuration
 

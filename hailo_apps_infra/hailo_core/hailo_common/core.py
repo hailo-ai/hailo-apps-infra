@@ -125,11 +125,6 @@ def get_default_parser():
         "--frame-rate", "-r", type=int, default=30,
         help="Frame rate of the video source. Default is 30."
     )
-    parser.add_argument(
-        "--labels-json",
-        default=None,
-        help="Path to costume labels JSON file",
-    )
     return parser
 
 def get_model_name(pipeline_name: str, arch: str) -> str:
