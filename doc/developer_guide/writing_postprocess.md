@@ -1,16 +1,11 @@
 # Writing Your Own Post-Process for Hailo Apps
 
-So you want to add a new network to Hailo-apps-infra that isn't supported yet? You've come to the right place! This guide will walk you through creating your own post-process and drawing filter. Don't worry - it's easier than it sounds.
-
-## What You'll Need to Know
-
-When you're working with a network that Hailo doesn't support out of the box, you'll need to write two main components:
-- A **post-process** that handles the network's output
-- A **drawing filter** that displays the results
-
-Let's dive in and build these step by step.
+So you want to add a new network to Hailo-apps-infra that isn't supported yet? You've come to the right place! This guide will walk you through creating your own post-process. Don't worry - it's easier than it sounds.
+This guide describes how to create a post-process function written in C++ that can be used in the HailoApps framework. Using the 'hailofilter' element.
+**Note** For python post-process, you can add your post-process function as a python callback function.
 
 ## Getting Started
+The post-process function should read the outputs of the HailoNet element which are tensor that are attached to the HailoROI object. The post-process function should remove the tensor from the HailoROI object and replace them with the post-process results. i.e. HailoDetection, HailoClassification, etc.
 
 ### Where to Put Your Files
 
@@ -130,7 +125,7 @@ void filter(HailoROIPtr roi)
 {
     // Get all the output tensors from the network
     std::vector<HailoTensorPtr> tensors = roi->get_tensors();
-    
+
     // Let's look at the first tensor
     HailoTensorPtr first_tensor = tensors[0];
     std::cout << "Tensor: " << first_tensor->name();
@@ -156,10 +151,10 @@ Now let's create some detection boxes! Replace your tensor examination code with
 void filter(HailoROIPtr roi)
 {
     std::vector<HailoTensorPtr> tensors = roi->get_tensors();
-    
+
     // Create some demo detections
     std::vector<HailoDetection> detections = demo_detection_objects();
-    
+
     // Add them to the frame
     hailo_common::add_detections(roi, detections);
 }
@@ -168,26 +163,26 @@ void filter(HailoROIPtr roi)
 Now add this helper function to create demo detections:
 
 ```cpp
-std::vector<HailoDetection> demo_detection_objects()
+std.vector<HailoDetection> demo_detection_objects()
 {
     std::vector<HailoDetection> objects;
-    
+
     // Create two detection boxes
     HailoDetection first_detection = HailoDetection(
         HailoBBox(0.2, 0.2, 0.2, 0.2), // x, y, width, height (as percentages)
         "person",                        // label
         0.99                            // confidence
     );
-    
+
     HailoDetection second_detection = HailoDetection(
         HailoBBox(0.6, 0.6, 0.2, 0.2),
         "person",
         0.89
     );
-    
+
     objects.push_back(first_detection);
     objects.push_back(second_detection);
-    
+
     return objects;
 }
 ```
@@ -244,17 +239,18 @@ Here's what your final `my_post.cpp` should look like:
 std::vector<HailoDetection> demo_detection_objects()
 {
     std::vector<HailoDetection> objects;
-    
+
     HailoDetection first_detection = HailoDetection(
         HailoBBox(0.2, 0.2, 0.2, 0.2), "person", 0.99
     );
+
     HailoDetection second_detection = HailoDetection(
         HailoBBox(0.6, 0.6, 0.2, 0.2), "person", 0.89
     );
-    
+
     objects.push_back(first_detection);
     objects.push_back(second_detection);
-    
+
     return objects;
 }
 
@@ -265,16 +261,3 @@ void filter(HailoROIPtr roi)
     hailo_common::add_detections(roi, detections);
 }
 ```
-
-## What's Next?
-
-You now have a solid foundation for creating post-processes! The demo creates hardcoded detection boxes, but in a real implementation, you'd:
-
-1. **Parse the tensor data** to extract actual detections from your network's output
-2. **Apply non-maximum suppression** to remove duplicate detections
-3. **Convert coordinates** from your network's format to the expected format
-4. **Filter results** based on confidence thresholds
-
-Each network is different, so you'll need to understand your specific model's output format!
-
-Good luck with your post-processing adventure! 🚀
