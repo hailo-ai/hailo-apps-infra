@@ -14,9 +14,9 @@ gi.require_version('Gst', '1.0')
 from gi.repository import Gst
         
 # Local application-specific imports
-from hailo_apps_infra.hailo_core.hailo_common.base_ui_callbacks import BaseUICallbacks
-from hailo_apps_infra.hailo_core.hailo_common.db_handler import DatabaseHandler, Record
-from hailo_apps_infra.hailo_core.hailo_common.db_visualizer import DatabaseVisualizer
+from hailo_apps.hailo_app_python.core.common.base_ui_callbacks import BaseUICallbacks
+from hailo_apps.hailo_app_python.core.common.db_handler import DatabaseHandler, Record
+from hailo_apps.hailo_app_python.core.common.db_visualizer import DatabaseVisualizer
 # endregion imports
 
 # region constants

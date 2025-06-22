@@ -23,39 +23,11 @@ import matplotlib.pyplot as plt
 
 # Local application-specific imports
 import hailo
-try:
-    from hailo_core.hailo_common.db_handler import DatabaseHandler, Record
-except ImportError:
-    from hailo_apps_infra.hailo_core.hailo_common.db_handler import DatabaseHandler, Record
-try:
-    from hailo_core.hailo_common.db_visualizer import DatabaseVisualizer
-except ImportError:
-    from hailo_apps_infra.hailo_core.hailo_common.db_visualizer import DatabaseVisualizer
-try:
-    from hailo_core.hailo_common.core import get_default_parser, detect_hailo_arch, get_resource_path, FIFODropQueue
-except ImportError:
-    from hailo_apps_infra.hailo_core.hailo_common.core import get_default_parser, detect_hailo_arch, get_resource_path, FIFODropQueue
-try:
-    from hailo_core.hailo_common.defines import (
-        RESOURCES_SO_DIR_NAME, 
-        FACE_DETECTION_PIPELINE, 
-        FACE_RECOGNITION_PIPELINE, 
-        RESOURCES_MODELS_DIR_NAME, 
-        FACE_DETECTION_POSTPROCESS_SO_FILENAME, 
-        FACE_RECOGNITION_POSTPROCESS_SO_FILENAME, 
-        FACE_ALIGN_POSTPROCESS_SO_FILENAME, 
-        FACE_CROP_POSTPROCESS_SO_FILENAME,
-        RESOURCES_VIDEOS_DIR_NAME,
-        FACE_RECOGNITION_VIDEO_NAME,
-        FACE_RECON_DIR_NAME,
-        FACE_RECON_TRAIN_DIR_NAME,
-        FACE_RECON_SAMPLES_DIR_NAME,
-        RESOURCES_JSON_DIR_NAME,
-        FACE_DETECTION_JSON_NAME,
-        FACE_ALGO_PARAMS_JSON_NAME
-    )
-except ImportError:
-    from hailo_apps_infra.hailo_core.hailo_common.defines import (
+
+from hailo_apps.hailo_app_python.core.common.db_handler import DatabaseHandler, Record
+from hailo_apps.hailo_app_python.core.common.db_visualizer import DatabaseVisualizer
+from hailo_apps.hailo_app_python.core.common.core import get_default_parser, detect_hailo_arch, get_resource_path, FIFODropQueue
+from hailo_apps.hailo_app_python.core.common.defines import (
     RESOURCES_SO_DIR_NAME, 
     FACE_DETECTION_PIPELINE, 
     FACE_RECOGNITION_PIPELINE, 
@@ -73,36 +45,19 @@ except ImportError:
     FACE_DETECTION_JSON_NAME,
     FACE_ALGO_PARAMS_JSON_NAME
 )
-try:
-    from hailo_core.hailo_common.buffer_utils import get_numpy_from_buffer_efficient, get_caps_from_pad
-except ImportError:
-    from hailo_apps_infra.hailo_core.hailo_common.buffer_utils import get_numpy_from_buffer_efficient, get_caps_from_pad
-try:
-    from hailo_apps.hailo_gstreamer.gstreamer_helper_pipelines import (
-        SOURCE_PIPELINE,
-        INFERENCE_PIPELINE,
-        INFERENCE_PIPELINE_WRAPPER,
-        TRACKER_PIPELINE,
-        USER_CALLBACK_PIPELINE,
-        DISPLAY_PIPELINE,
-        CROPPER_PIPELINE,
-        UI_APPSINK_PIPELINE
-    )
-except ImportError:
-    from hailo_apps_infra.hailo_apps.hailo_gstreamer.gstreamer_helper_pipelines import (
-        SOURCE_PIPELINE,
-        INFERENCE_PIPELINE,
-        INFERENCE_PIPELINE_WRAPPER,
-        TRACKER_PIPELINE,
-        USER_CALLBACK_PIPELINE,
-        DISPLAY_PIPELINE,
-        CROPPER_PIPELINE,
-        UI_APPSINK_PIPELINE
-    )
-try:
-    from hailo_apps.hailo_gstreamer.gstreamer_app import GStreamerApp
-except ImportError:
-    from hailo_apps_infra.hailo_apps.hailo_gstreamer.gstreamer_app import GStreamerApp
+from hailo_apps.hailo_app_python.core.common.buffer_utils import get_numpy_from_buffer_efficient, get_caps_from_pad
+from hailo_apps.hailo_app_python.core.gstreamer.gstreamer_helper_pipelines import (
+    SOURCE_PIPELINE,
+    INFERENCE_PIPELINE,
+    INFERENCE_PIPELINE_WRAPPER,
+    TRACKER_PIPELINE,
+    USER_CALLBACK_PIPELINE,
+    DISPLAY_PIPELINE,
+    CROPPER_PIPELINE,
+    UI_APPSINK_PIPELINE
+)
+
+from hailo_apps.hailo_app_python.core.gstreamer.gstreamer_app import GStreamerApp
 # endregion
 
 class GStreamerFaceRecognitionApp(GStreamerApp):

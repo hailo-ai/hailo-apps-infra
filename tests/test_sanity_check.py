@@ -5,7 +5,7 @@ import sys
 import importlib
 from pathlib import Path
 import logging
-from hailo_apps_infra.hailo_core.hailo_common.installation_utils import (
+from hailo_apps.hailo_app_python.core.common.installation_utils import (
     detect_host_arch,
     detect_hailo_arch,
     detect_pkg_installed

@@ -5,35 +5,28 @@ set -e
 BASE_URL="http://dev-public.hailo.ai/2025_01"
 HAILORT_VERSION="4.20.0"
 TAPPAS_CORE_VERSION="3.31.0"
-DOWNLOAD_DIR="hailo_temp_resources"
+DOWNLOAD_DIR="usr/local/hailo/resources/deb_whl_packages"
+# Default download directory
 
 # By default install both
-INSTALL_TAPPAS=true
-INSTALL_HAILORT=true
+INSTALL_TAPPAS=false
+INSTALL_HAILORT=false
 
 # --- Parse flags ---
 while [[ $# -gt 0 ]]; do
   case $1 in
     --hailort-version=*)
       HAILORT_VERSION="${1#*=}"
+      INSTALL_HAILORT=true
       shift
       ;;
     --tappas-core-version=*)
       TAPPAS_CORE_VERSION="${1#*=}"
+      INSTALL_TAPPAS=true
       shift
       ;;
     --download-dir=*)
       DOWNLOAD_DIR="${1#*=}"
-      shift
-      ;;
-    --only-tappas)
-      INSTALL_HAILORT=false
-      INSTALL_TAPPAS=true
-      shift
-      ;;
-    --only-hailort)
-      INSTALL_TAPPAS=false
-      INSTALL_HAILORT=true
       shift
       ;;
     *)
@@ -46,7 +39,8 @@ done
 
 # Ensure you haven't disabled both
 if [[ "$INSTALL_TAPPAS" = false && "$INSTALL_HAILORT" = false ]]; then
-  echo "Error: Cannot use both --only-tappas and --only-hailort together."
+  echo "Warning: No installation selected."
+  echo "Please specify at least one of --hailort-version or --tappas-core-version."
   exit 1
 fi
 

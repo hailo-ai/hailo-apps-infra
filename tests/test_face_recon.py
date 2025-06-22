@@ -7,9 +7,9 @@ import logging
 import pytest
 
 # Local application-specific imports
-from hailo_apps_infra.hailo_core.hailo_common.test_utils import run_pipeline_module_with_args, run_pipeline_pythonpath_with_args, run_pipeline_cli_with_args, get_pipeline_args
-from hailo_apps_infra.hailo_core.hailo_common.installation_utils import detect_host_arch
-from hailo_apps_infra.hailo_core.hailo_common.camera_utils import is_rpi_camera_available
+from hailo_apps.hailo_app_python.core.common.test_utils import run_pipeline_module_with_args, run_pipeline_pythonpath_with_args, run_pipeline_cli_with_args, get_pipeline_args
+from hailo_apps.hailo_app_python.core.common.installation_utils import detect_host_arch
+from hailo_apps.hailo_app_python.core.common.camera_utils import is_rpi_camera_available
 # endregion imports
 
 # Configure logging as needed.

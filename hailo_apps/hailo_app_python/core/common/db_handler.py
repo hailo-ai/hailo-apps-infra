@@ -12,9 +12,9 @@ from lancedb.pydantic import Vector, LanceModel
 import lancedb
 
 # Local application-specific imports
-from hailo_apps_infra.hailo_core.hailo_common.core import get_resource_path
-from hailo_apps_infra.hailo_core.hailo_common.defines import FACE_RECON_DIR_NAME, FACE_RECON_SAMPLES_DIR_NAME, FACE_RECON_DATABASE_DIR_NAME
-from hailo_apps_infra.hailo_core.hailo_common.db_visualizer import DatabaseVisualizer
+from hailo_apps.hailo_app_python.core.common.core import get_resource_path
+from hailo_apps.hailo_app_python.core.common.defines import FACE_RECON_DIR_NAME, FACE_RECON_SAMPLES_DIR_NAME, FACE_RECON_DATABASE_DIR_NAME
+from hailo_apps.hailo_app_python.core.common.db_visualizer import DatabaseVisualizer
 # endregion
 
 # Define the LanceModel schema for the records table

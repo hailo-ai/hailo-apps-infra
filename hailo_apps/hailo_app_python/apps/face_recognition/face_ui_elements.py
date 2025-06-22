@@ -3,9 +3,9 @@
 from pathlib import Path
 
 # Local application-specific imports
-from hailo_apps_infra.hailo_core.hailo_common.base_ui_elements import BaseUIElements
-from hailo_apps_infra.hailo_core.hailo_common.core import get_resource_path
-from hailo_apps_infra.hailo_core.hailo_common.defines import RESOURCES_PHOTOS_DIR_NAME, HAILO_LOGO_PHOTO_NAME
+from hailo_apps.hailo_app_python.core.common.base_ui_elements import BaseUIElements
+from hailo_apps.hailo_app_python.core.common.core import get_resource_path
+from hailo_apps.hailo_app_python.core.common.defines import RESOURCES_PHOTOS_DIR_NAME, HAILO_LOGO_PHOTO_NAME
 
 # Third-party imports
 from fastrtc import WebRTC

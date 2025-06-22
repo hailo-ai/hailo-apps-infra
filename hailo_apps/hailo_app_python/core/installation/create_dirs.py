@@ -1,17 +1,10 @@
 #!/usr/bin/env python3
-from pathlib import Path
-import sys
-# Ensure hailo_core is importable from anywhere
-PROJECT_ROOT = Path(__file__).resolve().parents[2]  # ~/dev/hailo-apps-infra/hailo_apps_infra
-sys.path.insert(0, str(PROJECT_ROOT))
-
-# ─── other imports ────────────────────────────────────────────────────────────
 import os
 import pwd
 import grp
 import subprocess
 
-from hailo_core.hailo_common.defines import (
+from hailo_apps.hailo_app_python.core.common.defines import (
     RESOURCES_ROOT_PATH_DEFAULT,
     RESOURCES_DIRS_MAP
 )
