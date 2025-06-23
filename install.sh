@@ -125,6 +125,6 @@ pip install -e .
 
 echo "🔧 Running post-install script…"
 
-hailo-post-install  --group "$DOWNLOAD_GROUP"
+hailo-post-install --group "$DOWNLOAD_GROUP"
 
 echo "✅ All done! Your package is now in '${VENV_NAME}'."

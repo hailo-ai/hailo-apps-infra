@@ -3,10 +3,6 @@ import setproctitle
 from pathlib import Path
 import sys
 
-# Ensure hailo_core is importable from anywhere
-PROJECT_ROOT = Path(__file__).resolve().parents[2]  # ~/dev/hailo-apps-infra/hailo_apps_infra
-sys.path.insert(0, str(PROJECT_ROOT))
-
 # ─── Common Hailo helpers ────────────────────────────────────────────────────────
 
 from hailo_apps.hailo_app_python.core.common.core import (
@@ -54,16 +50,6 @@ class GStreamerDetectionApp(GStreamerApp):
             default=None,
             help="Path to costume labels JSON file",
         )
-        parser.add_argument(
-            "--so-path",
-            default=None,
-            help="Path to the shared object file for post-processing",
-        )
-        parser.add_argument(
-            "--pp-function",
-            default=None,
-            help="Name of the post-processing function in the shared object file",
-        )
         # Call the parent class constructor
         super().__init__(parser, user_data)
 
@@ -100,20 +86,15 @@ class GStreamerDetectionApp(GStreamerApp):
             )
         
         print(f"Using HEF path: {self.hef_path}")
-        if self.options_menu.so_path is not None:
-            self.post_process_so = self.options_menu.so_path
-        else:
-            self.post_process_so = get_resource_path(
-                pipeline_name=SIMPLE_DETECTION_PIPELINE,
-                resource_type=RESOURCES_SO_DIR_NAME,
-                model=SIMPLE_DETECTION_POSTPROCESS_SO_FILENAME
-            )
+
+        self.post_process_so = get_resource_path(
+            pipeline_name=SIMPLE_DETECTION_PIPELINE,
+            resource_type=RESOURCES_SO_DIR_NAME,
+            model=SIMPLE_DETECTION_POSTPROCESS_SO_FILENAME
+        )
         print(f"Using post-process shared object: {self.post_process_so}")
 
-        if self.options_menu.pp_function is not None:
-            self.post_function_name = self.options_menu.pp_function
-        else:
-            self.post_function_name = SIMPLE_DETECTION_POSTPROCESS_FUNCTION
+        self.post_function_name = SIMPLE_DETECTION_POSTPROCESS_FUNCTION
 
         # User-defined label JSON file
         self.labels_json = self.options_menu.labels_json
