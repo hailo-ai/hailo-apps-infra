@@ -2,6 +2,13 @@
 
 This guide explains how to run the ready-to-use AI applications included in this repository. Each application is a command-line tool designed to showcase a specific AI capability on Hailo hardware.
 
+## Setup Environment
+**Note:** This should be run on every new terminal session.
+This will activate the virtual environment and set the PYTHONPATH.
+```bash
+source set_env.sh
+```
+
 ## Available Applications
 
 The following applications are available. Each one is a self-contained GStreamer pipeline that can be launched with a simple command.

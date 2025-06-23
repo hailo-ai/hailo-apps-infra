@@ -36,10 +36,12 @@ cd hailo-apps-infra
 Here are a few of the ready-to-use applications included in this repository.
 Before running any application, ensure you activate the Python virtual environment created during installation. This ensures all dependencies are correctly loaded.
 
-**Activate the virtual environment:**
+**Setup environment:**
+**Note:** This should be run on every new terminal session.
 ```bash
-source venv_hailo_apps/bin/activate
+source set_env.sh
 ```
+
 #### Simple Object Detection
 A lightweight version focused on demonstrating raw Hailo performance with minimal CPU overhead.
 
