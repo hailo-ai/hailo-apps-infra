@@ -109,11 +109,11 @@ echo "📦 Installing Python Hailo packages…"
 FLAGS=""
 if [[ "$INSTALL_TAPPAS_CORE" = true ]]; then
   echo "Installing TAPPAS core Python binding"
-  FLAGS="--tappas-core-version ${tappas_version}"
+  FLAGS="--tappas-core-version=${TAPPAS_CORE_VERSION}"
 fi
 if [[ "$INSTALL_HAILORT" = true ]]; then
   echo "Installing HailoRT Python binding"
-  FLAGS="${FLAGS} --hailort-version ${hailort_version}"
+  FLAGS="${FLAGS} --hailort-version=${HAILORT_VERSION}"
 fi
 
 ./scripts/hailo_python_installation.sh ${FLAGS}

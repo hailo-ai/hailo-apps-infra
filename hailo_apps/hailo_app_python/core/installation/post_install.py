@@ -112,7 +112,7 @@ def post_install():
     create_symlink(RESOURCES_ROOT_PATH_DEFAULT, resources_path)
 
     print("⬇️ Downloading resources...")
-    download_resources()
+    download_resources(group=RESOURCES_GROUP_DEFAULT,)
     print(f"Resources downloaded to {resources_path}")
 
     print("⚙️ Compiling post-process...")

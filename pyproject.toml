@@ -29,6 +29,7 @@ dependencies = [
 ]
 
 [project.scripts]
+hailo-post-install =        "hailo_apps.hailo_app_python.core.installation.post_install:main"
 hailo-compile-postprocess = "hailo_apps.hailo_app_python.core.installation.compile_cpp:main"
 hailo-set-env =             "hailo_apps.hailo_app_python.core.installation.set_env:main"
 hailo-download-resources =  "hailo_apps.hailo_app_python.core.installation.download_resources:main"

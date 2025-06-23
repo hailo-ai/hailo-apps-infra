@@ -38,42 +38,17 @@ PYTHON_CMD = "python3"
 PIP_CMD = "pip3"
 VENV_CREATE_CMD = "python3 -m venv"
 
-# Module names
-PKG_MODULE = "hailo_apps"
-HAILO_CORE_MODULE = "hailo_core"
-HAILO_APPS_MODULE = "hailo_apps"
-HAILO_COMMON_MODULE = "hailo_common"
-HAILO_CONFIG_MODULE = "hailo_config"
-HAILO_INSTALLATION_MODULE = "hailo_installation"
-HAILO_GSTREAMER_MODULE = "hailo_gstreamer"
-HAILO_PIPELINES_MODULE = "hailo_pipelines"
-HAILO_MODULE_NAMES = [
-    HAILO_COMMON_MODULE,
-    HAILO_CONFIG_MODULE,
-    HAILO_INSTALLATION_MODULE,
-    HAILO_GSTREAMER_MODULE,
-    HAILO_PIPELINES_MODULE,
-]
-
 # Base project paths
 REPO_ROOT = Path(__file__).resolve().parents[4]
-PACKAGE_ROOT = REPO_ROOT / PKG_MODULE
-CORE_ROOT = PACKAGE_ROOT / HAILO_CORE_MODULE
-APPS_ROOT = PACKAGE_ROOT / HAILO_APPS_MODULE
-COMMON_ROOT = CORE_ROOT / HAILO_COMMON_MODULE
-CONFIG_ROOT = CORE_ROOT / HAILO_CONFIG_MODULE
-INSTALLATION_ROOT = CORE_ROOT / HAILO_INSTALLATION_MODULE
-GSTREAMER_ROOT = APPS_ROOT / HAILO_GSTREAMER_MODULE
-PIPELINES_ROOT = APPS_ROOT / HAILO_PIPELINES_MODULE
 
-# Default config paths
-DEFAULT_CONFIG_PATH = str(CONFIG_ROOT / "config.yaml")
-DEFAULT_RESOURCES_CONFIG_PATH = str(CONFIG_ROOT / "resources_config.yaml")
+# Default config paths (now in top-level “config” folder)
+DEFAULT_CONFIG_PATH            = str(REPO_ROOT / "config" / "config.yaml")
+DEFAULT_RESOURCES_CONFIG_PATH  = str(REPO_ROOT / "config" / "resources_config.yaml")
 
 # Symlink, dotenv, local resources defaults
-DEFAULT_RESOURCES_SYMLINK_PATH = str(REPO_ROOT / "resources")
-DEFAULT_DOTENV_PATH = str(REPO_ROOT / "hailo_apps.env")
-DEFAULT_LOCAL_RESOURCES_PATH = str(REPO_ROOT / "local_resources")
+DEFAULT_RESOURCES_SYMLINK_PATH = str(REPO_ROOT / "resources")        # e.g. created by post-install
+DEFAULT_DOTENV_PATH            = str(REPO_ROOT / ".env")             # your env file lives here
+DEFAULT_LOCAL_RESOURCES_PATH   = str(REPO_ROOT / "local_resources")  # bundled GIFs, JSON, etc.
 
 # Supported config options
 VALID_HAILORT_VERSION = [AUTO_DETECT, "4.20.0", "4.21.0", "4.22.0"]
