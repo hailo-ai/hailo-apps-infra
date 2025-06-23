@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 def compile_postprocess():
     # 1) locate hailo_apps_infra package
     here     = Path(__file__).resolve()    # …/hailo_installation/compile_cpp.py
-    pkg_root = here.parents[2]             # …/site-packages/hailo_apps_infra
+    pkg_root = here.parents[3]             # …/site-packages/hailo_apps_infra
 
     # 2) point at the new folder
     pp_dir   = pkg_root / "hailo_cpp_postprocess"

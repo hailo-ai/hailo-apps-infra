@@ -4,22 +4,26 @@ from pathlib import Path
 import sys
 import os
 import shutil
+import os
+import pwd
+import grp
+import subprocess
 
-# Ensure hailo_core is importable from anywhere
-PROJECT_ROOT = Path(__file__).resolve().parents[2]  # ~/dev/hailo-apps-infra/hailo_apps_infra
-sys.path.insert(0, str(PROJECT_ROOT))
+from hailo_apps.hailo_app_python.core.common.defines import (
+    RESOURCES_ROOT_PATH_DEFAULT,
+    RESOURCES_DIRS_MAP
+)
 
-from hailo_core.hailo_installation.create_dirs  import setup_resource_dirs
-from hailo_core.hailo_installation.download_resources import download_resources
-from hailo_core.hailo_installation.compile_cpp import compile_postprocess
-from hailo_core.hailo_common.installation_utils import (
+from hailo_apps.hailo_app_python.core.installation.download_resources import download_resources
+from hailo_apps.hailo_app_python.core.installation.compile_cpp import compile_postprocess
+from hailo_apps.hailo_app_python.core.common.installation_utils import (
     create_symlink,
 )
-from hailo_core.hailo_common.config_utils import (
+from hailo_apps.hailo_app_python.core.common.config_utils import (
     load_and_validate_config,
 )
-from hailo_core.hailo_common.core import load_environment
-from hailo_core.hailo_common.defines import (
+from hailo_apps.hailo_app_python.core.common.core import load_environment
+from hailo_apps.hailo_app_python.core.common.defines import (
     RESOURCES_ROOT_PATH_DEFAULT,
     RESOURCES_PATH_KEY,
     RESOURCES_PATH_DEFAULT,
@@ -27,10 +31,50 @@ from hailo_core.hailo_common.defines import (
     RESOURCES_GROUP_DEFAULT,
     DEFAULT_CONFIG_PATH,
 )
-from hailo_core.hailo_installation.set_env import (
+from hailo_apps.hailo_app_python.core.installation.set_env import (
     handle_dot_env,
     set_environment_vars
 )
+from hailo_apps.hailo_app_python.core.common.defines import (
+    RESOURCES_ROOT_PATH_DEFAULT,
+    RESOURCES_DIRS_MAP
+)
+
+def setup_resource_dirs():   
+    """
+    Create resource directories for Hailo applications.
+    This function creates the necessary directories for storing models and videos.
+    It also sets the ownership and permissions for these directories.
+    """
+    # 1) Figure out which user actually invoked sudo (or fallback to the current user)
+    sudo_user = os.environ.get("SUDO_USER")
+    if sudo_user:
+        install_user = sudo_user
+    else:
+        install_user = pwd.getpwuid(os.getuid()).pw_name
+
+    # 2) Lookup that user's primary group name
+    pw   = pwd.getpwnam(install_user)
+    grpname = grp.getgrgid(pw.pw_gid).gr_name
+
+
+    # 3) Create each subdir (using sudo so you don’t have to run the whole script as root)
+    for sub in RESOURCES_DIRS_MAP:
+        target = sub
+        subprocess.run(["sudo", "mkdir", "-p", str(target)], check=True)
+
+    # 4) chown -R user:group and chmod -R 755
+    subprocess.run([
+        "sudo", "chown", "-R",
+        f"{install_user}:{grpname}", str(RESOURCES_ROOT_PATH_DEFAULT)
+    ], check=True)
+    subprocess.run([
+        "sudo", "chmod", "-R", "755", str(RESOURCES_ROOT_PATH_DEFAULT)
+    ], check=True)
+
+    # # 5) Create the storage directory if it doesn't exist
+    # if storage_dir is not None:
+    #     os.makedirs(storage_dir, exist_ok=True)
 
 def post_install():
     """
@@ -41,28 +85,10 @@ def post_install():
     parser = argparse.ArgumentParser(
         description="Post-installation script for Hailo Apps Infra"
     )
-    parser.add_argument(
-        "--config",
-        type=str,
-        default=DEFAULT_CONFIG_PATH,
-        help="Name of the virtualenv to create"
-    )
-    parser.add_argument(
-        "--group",
-        type=str,
-        default=RESOURCES_GROUP_DEFAULT,
-        help="HailoRT version to install"
-    )  
-    parser.add_argument(
-        "--dotenv",
-        type=str,
-        default=str(REPO_ROOT / ".env"),
-        help="Path to the .env file"
-    )  
     args = parser.parse_args()
-    handle_dot_env(args.dotenv)  # this loads the .env file if it exists
-    config = load_and_validate_config(args.config)
-    set_environment_vars(config,args.dotenv)  # this sets env vars like HAILO_ARCH
+    handle_dot_env()  # this loads the .env file if it exists
+    config = load_and_validate_config(DEFAULT_CONFIG_PATH)
+    set_environment_vars(config)  # this sets env vars like HAILO_ARCH
 
     load_environment()  # this sets env vars like HAILO_ARCH
 
@@ -86,7 +112,7 @@ def post_install():
     create_symlink(RESOURCES_ROOT_PATH_DEFAULT, resources_path)
 
     print("⬇️ Downloading resources...")
-    download_resources(group=args.group)
+    download_resources()
     print(f"Resources downloaded to {resources_path}")
 
     print("⚙️ Compiling post-process...")

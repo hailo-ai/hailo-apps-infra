@@ -39,6 +39,7 @@ PIP_CMD = "pip3"
 VENV_CREATE_CMD = "python3 -m venv"
 
 # Module names
+PKG_MODULE = "hailo_apps"
 HAILO_CORE_MODULE = "hailo_core"
 HAILO_APPS_MODULE = "hailo_apps"
 HAILO_COMMON_MODULE = "hailo_common"
@@ -55,8 +56,8 @@ HAILO_MODULE_NAMES = [
 ]
 
 # Base project paths
-REPO_ROOT = Path(__file__).resolve().parents[3]
-PACKAGE_ROOT = REPO_ROOT / "hailo_apps_infra"
+REPO_ROOT = Path(__file__).resolve().parents[4]
+PACKAGE_ROOT = REPO_ROOT / PKG_MODULE
 CORE_ROOT = PACKAGE_ROOT / HAILO_CORE_MODULE
 APPS_ROOT = PACKAGE_ROOT / HAILO_APPS_MODULE
 COMMON_ROOT = CORE_ROOT / HAILO_COMMON_MODULE
@@ -71,7 +72,7 @@ DEFAULT_RESOURCES_CONFIG_PATH = str(CONFIG_ROOT / "resources_config.yaml")
 
 # Symlink, dotenv, local resources defaults
 DEFAULT_RESOURCES_SYMLINK_PATH = str(REPO_ROOT / "resources")
-DEFAULT_DOTENV_PATH = str(REPO_ROOT / ".env")
+DEFAULT_DOTENV_PATH = str(REPO_ROOT / "hailo_apps.env")
 DEFAULT_LOCAL_RESOURCES_PATH = str(REPO_ROOT / "local_resources")
 
 # Supported config options

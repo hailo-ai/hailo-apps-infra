@@ -16,14 +16,14 @@ import urllib.request
 
 
 # ─── load_config, load_environment ────────────────────────────────────────────────
-from hailo_core.hailo_common.config_utils import load_config
+from hailo_apps.hailo_app_python.core.common.config_utils import load_config
 
-from hailo_core.hailo_common.core import load_environment
+from hailo_apps.hailo_app_python.core.common.core import load_environment
 
-from hailo_core.hailo_common.installation_utils import detect_hailo_arch
+from hailo_apps.hailo_app_python.core.common.installation_utils import detect_hailo_arch
 
 # ─── all the defines ──────────────────────────────────────────────────────────────
-from hailo_core.hailo_common.defines import (
+from hailo_apps.hailo_app_python.core.common.defines import (
         DEFAULT_RESOURCES_CONFIG_PATH,
         HAILO_ARCH_KEY,
         MODEL_ZOO_URL,

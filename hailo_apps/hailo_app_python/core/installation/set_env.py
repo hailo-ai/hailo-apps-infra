@@ -8,13 +8,13 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from hailo_core.hailo_common.installation_utils import (
+from hailo_apps.hailo_app_python.core.common.installation_utils import (
     detect_system_pkg_version, detect_host_arch,
     detect_hailo_arch, auto_detect_tappas_variant,
     auto_detect_tappas_version, auto_detect_tappas_postproc_dir
 )
-from hailo_core.hailo_common.config_utils import load_and_validate_config
-from hailo_core.hailo_common.defines import *
+from hailo_apps.hailo_app_python.core.common.config_utils import load_and_validate_config
+from hailo_apps.hailo_app_python.core.common.defines import *
 
 logger = logging.getLogger("env-setup")
 

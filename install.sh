@@ -83,8 +83,13 @@ if [[ -d "${VENV_PATH}" ]]; then
   rm -rf "${VENV_PATH}"
 fi
 
+# Clean up build artifacts from the current directory
+echo "🧹 Cleaning up build artifacts..."
+find . -name "*.egg-info" -type d -exec rm -rf {} + 2>/dev/null || true
+rm -rf build/ dist/ 2>/dev/null || true
+echo "✅ Build artifacts cleaned"
+
 # Ensure Meson is installed
-sudo apt-get update
 sudo apt-get install -y meson
 
 echo "🌱 Creating virtualenv '${VENV_NAME}' (with system site-packages)…"
@@ -111,7 +116,7 @@ if [[ "$INSTALL_HAILORT" = true ]]; then
   FLAGS="${FLAGS} --hailort-version ${hailort_version}"
 fi
 
-python3 scripts/hailo_python_installation.sh ${FLAGS}
+./scripts/hailo_python_installation.sh ${FLAGS}
 
 python3 -m pip install --upgrade pip setuptools wheel
 
