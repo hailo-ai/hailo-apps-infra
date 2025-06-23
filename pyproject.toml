@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "hailo-apps-infra"
-version = "0.4.0"
-description = "Infra package to install all modular Hailo apps"
+name = "hailo-apps"
+version = "0.5.0"
+description = "Hailo AI applications and pipelines package"
 readme = "README.md"
 requires-python = ">=3.7"
 authors = [
@@ -29,26 +29,23 @@ dependencies = [
 ]
 
 [project.scripts]
-hailo-post-install =        "hailo_apps_infra.hailo_core.hailo_installation.post_install:main"
-hailo-set-env =             "hailo_apps_infra.hailo_core.hailo_installation.set_env:main"
-hailo-download-resources =  "hailo_apps_infra.hailo_core.hailo_installation.download_resources:main"
-hailo-detect =              "hailo_apps_infra.hailo_apps.hailo_pipelines.detection_pipeline:main"
-hailo-depth =               "hailo_apps_infra.hailo_apps.hailo_pipelines.depth_pipeline:main"
-hailo-pose =                "hailo_apps_infra.hailo_apps.hailo_pipelines.pose_estimation_pipeline:main"
-hailo-seg =                 "hailo_apps_infra.hailo_apps.hailo_pipelines.instance_segmentation_pipeline:main"
-hailo-simple-detect =       "hailo_apps_infra.hailo_apps.hailo_pipelines.detection_pipeline_simple:main"
-hailo-face-recon =          "hailo_apps_infra.hailo_apps.apps.face_recognition.face_recognition:main"
+hailo-post-install =        "hailo_apps.hailo_app_python.core.installation.post_install:main"
+hailo-compile-postprocess = "hailo_apps.hailo_app_python.core.installation.compile_cpp:main"
+hailo-set-env =             "hailo_apps.hailo_app_python.core.installation.set_env:main"
+hailo-download-resources =  "hailo_apps.hailo_app_python.core.installation.download_resources:main"
+hailo-detect =              "hailo_apps.hailo_app_python.apps.detection.detection_pipeline:main"
+hailo-depth =               "hailo_apps.hailo_app_python.apps.depth.depth_pipeline:main"
+hailo-pose =                "hailo_apps.hailo_app_python.apps.pose_estimation.pose_estimation_pipeline:main"
+hailo-seg =                 "hailo_apps.hailo_app_python.apps.instance_segmentation.instance_segmentation_pipeline:main"
+hailo-detect-simple =       "hailo_apps.hailo_app_python.apps.detection_simple.detection_pipeline_simple:main"
+hailo-face-recon =          "hailo_apps.hailo_app_python.apps.face_recognition.face_recognition:main"
 
 [tool.setuptools.packages.find]
-include = ["hailo_apps_infra*"]
+include = ["hailo_apps*"]
 
 [tool.setuptools.package-data]
-"hailo_apps_infra.hailo_cpp_postprocess" = [
-  "meson.build",
-  "compile_postprocess.sh",
-  "cpp/**/*",
-]
-"hailo_apps_infra.hailo_core" = [
-    "hailo_config/*.yaml",
-    "hailo_config/*.yml"
+"hailo_apps.hailo_app_python.core.cpp_postprocess" = [
+    "meson.build",
+    "compile_postprocess.sh",
+    "cpp/**/*",
 ]

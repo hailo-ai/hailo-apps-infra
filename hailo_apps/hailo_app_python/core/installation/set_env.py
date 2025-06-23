@@ -4,24 +4,24 @@ import argparse
 import logging
 from pathlib import Path
 
-# Ensure hailo_core is importable from anywhere
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(PROJECT_ROOT))
-
-from hailo_core.hailo_common.installation_utils import (
+from hailo_apps.hailo_app_python.core.common.installation_utils import (
     detect_system_pkg_version, detect_host_arch,
     detect_hailo_arch, auto_detect_tappas_variant,
     auto_detect_tappas_version, auto_detect_tappas_postproc_dir
 )
-from hailo_core.hailo_common.config_utils import load_and_validate_config
-from hailo_core.hailo_common.defines import *
+from hailo_apps.hailo_app_python.core.common.config_utils import load_and_validate_config
+from hailo_apps.hailo_app_python.core.common.defines import *
 
 logger = logging.getLogger("env-setup")
 
 
 def handle_dot_env(env_path: Path = None) -> Path:
-    env_path = Path(env_path) or Path(DEFAULT_DOTENV_PATH)
-    if not Path(env_path).is_file():
+    if env_path is None:
+        env_path = REPO_ROOT / DEFAULT_DOTENV_PATH
+    else:
+        env_path = Path(env_path)
+    
+    if not env_path.is_file():
         print(f"🔧 Creating .env file at {env_path}")
         env_path.touch()
     os.chmod(env_path, 0o666)
@@ -45,6 +45,11 @@ def _persist_env_vars(env_vars: dict, env_path: Path) -> None:
 
 
 def set_environment_vars(config, env_path: Path = None) -> None:
+
+    # Handle the None case for env_path
+    if env_path is None:
+        env_path = handle_dot_env()
+
     host_arch = config.get(HOST_ARCH_KEY, HOST_ARCH_DEFAULT)
     hailo_arch = config.get(HAILO_ARCH_KEY, HAILO_ARCH_DEFAULT)
     resources_path = config.get(RESOURCES_PATH_KEY, DEFAULT_RESOURCES_SYMLINK_PATH)

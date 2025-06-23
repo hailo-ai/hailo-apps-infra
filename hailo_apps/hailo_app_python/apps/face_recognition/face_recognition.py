@@ -12,35 +12,12 @@ from gi.repository import Gst
 
 # Local application-specific imports
 import hailo
-try:
-    from hailo_apps.hailo_gstreamer.gstreamer_app import app_callback_class
-except ImportError:
-    from hailo_apps_infra.hailo_apps.hailo_gstreamer.gstreamer_app import app_callback_class
+from hailo_apps.hailo_app_python.core.gstreamer.gstreamer_app import app_callback_class
+from hailo_apps.hailo_app_python.apps.face_recognition.face_recognition_pipeline import GStreamerFaceRecognitionApp
+from hailo_apps.hailo_app_python.core.common.telegram_handler import TelegramHandler
+from hailo_apps.hailo_app_python.core.common.defines import HAILO_LOGO_PHOTO_NAME
+from hailo_apps.hailo_app_python.apps.face_recognition.face_ui_elements import UIElements
 
-try:
-    from hailo_apps.hailo_pipelines.face_recognition_pipeline import GStreamerFaceRecognitionApp
-except ImportError:
-    from hailo_apps_infra.hailo_apps.hailo_pipelines.face_recognition_pipeline import GStreamerFaceRecognitionApp
-
-try:
-    from hailo_core.hailo_common.telegram_handler import TelegramHandler
-except ImportError:
-    from hailo_apps_infra.hailo_core.hailo_common.telegram_handler import TelegramHandler
-
-try:
-    from hailo_core.hailo_common.defines import HAILO_LOGO_PHOTO_NAME
-except ImportError:
-    from hailo_apps_infra.hailo_core.hailo_common.defines import HAILO_LOGO_PHOTO_NAME
-
-try:
-    from hailo_apps.apps.face_recognition.face_ui_callbacks import UICallbacks
-except ImportError:
-    from hailo_apps_infra.hailo_apps.apps.face_recognition.face_ui_callbacks import UICallbacks
-
-try:
-    from hailo_apps.apps.face_recognition.face_ui_elements import UIElements
-except ImportError:
-    from hailo_apps_infra.hailo_apps.apps.face_recognition.face_ui_elements import UIElements
 # endregion
 
 # region Constants

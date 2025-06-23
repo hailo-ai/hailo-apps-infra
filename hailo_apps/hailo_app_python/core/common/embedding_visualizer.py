@@ -16,23 +16,13 @@ except ImportError:
 
 # Local application/library imports
 from db_handler import DatabaseHandler, Record
-try:
-    from hailo_core.hailo_common.core import get_resource_path
-except ImportError:
-    from hailo_apps_infra.hailo_core.hailo_common.core import get_resource_path
-try:
-    from hailo_core.hailo_common.defines import (
+from hailo_apps.hailo_app_python.core.common.core import get_resource_path
+
+from hailo_apps.hailo_app_python.core.common.defines import (
         FACE_RECON_DIR_NAME,
         FACE_RECON_SAMPLES_DIR_NAME,
         FACE_RECON_DATABASE_DIR_NAME
     )
-except ImportError:
-    from hailo_apps_infra.hailo_core.hailo_common.defines import (
-    FACE_RECON_DIR_NAME,
-    FACE_RECON_SAMPLES_DIR_NAME,
-    FACE_RECON_DATABASE_DIR_NAME
-)
-# endregion imports
 
 def visualize_embeddings(db_handler):
     """

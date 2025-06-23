@@ -1,8 +1,10 @@
 import os
-try:
-    from hailo_core.hailo_common.defines import TAPPAS_POSTPROC_PATH_KEY, GST_VIDEO_SINK
-except ImportError:
-    from hailo_apps_infra.hailo_core.hailo_common.defines import TAPPAS_POSTPROC_PATH_KEY, GST_VIDEO_SINK
+from hailo_apps.hailo_app_python.core.common.defines import (
+    TAPPAS_POSTPROC_PATH_KEY,
+    GST_VIDEO_SINK,
+)
+
+
 def get_source_type(input_source):
     # This function will return the source type based on the input source
     # return values can be "file", "mipi" or "usb"

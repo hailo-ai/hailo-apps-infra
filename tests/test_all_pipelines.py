@@ -2,33 +2,19 @@ import os
 import pytest
 import logging
 
-# Import test utilities
-try:
-    from hailo_core.hailo_common.test_utils import (
-        run_pipeline_module_with_args,
-        run_pipeline_pythonpath_with_args,
-        run_pipeline_cli_with_args,
-        get_pipeline_args,
-    )
-except ImportError:
-    from hailo_apps_infra.hailo_core.hailo_common.test_utils import (
-        run_pipeline_module_with_args,
-        run_pipeline_pythonpath_with_args,
-        run_pipeline_cli_with_args,
-        get_pipeline_args,
-    )
+
+from hailo_apps.hailo_app_python.core.common.test_utils import (
+    run_pipeline_module_with_args,
+    run_pipeline_pythonpath_with_args,
+    run_pipeline_cli_with_args,
+    get_pipeline_args,
+)
 
 # Import installation utilities
-try:
-    from hailo_core.hailo_common.installation_utils import detect_hailo_arch , detect_host_arch
-except ImportError:
-    from hailo_apps_infra.hailo_core.hailo_common.installation_utils import detect_hailo_arch , detect_host_arch
 
-# Import camera utilities
-try:
-    from hailo_core.hailo_common.camera_utils import is_rpi_camera_available
-except ImportError:
-    from hailo_apps_infra.hailo_core.hailo_common.camera_utils import is_rpi_camera_available
+from hailo_apps.hailo_app_python.core.common.installation_utils import detect_hailo_arch , detect_host_arch
+
+from hailo_apps.hailo_app_python.core.common.camera_utils import is_rpi_camera_available
 
 # Configure logging as needed.
 logging.basicConfig(level=logging.INFO)

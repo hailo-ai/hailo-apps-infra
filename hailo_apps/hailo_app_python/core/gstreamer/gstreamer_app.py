@@ -12,46 +12,37 @@ import time
 import queue
 gi.require_version('Gst', '1.0')
 from gi.repository import Gst, GLib, GObject
-from .gstreamer_helper_pipelines import (
+
+# hailo_app_python/core/gstreamer/gstreamer_app.py
+
+# Absolute import for your local helper
+from hailo_apps.hailo_app_python.core.gstreamer.gstreamer_helper_pipelines import (
     get_source_type,
 )
 
-try:
-    from hailo_core.hailo_common.defines import (
-        HAILO_RGB_VIDEO_FORMAT,
-        GST_VIDEO_SINK,
-        TAPPAS_POSTPROC_PATH_KEY,
-        RESOURCES_PATH_KEY,
-        RESOURCES_ROOT_PATH_DEFAULT,
-        RESOURCES_VIDEOS_DIR_NAME,
-        BASIC_PIPELINES_VIDEO_EXAMPLE_NAME,
-        USB_CAMERA,
-        RPI_NAME_I,
-        )
-except ImportError:
-    from hailo_apps_infra.hailo_core.hailo_common.defines import (
-        HAILO_RGB_VIDEO_FORMAT,
-        GST_VIDEO_SINK,
-        TAPPAS_POSTPROC_PATH_KEY,
-        RESOURCES_PATH_KEY,
-        RESOURCES_ROOT_PATH_DEFAULT,
-        RESOURCES_VIDEOS_DIR_NAME,
-        BASIC_PIPELINES_VIDEO_EXAMPLE_NAME,
-        USB_CAMERA,
-        RPI_NAME_I,
-        )
-try:    
-    from hailo_core.hailo_common.camera_utils import get_usb_video_devices
-except ImportError:
-    from hailo_apps_infra.hailo_core.hailo_common.camera_utils import get_usb_video_devices
-try:
-    from hailo_core.hailo_common.core import load_environment
-except ImportError:
-    from hailo_apps_infra.hailo_core.hailo_common.core import load_environment
-try:
-    from hailo_core.hailo_common.buffer_utils import get_caps_from_pad, get_numpy_from_buffer
-except ImportError:
-    from hailo_apps_infra.hailo_core.hailo_common.buffer_utils import get_caps_from_pad, get_numpy_from_buffer
+# Absolute imports for your common utilities
+from hailo_apps.hailo_app_python.core.common.defines import (
+    HAILO_RGB_VIDEO_FORMAT,
+    GST_VIDEO_SINK,
+    TAPPAS_POSTPROC_PATH_KEY,
+    RESOURCES_PATH_KEY,
+    RESOURCES_ROOT_PATH_DEFAULT,
+    RESOURCES_VIDEOS_DIR_NAME,
+    BASIC_PIPELINES_VIDEO_EXAMPLE_NAME,
+    USB_CAMERA,
+    RPI_NAME_I,
+)
+from hailo_apps.hailo_app_python.core.common.camera_utils import (
+    get_usb_video_devices,
+)
+from hailo_apps.hailo_app_python.core.common.core import (
+    load_environment,
+)
+from hailo_apps.hailo_app_python.core.common.buffer_utils import (
+    get_caps_from_pad,
+    get_numpy_from_buffer,
+)
+
 
 try:
     from picamera2 import Picamera2

@@ -34,3 +34,5 @@ hailo_infra_venv/
 
 tmp_venv
 
+venv_hailo_apps/
+
