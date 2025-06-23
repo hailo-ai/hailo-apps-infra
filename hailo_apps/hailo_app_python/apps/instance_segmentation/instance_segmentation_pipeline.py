@@ -86,17 +86,13 @@ class GStreamerInstanceSegmentationApp(GStreamerApp):
 
         # Determine which JSON config to use based on HEF filename
         hef_name = Path(self.hef_path).name
-        if self.options_menu.labels_json is not None:
-            self.config_file = Path(self.options_menu.labels_json)
-            print(f"Using provided config file: {self.config_file}")
+        if INSTANCE_SEGMENTATION_MODEL_NAME_H8 in hef_name:
+            self.config_file = (Path(DEFAULT_LOCAL_RESOURCES_PATH) / (INSTANCE_SEGMENTATION_MODEL_NAME_H8 + JSON_FILE_EXTENSION))
+            print(f"Using config file: {self.config_file}")
+        elif INSTANCE_SEGMENTATION_MODEL_NAME_H8L in hef_name:
+            self.config_file = (Path(DEFAULT_LOCAL_RESOURCES_PATH) / (INSTANCE_SEGMENTATION_MODEL_NAME_H8L + JSON_FILE_EXTENSION))
         else:
-            if INSTANCE_SEGMENTATION_MODEL_NAME_H8 in hef_name:
-                self.config_file = (Path(DEFAULT_LOCAL_RESOURCES_PATH) / (INSTANCE_SEGMENTATION_MODEL_NAME_H8 + JSON_FILE_EXTENSION))
-                print(f"Using config file: {self.config_file}")
-            elif INSTANCE_SEGMENTATION_MODEL_NAME_H8L in hef_name:
-                self.config_file = (Path(DEFAULT_LOCAL_RESOURCES_PATH) / (INSTANCE_SEGMENTATION_MODEL_NAME_H8L + JSON_FILE_EXTENSION))
-            else:
-                raise ValueError("HEF version not supported; please provide a compatible segmentation HEF or config file.")
+            raise ValueError("HEF version not supported; please provide a compatible segmentation HEF or config file.")
 
         # Post-process shared object
         self.post_process_so = get_resource_path(INSTANCE_SEGMENTATION_PIPELINE, RESOURCES_SO_DIR_NAME, INSTANCE_SEGMENTATION_POSTPROCESS_SO_FILENAME)
