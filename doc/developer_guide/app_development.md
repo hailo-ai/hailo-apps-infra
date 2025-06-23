@@ -6,21 +6,7 @@ This guide provides a comprehensive overview of how to develop AI applications u
 
 Our framework is built on a stack of technologies, from the open-source GStreamer foundation to our custom Python tools. The diagram below illustrates how these layers build upon one another, with each layer providing a higher level of abstraction.
 
-<svg width="600" height="250" viewBox="0 0 600 250" xmlns="http://www.w3.org/2000/svg">
-
-  <rect x="50" y="200" width="500" height="50" fill="#ADD8E6" stroke="#333" stroke-width="2"/>
-  <text x="300" y="230" text-anchor="middle" font-size="16" fill="#000">GStreamer Core Framework</text>
-
-  <rect x="100" y="150" width="400" height="50" fill="#87CEEB" stroke="#333" stroke-width="2"/>
-  <text x="300" y="180" text-anchor="middle" font-size="16" fill="#000">Hailo's Tappas Plugins (C/C++)</text>
-
-  <rect x="150" y="100" width="300" height="50" fill="#4682B4" stroke="#333" stroke-width="2"/>
-  <text x="300" y="130" text-anchor="middle" font-size="16" fill="#FFF">Hailo Apps Python Layer</text>
-
-  <rect x="200" y="50" width="200" height="50" fill="#1E90FF" stroke="#333" stroke-width="2"/>
-  <text x="300" y="80" text-anchor="middle" font-size="16" fill="#FFF">User Code</text>
-</svg>
-
+![Hailo Architecture](../images/architecture.svg)
 
 This diagram visually represents our technology stack. Understanding this stack is key to effective development.
 
@@ -70,8 +56,7 @@ This layer is developed in this repository to simplify the process of building a
 
 This is the fastest way to build an application. The core idea is to start from one of our pre-built examples and inject your custom logic by writing a simple Python callback function. Each pipeline is designed to be runnable with a simple callback.
 
-TBD fix this section.
-We recommend copying one of our example applications, like `hailo_apps_infra/hailo_apps/apps/detection/detection.py`, as your starting point.
+We recommend copying one of our example applications, like `hailo_apps/hailo_app_python/apps/detection/detection.py`, as your starting point.
 
 ### The User Application Workflow
 
@@ -136,11 +121,10 @@ if __name__ == "__main__":
 ```
 
 ### How to Run Your Application
-TBD fix this section.
 To run your application, you simply execute your Python script from the terminal. The application will automatically handle command-line arguments for inputs, HEF files, and other parameters.
-
+For example:
 ```bash
-python hailo_apps_infra/hailo_apps/apps/detection/detection.py --input /path/to/your/video.mp4
+python hailo_apps/hailo_app_python/apps/detection/detection.py --input </path/to/your/video.mp4>
 ```
 
 ### The Callback Mechanism Explained

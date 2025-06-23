@@ -97,7 +97,7 @@ shared_library('my_post',
 
 To compile your new post-process, run:
 ```bash
-hailo-compile-post-process
+hailo-compile-postprocess
 ```
 or use:
 ```bash
