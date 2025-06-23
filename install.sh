@@ -91,6 +91,7 @@ echo "✅ Build artifacts cleaned"
 
 # Ensure Meson is installed
 sudo apt-get install -y meson
+sudo apt install python3-gi python3-gi-cairo
 
 echo "🌱 Creating virtualenv '${VENV_NAME}' (with system site-packages)…"
 python3 -m venv --system-site-packages "${VENV_PATH}"
