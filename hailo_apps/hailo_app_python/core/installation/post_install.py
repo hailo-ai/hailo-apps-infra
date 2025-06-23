@@ -85,9 +85,21 @@ def post_install():
     parser = argparse.ArgumentParser(
         description="Post-installation script for Hailo Apps Infra"
     )
+    parser.add_argument(
+        "--config",
+        type=str,
+        default=DEFAULT_CONFIG_PATH,
+        help="Name of the virtualenv to create"
+    )
+    parser.add_argument(
+        "--group",
+        type=str,
+        default=RESOURCES_GROUP_DEFAULT,
+        help="HailoRT version to install"
+    )  
     args = parser.parse_args()
     handle_dot_env()  # this loads the .env file if it exists
-    config = load_and_validate_config(DEFAULT_CONFIG_PATH)
+    config = load_and_validate_config(args.config)
     set_environment_vars(config)  # this sets env vars like HAILO_ARCH
 
     load_environment()  # this sets env vars like HAILO_ARCH
@@ -112,7 +124,7 @@ def post_install():
     create_symlink(RESOURCES_ROOT_PATH_DEFAULT, resources_path)
 
     print("⬇️ Downloading resources...")
-    download_resources(group=RESOURCES_GROUP_DEFAULT,)
+    download_resources(group=args.group)
     print(f"Resources downloaded to {resources_path}")
 
     print("⚙️ Compiling post-process...")
