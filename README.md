@@ -47,7 +47,7 @@ A lightweight version focused on demonstrating raw Hailo performance with minima
 
 **Command:**
 ```bash
-hailo-detection-simple
+hailo-detect-simple
 ```
 **Output:**
 
@@ -58,7 +58,7 @@ A comprehensive detection application featuring object tracking and resolution s
 
 **Command:**
 ```bash
-hailo-detection
+hailo-detect
 ```
 
 #### Pose Estimation
