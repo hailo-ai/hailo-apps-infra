@@ -120,8 +120,7 @@ class GStreamerApp:
         self.current_path = os.path.dirname(os.path.abspath(__file__))
         self.postprocess_dir = tappas_post_process_dir
         if self.options_menu.input is None:
-            root = Path(os.environ.get(RESOURCES_PATH_KEY, RESOURCES_ROOT_PATH_DEFAULT))
-            self.video_source = str(root / RESOURCES_VIDEOS_DIR_NAME / BASIC_PIPELINES_VIDEO_EXAMPLE_NAME)
+            self.video_source = str(Path(RESOURCES_ROOT_PATH_DEFAULT) / RESOURCES_VIDEOS_DIR_NAME / BASIC_PIPELINES_VIDEO_EXAMPLE_NAME)
         else:
             self.video_source = self.options_menu.input
         if self.video_source == USB_CAMERA:
