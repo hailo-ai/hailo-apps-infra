@@ -210,7 +210,7 @@ After running any of the installation methods, you can verify that everything is
     ```
 4.  **Run a demo application**
     ```bash
-    hailo-detection-simple
+    hailo-detect-simple
     ```
     A video window with live detections should appear.
 
