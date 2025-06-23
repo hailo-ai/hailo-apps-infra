@@ -2,7 +2,7 @@
 set -e
 
 # Activate the virtual environment
-source ./hailo_infra_venv/bin/activate
+source ./set_env.sh
 
 # Directories
 TESTS_DIR="tests"
@@ -16,7 +16,7 @@ python -m pip install -r tests/test_resources/requirements.txt
 
 # Download necessary Hailo resources
 echo "Downloading resources..."
-python -m hailo_apps_infra.installation.hailo_installation.download_resources --group all
+python -m hailo_apps.hailo_app_python.core.installation.download_resources --group all
 
 # Run pytest via the Python module so it’s guaranteed to run in this venv
 echo "Running tests..."

@@ -24,33 +24,39 @@ logger = logging.getLogger("test_run_everything")
 pipelines = [
     {
         "name": "detection",
-        "module": "hailo_apps_infra.hailo_apps.hailo_pipelines.detection_pipeline",
-        "script": "hailo_apps_infra/hailo_apps/hailo_pipelines/detection_pipeline.py",
+        "module": "hailo_apps.hailo_app_python.apps.detection.detection_pipeline",
+        "script": "hailo_apps/hailo_app_python/apps/detection/detection_pipeline.py",
         "cli": "hailo-detect"
     },
     {
         "name": "pose_estimation",
-        "module": "hailo_apps_infra.hailo_apps.hailo_pipelines.pose_estimation_pipeline",
-        "script": "hailo_apps_infra/hailo_apps/hailo_pipelines/pose_estimation_pipeline.py",
+        "module": "hailo_apps.hailo_app_python.apps.pose_estimation.pose_estimation_pipeline",
+        "script": "hailo_apps/hailo_app_python/apps/pose_estimation/pose_estimation_pipeline.py",
         "cli": "hailo-pose"
     },
     {
         "name": "depth",
-        "module": "hailo_apps_infra.hailo_apps.hailo_pipelines.depth_pipeline",
-        "script": "hailo_apps_infra/hailo_apps/hailo_pipelines/depth_pipeline.py",
+        "module": "hailo_apps.hailo_app_python.apps.depth.depth_pipeline",
+        "script": "hailo_apps/hailo_app_python/apps/depth/depth_pipeline.py",
         "cli": "hailo-depth"
     },
     {
         "name": "instance_segmentation",
-        "module": "hailo_apps_infra.hailo_apps.hailo_pipelines.instance_segmentation_pipeline",
-        "script": "hailo_apps_infra/hailo_apps/hailo_pipelines/instance_segmentation_pipeline.py",
+        "module": "hailo_apps.hailo_app_python.apps.instance_segmentation.instance_segmentation_pipeline",
+        "script": "hailo_apps/hailo_app_python/apps/instance_segmentation/instance_segmentation_pipeline.py",
         "cli": "hailo-seg"
     },
     {
         "name": "simple_detection",
-        "module": "hailo_apps_infra.hailo_apps.hailo_pipelines.detection_pipeline_simple",
-        "script": "hailo_apps_infra/hailo_apps/hailo_pipelines/detection_pipeline_simple.py",
-        "cli": "hailo-simple-detect"
+        "module": "hailo_apps.hailo_app_python.apps.detection_simple.detection_pipeline_simple",
+        "script": "hailo_apps/hailo_app_python/apps/detection_simple/detection_pipeline_simple.py",
+        "cli": "hailo-detect-simple"
+    },
+    {
+        "name": "face_recognition",
+        "module": "hailo_apps.hailo_app_python.apps.face_recognition.face_recognition",
+        "script": "hailo_apps/hailo_app_python/apps/face_recognition/face_recognition.py",
+        "cli": "hailo-face-recon"
     },
 ]
 
@@ -70,13 +76,13 @@ def test_pipeline_run_defaults(pipeline, run_method_name):
     run_method = run_methods[run_method_name]
     log_dir = "logs"
     os.makedirs(log_dir, exist_ok=True)
-    
+
     # ---------------------------
     # First run: Use empty arguments (defaults)
     # ---------------------------
     empty_args = []  # Empty args run as default behavior
     log_file_path_empty = os.path.join(log_dir, f"{pipeline_name}_{run_method_name}_empty.log")
-    
+    stdout, stderr = b"", b""
     if run_method_name == "module":
         cmd = ['python', '-u', '-m', pipeline["module"]] + empty_args
         print(f"Running command with empty args for {pipeline_name} ({run_method_name}): {' '.join(cmd)}")
@@ -91,23 +97,21 @@ def test_pipeline_run_defaults(pipeline, run_method_name):
         stdout, stderr = run_method(pipeline["cli"], empty_args, log_file_path_empty)
     else:
         pytest.fail(f"Unknown run method: {run_method_name}")
-    
     out_str = stdout.decode().lower() if stdout else ""
     err_str = stderr.decode().lower() if stderr else ""
     print(f"Empty args run for {pipeline_name} ({run_method_name}) Output:\n{out_str}")
-    
     # Basic assertions for the empty args run.
     assert "error" not in err_str, f"{pipeline_name} ({run_method_name}) reported an error in empty-args run: {err_str}"
     assert "traceback" not in err_str, f"{pipeline_name} ({run_method_name}) traceback in empty-args run: {err_str}"
-    
- # ---------------------------
+
+    # ---------------------------
     # Second run: With extra test arguments.
     # ---------------------------
     # For example, to include the USB camera:
     # The order is preserved—first the USB camera.
     extra_args = get_pipeline_args(suite="usb_camera")
     log_file_path_extra = os.path.join(log_dir, f"{pipeline_name}_{run_method_name}_extra.log")
-    
+    stdout_extra, stderr_extra = b"", b""
     if run_method_name == "module":
         cmd = ['python', '-u', '-m', pipeline["module"]] + extra_args
         print(f"Running command (extra args) for {pipeline_name} ({run_method_name}): {' '.join(cmd)}")
@@ -122,19 +126,17 @@ def test_pipeline_run_defaults(pipeline, run_method_name):
         stdout_extra, stderr_extra = run_method(pipeline["cli"], extra_args, log_file_path_extra)
     else:
         pytest.fail(f"Unknown run method: {run_method_name}")
-    
     out_extra_str = stdout_extra.decode().lower() if stdout_extra else ""
     err_extra_str = stderr_extra.decode().lower() if stderr_extra else ""
     print(f"Extra args run for {pipeline_name} ({run_method_name}) Output:\n{out_extra_str}")
     assert "error" not in err_extra_str, f"{pipeline_name} ({run_method_name}) reported error in extra run: {err_extra_str}"
     assert "traceback" not in err_extra_str, f"{pipeline_name} ({run_method_name}) traceback in extra run: {err_extra_str}"
 
-
     # --------- Third run: RPi camera (using common package function) ---------
     # Only run if the machine appears to be a Raspberry Pi.
     extra_args_rpi = get_pipeline_args(suite="rpi_camera")
     rpi_device = is_rpi_camera_available()
-
+    stdout_rpi, stderr_rpi = b"", b""
     if ("rpi" == detect_host_arch() and rpi_device):
         log_file_path_rpi = os.path.join(log_dir, f"{pipeline_name}_{run_method_name}_rpi.log")
         if run_method_name == "module":
@@ -151,7 +153,6 @@ def test_pipeline_run_defaults(pipeline, run_method_name):
             stdout_rpi, stderr_rpi = run_method(pipeline["cli"], extra_args_rpi, log_file_path_rpi)
         else:
             pytest.fail(f"Unknown run method: {run_method_name}")
-
         out_rpi_str = stdout_rpi.decode().lower() if stdout_rpi else ""
         err_rpi_str = stderr_rpi.decode().lower() if stderr_rpi else ""
         print(f"RPi args run output for {pipeline_name} ({run_method_name}):\n{out_rpi_str}")
