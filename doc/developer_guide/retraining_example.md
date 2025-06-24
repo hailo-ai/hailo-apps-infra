@@ -63,4 +63,18 @@ You should get a message like this: 
 ![successful-compilation](../images/successful-compilation.png)
 
 ### Now, we have the yolov8s.hef. This file can be used on the Raspberry Pi 5 AI Kit.
-For deployment instructions, see [Using Retrained Models](basic-pipelines.md#using-retrained-models).
+
+Load a custom model’s HEF using the `--hef-path` flag. Default labels are [COCO labels](https://github.com/ultralytics/ultralytics/blob/main/ultralytics/cfg/datasets/coco.yaml) (80 classes). For custom models with different labels, use the `--labels-path` flag to load your labels file (e.g., `/local_resources/barcode_labels.json`).
+
+The default package installation downloads the network trained in the retraining example above, which can be used as a reference (including `/local_resources/barcode_labels.json`).
+
+To run the example with a custom model (adjust paths and the need in `labels_json`):
+```bash
+cd hailo_apps/hailo_app_python/apps/detection
+python detection.py --labels-json local_resources/barcode_labels.json --hef-path resources/yolov8s-hailo8l-barcode.hef --input resources/barcode.mp4
+```
+By default, the package contains the following YOLO-based detection models: YOLOv6n, YOLOv8s, YOLOv8m, YOLOv11n, and YOLOv11s. The files located under the `resources` directory, for example: [yolov8m](../../../hailo-apps-internal/resources/models/hailo8/yolov8m.hef). 
+
+Example output: 
+
+![Example output](../images/barcode-example.png)

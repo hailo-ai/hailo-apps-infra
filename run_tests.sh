@@ -23,6 +23,7 @@ echo "Running tests..."
 python -m pytest --log-cli-level=INFO \
     "${TESTS_DIR}/test_sanity_check.py" \
     "${TESTS_DIR}/test_all_pipelines.py" \
-    "${TESTS_DIR}/test_face_recon.py"
+    "${TESTS_DIR}/test_face_recon.py" \
+    "${TESTS_DIR}/test_retraining.py"
 
 echo "All tests completed successfully."

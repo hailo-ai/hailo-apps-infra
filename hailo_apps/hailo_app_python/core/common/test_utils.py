@@ -8,7 +8,7 @@ import time
 import pytest  
 from .defines import TEST_RUN_TIME, TERM_TIMEOUT  
 
-def get_pipeline_args(suite="default",hef_path=None, override_usb_camera=None , override_video_input=None):
+def get_pipeline_args(suite="default",hef_path=None, override_usb_camera=None , override_video_input=None, override_labels_json=None):
     """
     Returns a list of additional arguments based on the specified test suite.
     
@@ -69,7 +69,13 @@ def get_pipeline_args(suite="default",hef_path=None, override_usb_camera=None , 
         elif s == "dump_dot":
             args.append("--dump-dot")
         elif s == "labels":
-            args += ["--labels-json", "resources/labels.json"]
+            # If override_labels_json is provided, use it; otherwise, use the default json file.
+            if override_labels_json:
+                json_file = override_labels_json
+            else:
+                json_file = "resources/labels.json"
+            # Append or override --input (here we simply add the argument)
+            args += ["--labels-json", json_file]
         elif s == "ui":
             args.append("--ui")
         elif s == "visualize":

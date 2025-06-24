@@ -164,6 +164,8 @@ DETECTION_MODEL_NAME_H8 = "yolov8m"
 DETECTION_MODEL_NAME_H8L = "yolov8s"
 DETECTION_POSTPROCESS_SO_FILENAME = "libyolo_hailortpp_postprocess.so"
 DETECTION_POSTPROCESS_FUNCTION = "filter_letterbox"
+RETRAINING_BARCODE_LABELS_JSON_NAME = "barcode_labels.json"
+RETRAINING_MODEL_NAME = "yolov8s-hailo8l-barcode"
 
 # Instance segmentation pipeline defaults
 INSTANCE_SEGMENTATION_APP_TITLE = "Hailo Instance Segmentation App"
@@ -239,6 +241,7 @@ HAILO_NV12_VIDEO_FORMAT = "NV12"
 # Video examples
 BASIC_PIPELINES_VIDEO_EXAMPLE_NAME = "example.mp4"
 BASIC_PIPELINES_VIDEO_EXAMPLE_640_NAME = "example_640.mp4"
+BARCODE_VIDEO_EXAMPLE_NAME = 'barcode.mp4'
 
 # Photos resources
 HAILO_LOGO_PHOTO_NAME = "logo.png"
