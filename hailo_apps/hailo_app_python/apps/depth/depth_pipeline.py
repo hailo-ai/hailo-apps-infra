@@ -2,9 +2,6 @@
 # Standard library imports
 import sys
 from pathlib import Path
-# Ensure hailo_core is importable from anywhere
-PROJECT_ROOT = Path(__file__).resolve().parents[2]  # ~/dev/hailo-apps-infra/hailo_apps_infra
-sys.path.insert(0, str(PROJECT_ROOT))
 import setproctitle
 
 # Third-party imports
@@ -23,7 +20,7 @@ from hailo_apps.hailo_app_python.core.common.defines import DEPTH_POSTPROCESS_FU
 # User Gstreamer Application: This class inherits from the common.GStreamerApp class
 class GStreamerDepthApp(GStreamerApp):
     def __init__(self, app_callback, user_data, parser=None):
-        
+
         if parser == None:
             parser = get_default_parser()
 
@@ -58,7 +55,7 @@ class GStreamerDepthApp(GStreamerApp):
         depth_pipeline_wrapper = INFERENCE_PIPELINE_WRAPPER(depth_pipeline, name='inference_wrapper_depth')
         user_callback_pipeline = USER_CALLBACK_PIPELINE()
         display_pipeline = DISPLAY_PIPELINE(video_sink=self.video_sink, sync=self.sync, show_fps=self.show_fps)
-    
+
         return (
             f'{source_pipeline} ! '
             f'{depth_pipeline_wrapper} ! '
@@ -72,7 +69,7 @@ def main():
     app_callback = dummy_callback
     app = GStreamerDepthApp(app_callback, user_data)
     app.run()
-    
+
 if __name__ == "__main__":
     print("Starting Hailo Depth App...")
     main()

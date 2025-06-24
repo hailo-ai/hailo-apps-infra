@@ -4,7 +4,7 @@
 
 #### Run the detection simple example:
 ```bash
-hailo-detection-simple
+hailo-detect-simple
 ```
 To close the application, press `Ctrl+C`.
 
@@ -16,7 +16,7 @@ For more details, pleasee see the full detection application: [Full detection ap
 
 #### Running with Raspberry Pi Camera input:
 ```bash
-hailo-detection-simple --input rpi
+hailo-detect-simple --input rpi
 ```
 
 #### Running with USB camera input (webcam):
@@ -24,7 +24,7 @@ There are 2 ways:
 
 Specify the argument `--input` to `usb`:
 ```bash
-hailo-detection-simple --input usb
+hailo-detect-simple --input usb
 ```
 
 This will automatically detect the available USB camera (if multiple are connected, it will use the first detected).
@@ -37,17 +37,17 @@ get-usb-camera
 ```
 Run example using USB camera input - Use the device found by the previous script:
 ```bash
-hailo-detection-simple --input /dev/video<X>
+hailo-detect-simple --input /dev/video<X>
 ```
 
 For additional options, execute:
 ```bash
-hailo-detection-simple --help
+hailo-detect-simple --help
 ```
 
 #### Running as Python script
 
-For examples: 
+For examples:
 ```bash
 python detection_simple.py --input usb
 ```

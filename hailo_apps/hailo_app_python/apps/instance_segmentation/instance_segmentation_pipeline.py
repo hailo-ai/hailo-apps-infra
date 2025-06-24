@@ -4,9 +4,6 @@ import os
 import setproctitle
 from pathlib import Path
 import sys
-# Ensure hailo_core is importable from anywhere
-PROJECT_ROOT = Path(__file__).resolve().parents[2]  # ~/dev/hailo-apps-infra/hailo_apps_infra
-sys.path.insert(0, str(PROJECT_ROOT))
 
 # Local application-specific imports
 from hailo_apps.hailo_app_python.core.common.installation_utils import detect_hailo_arch
@@ -25,11 +22,6 @@ class GStreamerInstanceSegmentationApp(GStreamerApp):
 
         if parser is None:
             parser = get_default_parser()
-        parser.add_argument(
-            "--labels-json",
-            default=None,
-            help="Path to costume labels JSON file",
-        )
         super().__init__(parser, user_data)
 
         # Hailo parameters
@@ -81,11 +73,11 @@ class GStreamerInstanceSegmentationApp(GStreamerApp):
         self.create_pipeline()
 
     def get_pipeline_string(self):
-        source_pipeline = SOURCE_PIPELINE(video_source=self.video_source, 
-                                          video_width=self.video_width, video_height=self.video_height, 
-                                          frame_rate=self.frame_rate, sync=self.sync    
+        source_pipeline = SOURCE_PIPELINE(video_source=self.video_source,
+                                          video_width=self.video_width, video_height=self.video_height,
+                                          frame_rate=self.frame_rate, sync=self.sync
     )
-        
+
         infer_pipeline = INFERENCE_PIPELINE(
             hef_path=self.hef_path,
             post_process_so=self.post_process_so,

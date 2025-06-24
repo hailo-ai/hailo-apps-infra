@@ -4,9 +4,6 @@ import os
 import setproctitle
 from pathlib import Path
 import sys
-# Ensure hailo_core is importable from anywhere
-PROJECT_ROOT = Path(__file__).resolve().parents[2]  # ~/dev/hailo-apps-infra/hailo_apps_infra
-sys.path.insert(0, str(PROJECT_ROOT))
 
 # Local application-specific imports
 from hailo_apps.hailo_app_python.core.common.installation_utils import detect_hailo_arch
@@ -51,7 +48,7 @@ class GStreamerPoseEstimationApp(GStreamerApp):
         if self.options_menu.hef_path:
             self.hef_path = self.options_menu.hef_path
         else: # Set models based on hailo8 or hailo8l
-            self.hef_path = get_resource_path( 
+            self.hef_path = get_resource_path(
                 pipeline_name=POSE_ESTIMATION_PIPELINE,
                 resource_type=RESOURCES_MODELS_DIR_NAME,
             )

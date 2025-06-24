@@ -64,7 +64,7 @@ hailo-seg --help
 
 #### Running as Python script
 
-For examples: 
+For examples:
 ```bash
 python instance_segmentation.py --input usb
 ```
@@ -141,11 +141,6 @@ Detailed Steps of the `callback` function:
 #### Boundary Handling: Ensures the ROI dimensions are within the frame boundaries and handles negative values.
 
 ## Command Line Arguments
-
-### Application specific arguments:
-```bash
---labels-json <path>    # Path to custom labels JSON file
-```
 
 ### All pipeline commands support these common arguments:
 
