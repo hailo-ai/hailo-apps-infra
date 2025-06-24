@@ -47,9 +47,10 @@ A lightweight version focused on demonstrating raw Hailo performance with minima
 
 **Command:**
 ```bash
-hailo-detection-simple
+hailo-detect-simple
 ```
 **Output:**
+
 ![Detection Example](doc/images/detection.gif)
 
 #### Full Object Detection
@@ -57,7 +58,7 @@ A comprehensive detection application featuring object tracking and resolution s
 
 **Command:**
 ```bash
-hailo-detection
+hailo-detect
 ```
 
 #### Pose Estimation
@@ -68,6 +69,7 @@ Detects human pose keypoints (e.g., joints and limbs) in real-time.
 hailo-pose
 ```
 **Output:**
+
 ![Pose Estimation Example](doc/images/pose_estimation.gif)
 
 #### Instance Segmentation
@@ -78,6 +80,7 @@ Provides pixel-level masks for each detected object.
 hailo-seg
 ```
 **Output:**
+
 ![Instance Segmentation Example](doc/images/instance_segmentation.gif)
 
 For a complete list of all available applications and their features, please see the [Running Applications Guide](./doc/user_guide/running_applications.md).
