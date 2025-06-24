@@ -8,7 +8,6 @@ TAPPAS_CORE_VERSION="3.31.0"
 DOWNLOAD_DIR="usr/local/hailo/resources/deb_whl_packages"
 # Default download directory
 
-# By default install both
 INSTALL_TAPPAS=false
 INSTALL_HAILORT=false
 
@@ -39,14 +38,15 @@ done
 
 # Ensure you haven't disabled both
 if [[ "$INSTALL_TAPPAS" = false && "$INSTALL_HAILORT" = false ]]; then
-  echo "Warning: No installation selected."
-  exit 0
+  # By default install both
+  INSTALL_TAPPAS=true
+  INSTALL_HAILORT=true
 fi
 
 echo "→ HAILORT_VERSION    = $HAILORT_VERSION"
 echo "→ TAPPAS_CORE_VERSION= $TAPPAS_CORE_VERSION"
 echo "→ DOWNLOAD_DIR       = $DOWNLOAD_DIR"
-echo "→ install Tapas?     = $INSTALL_TAPPAS"
+echo "→ install TAPPAS?     = $INSTALL_TAPPAS"
 echo "→ install HailoRT?   = $INSTALL_HAILORT"
 
 mkdir -p "$DOWNLOAD_DIR"

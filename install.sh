@@ -129,3 +129,4 @@ echo "🔧 Running post-install script…"
 hailo-post-install --group "$DOWNLOAD_GROUP"
 
 echo "✅ All done! Your package is now in '${VENV_NAME}'."
+echo "source set_env.sh to setup the environment"
