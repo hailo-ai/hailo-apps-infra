@@ -1,5 +1,6 @@
+# region imports
+# Standard library imports
 import os
-import numpy as np
 import setproctitle
 from pathlib import Path
 import sys
@@ -7,45 +8,13 @@ import sys
 PROJECT_ROOT = Path(__file__).resolve().parents[2]  # ~/dev/hailo-apps-infra/hailo_apps_infra
 sys.path.insert(0, str(PROJECT_ROOT))
 
-
-# ─── Common Hailo helpers ────────────────────────────────────────────────────────
-
+# Local application-specific imports
 from hailo_apps.hailo_app_python.core.common.installation_utils import detect_hailo_arch
-
-from hailo_apps.hailo_app_python.core.common.core import (
-    get_default_parser,
-    get_resource_path,
-)
-
-from hailo_apps.hailo_app_python.core.common.defines import (
-    POSE_ESTIMATION_APP_TITLE,
-    POSE_ESTIMATION_PIPELINE,
-    RESOURCES_MODELS_DIR_NAME,
-    RESOURCES_SO_DIR_NAME,
-    POSE_ESTIMATION_POSTPROCESS_SO_FILENAME,
-    POSE_ESTIMATION_POSTPROCESS_FUNCTION,
-    HAILO_ARCH_KEY,
-)
-
-
-from hailo_apps.hailo_app_python.core.gstreamer.gstreamer_helper_pipelines import (
-    QUEUE,
-    SOURCE_PIPELINE,
-    INFERENCE_PIPELINE,
-    INFERENCE_PIPELINE_WRAPPER,
-    TRACKER_PIPELINE,
-    USER_CALLBACK_PIPELINE,
-    DISPLAY_PIPELINE,
-)
-
-from hailo_apps.hailo_app_python.core.gstreamer.gstreamer_app import (
-    GStreamerApp,
-    app_callback_class,
-    dummy_callback,
-)
-
-
-
+from hailo_apps.hailo_app_python.core.common.core import get_default_parser, get_resource_path
+from hailo_apps.hailo_app_python.core.common.defines import POSE_ESTIMATION_APP_TITLE, POSE_ESTIMATION_PIPELINE, RESOURCES_MODELS_DIR_NAME, RESOURCES_SO_DIR_NAME, POSE_ESTIMATION_POSTPROCESS_SO_FILENAME, POSE_ESTIMATION_POSTPROCESS_FUNCTION, HAILO_ARCH_KEY
+from hailo_apps.hailo_app_python.core.gstreamer.gstreamer_helper_pipelines import SOURCE_PIPELINE, INFERENCE_PIPELINE, INFERENCE_PIPELINE_WRAPPER, TRACKER_PIPELINE, USER_CALLBACK_PIPELINE, DISPLAY_PIPELINE
+from hailo_apps.hailo_app_python.core.gstreamer.gstreamer_app import GStreamerApp, app_callback_class, dummy_callback
+# endregion imports
 
 #-----------------------------------------------------------------------------------------------
 # User Gstreamer Application

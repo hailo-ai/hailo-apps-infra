@@ -17,7 +17,7 @@ from hailo_apps.hailo_app_python.apps.face_recognition.face_recognition_pipeline
 from hailo_apps.hailo_app_python.core.common.telegram_handler import TelegramHandler
 from hailo_apps.hailo_app_python.core.common.defines import HAILO_LOGO_PHOTO_NAME
 from hailo_apps.hailo_app_python.apps.face_recognition.face_ui_elements import UIElements
-
+from hailo_apps.hailo_app_python.apps.face_recognition.face_ui_callbacks import UICallbacks
 # endregion
 
 # region Constants
@@ -45,7 +45,7 @@ class user_callbacks_class(app_callback_class):
             self.telegram_handler = TelegramHandler(self.telegram_token, self.telegram_chat_id)
 
     # region Core application functions that are part of the main program logic and are called directly during pipeline execution, but are not GStreamer callback handlers themselves
-    def send_notification(self, name, global_id, distance, frame):
+    def send_notification(self, name, global_id, confidence, frame):
         """
         Check if Telegram is enabled and send a notification via the TelegramHandler.
         """
@@ -54,7 +54,7 @@ class user_callbacks_class(app_callback_class):
 
         # Check if the notification should be sent
         if self.telegram_handler.should_send_notification(global_id):
-            self.telegram_handler.send_notification(name, global_id, distance, frame)
+            self.telegram_handler.send_notification(name, global_id, confidence, frame)
     # endregion
 
 def app_callback(pad, info, user_data):
@@ -76,7 +76,10 @@ def app_callback(pad, info, user_data):
             classifications = detection.get_objects_typed(hailo.HAILO_CLASSIFICATION)
             if len(classifications) > 0:
                 for classification in classifications:
-                    string_to_print += f'Person recognition: {classification.get_label()} (Confidence: {classification.get_confidence():.1f})'
+                    if classification.get_label() == 'Unknown':
+                        string_to_print += 'Unknown person detected'
+                    else:
+                        string_to_print += f'Person recognition: {classification.get_label()} (Confidence: {classification.get_confidence():.1f})'
                     if track_id > user_data.latest_track_id:
                         user_data.latest_track_id = track_id
                         if len(user_data.ui_text_message) >= MAX_UI_TEXT_MESSAGES:
@@ -84,7 +87,7 @@ def app_callback(pad, info, user_data):
                         user_data.ui_text_message.append(string_to_print)
     return Gst.PadProbeReturn.OK
 
-if __name__ == "__main__":  
+def main():  
     user_data = user_callbacks_class()
     pipeline = GStreamerFaceRecognitionApp(app_callback, user_data)  # appsink_callback argument provided anyway although in non UI interface where eventually not used - since here we don't have access to requested UI/CLI mode
     if pipeline.options_menu.mode == 'delete':  # always CLI even if mistakenly GUI mode is selected
@@ -101,3 +104,6 @@ if __name__ == "__main__":
         ui_thread = threading.Thread(target=lambda: ui_interface.launch(allowed_paths=[Path(Path(__file__).parent, HAILO_LOGO_PHOTO_NAME)]), daemon=False)  # Launch the stream UI in a separate thread from the GStreamer pipeline
         ui_thread.start()
         ui_thread.join()  # otherwise not working
+
+if __name__ == "__main__": 
+    main()

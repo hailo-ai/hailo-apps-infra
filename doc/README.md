@@ -17,3 +17,4 @@ Welcome to the complete documentation for the Hailo Applications repository. Thi
 **For developers and contributors.** This section provides the technical details you need to build on top of our framework. It includes:
 *   **Application Development**: A comprehensive guide to the framework architecture and development workflow.
 *   **Writing a C++ Post-Process**: A guide for creating custom post-processing functions for your models.
+*   **Retraining Models**: A guide for retraining models.

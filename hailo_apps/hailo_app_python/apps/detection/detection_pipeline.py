@@ -1,42 +1,14 @@
-
-import numpy as np
+# region imports
+# Standard library imports
 import setproctitle
-from pathlib import Path
-import sys
 
-
-# ─── Common Hailo helpers ────────────────────────────────────────────────────────
+# Local application-specific imports
 from hailo_apps.hailo_app_python.core.common.installation_utils import detect_hailo_arch
-
-from hailo_apps.hailo_app_python.core.common.core import (
-    get_default_parser,
-    get_resource_path,
-)
-
-from hailo_apps.hailo_app_python.core.common.defines import (
-    DETECTION_APP_TITLE,
-    DETECTION_PIPELINE,
-    RESOURCES_MODELS_DIR_NAME,
-    RESOURCES_SO_DIR_NAME,
-    DETECTION_POSTPROCESS_SO_FILENAME,
-    DETECTION_POSTPROCESS_FUNCTION,
-)
-
-from hailo_apps.hailo_app_python.core.gstreamer.gstreamer_helper_pipelines import (
-    QUEUE,
-    SOURCE_PIPELINE,
-    INFERENCE_PIPELINE,
-    INFERENCE_PIPELINE_WRAPPER,
-    TRACKER_PIPELINE,
-    USER_CALLBACK_PIPELINE,
-    DISPLAY_PIPELINE,
-)
-
-from hailo_apps.hailo_app_python.core.gstreamer.gstreamer_app import (
-    GStreamerApp,
-    app_callback_class,
-    dummy_callback,
-)
+from hailo_apps.hailo_app_python.core.common.core import get_default_parser, get_resource_path
+from hailo_apps.hailo_app_python.core.common.defines import DETECTION_APP_TITLE, DETECTION_PIPELINE, RESOURCES_MODELS_DIR_NAME, RESOURCES_SO_DIR_NAME, DETECTION_POSTPROCESS_SO_FILENAME, DETECTION_POSTPROCESS_FUNCTION
+from hailo_apps.hailo_app_python.core.gstreamer.gstreamer_helper_pipelines import SOURCE_PIPELINE, INFERENCE_PIPELINE, INFERENCE_PIPELINE_WRAPPER, TRACKER_PIPELINE, USER_CALLBACK_PIPELINE, DISPLAY_PIPELINE
+from hailo_apps.hailo_app_python.core.gstreamer.gstreamer_app import GStreamerApp, app_callback_class, dummy_callback
+# endregion imports
 
 # -----------------------------------------------------------------------------------------------
 # User Gstreamer Application

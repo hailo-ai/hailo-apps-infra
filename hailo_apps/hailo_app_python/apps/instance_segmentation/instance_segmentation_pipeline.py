@@ -1,6 +1,6 @@
-
+# region imports
+# Standard library imports
 import os
-import numpy as np
 import setproctitle
 from pathlib import Path
 import sys
@@ -8,45 +8,13 @@ import sys
 PROJECT_ROOT = Path(__file__).resolve().parents[2]  # ~/dev/hailo-apps-infra/hailo_apps_infra
 sys.path.insert(0, str(PROJECT_ROOT))
 
-# ─── Common Hailo helpers ────────────────────────────────────────────────────────
-
+# Local application-specific imports
 from hailo_apps.hailo_app_python.core.common.installation_utils import detect_hailo_arch
-
-from hailo_apps.hailo_app_python.core.common.core import (
-    get_default_parser,
-    get_resource_path,
-)
-
-from hailo_apps.hailo_app_python.core.common.defines import (
-    HAILO_ARCH_KEY,
-    INSTANCE_SEGMENTATION_APP_TITLE,
-    INSTANCE_SEGMENTATION_PIPELINE,
-    RESOURCES_MODELS_DIR_NAME,
-    RESOURCES_SO_DIR_NAME,
-    INSTANCE_SEGMENTATION_MODEL_NAME_H8,
-    INSTANCE_SEGMENTATION_MODEL_NAME_H8L,
-    INSTANCE_SEGMENTATION_POSTPROCESS_SO_FILENAME,
-    INSTANCE_SEGMENTATION_POSTPROCESS_FUNCTION,
-    DEFAULT_LOCAL_RESOURCES_PATH,
-    JSON_FILE_EXTENSION
-)
-
-# ─── GStreamer routines (from your hailo_gstreamer package) ────────────────────
-from hailo_apps.hailo_app_python.core.gstreamer.gstreamer_helper_pipelines import (
-    QUEUE,
-    SOURCE_PIPELINE,
-    INFERENCE_PIPELINE,
-    INFERENCE_PIPELINE_WRAPPER,
-    TRACKER_PIPELINE,
-    USER_CALLBACK_PIPELINE,
-    DISPLAY_PIPELINE,
-)
-
-from hailo_apps.hailo_app_python.core.gstreamer.gstreamer_app import (
-    GStreamerApp,
-    app_callback_class,
-    dummy_callback,
-)
+from hailo_apps.hailo_app_python.core.common.core import get_default_parser, get_resource_path
+from hailo_apps.hailo_app_python.core.common.defines import HAILO_ARCH_KEY, INSTANCE_SEGMENTATION_APP_TITLE, INSTANCE_SEGMENTATION_PIPELINE, RESOURCES_MODELS_DIR_NAME, RESOURCES_SO_DIR_NAME, INSTANCE_SEGMENTATION_MODEL_NAME_H8, INSTANCE_SEGMENTATION_MODEL_NAME_H8L, INSTANCE_SEGMENTATION_POSTPROCESS_SO_FILENAME, INSTANCE_SEGMENTATION_POSTPROCESS_FUNCTION, DEFAULT_LOCAL_RESOURCES_PATH, JSON_FILE_EXTENSION
+from hailo_apps.hailo_app_python.core.gstreamer.gstreamer_helper_pipelines import SOURCE_PIPELINE, INFERENCE_PIPELINE, INFERENCE_PIPELINE_WRAPPER, TRACKER_PIPELINE, USER_CALLBACK_PIPELINE, DISPLAY_PIPELINE
+from hailo_apps.hailo_app_python.core.gstreamer.gstreamer_app import GStreamerApp, app_callback_class, dummy_callback
+# endregion imports
 
 #-----------------------------------------------------------------------------------------------
 # User GStreamer Application: Instance Segmentation
@@ -57,6 +25,11 @@ class GStreamerInstanceSegmentationApp(GStreamerApp):
 
         if parser is None:
             parser = get_default_parser()
+        parser.add_argument(
+            "--labels-json",
+            default=None,
+            help="Path to costume labels JSON file",
+        )
         super().__init__(parser, user_data)
 
         # Hailo parameters
@@ -86,6 +59,7 @@ class GStreamerInstanceSegmentationApp(GStreamerApp):
 
         # Determine which JSON config to use based on HEF filename
         hef_name = Path(self.hef_path).name
+
         if self.options_menu.labels_json is not None:
             self.config_file = Path(self.options_menu.labels_json)
             print(f"Using provided config file: {self.config_file}")

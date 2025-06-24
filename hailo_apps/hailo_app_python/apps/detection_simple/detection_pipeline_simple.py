@@ -1,40 +1,14 @@
-import numpy as np
+# region imports
+# Standard library imports
 import setproctitle
-from pathlib import Path
-import sys
 
-# ─── Common Hailo helpers ────────────────────────────────────────────────────────
-
-from hailo_apps.hailo_app_python.core.common.core import (
-    get_default_parser,
-    detect_hailo_arch,
-)
-
-from hailo_apps.hailo_app_python.core.common.core import get_resource_path
-
-from hailo_apps.hailo_app_python.core.common.defines import (
-    SIMPLE_DETECTION_PIPELINE,
-    RESOURCES_VIDEOS_DIR_NAME,
-    RESOURCES_MODELS_DIR_NAME,
-    RESOURCES_SO_DIR_NAME,
-    SIMPLE_DETECTION_VIDEO_NAME,
-    SIMPLE_DETECTION_POSTPROCESS_SO_FILENAME,
-    SIMPLE_DETECTION_POSTPROCESS_FUNCTION,
-    SIMPLE_DETECTION_APP_TITLE,
-)
-
-from hailo_apps.hailo_app_python.core.gstreamer.gstreamer_helper_pipelines import (
-    SOURCE_PIPELINE,
-    INFERENCE_PIPELINE,
-    USER_CALLBACK_PIPELINE,
-    DISPLAY_PIPELINE,
-)
-
-from hailo_apps.hailo_app_python.core.gstreamer.gstreamer_app import (
-    GStreamerApp,
-    app_callback_class,
-    dummy_callback,
-)
+# Local application-specific imports
+from hailo_apps.hailo_app_python.core.common.installation_utils import detect_hailo_arch
+from hailo_apps.hailo_app_python.core.common.core import get_default_parser, get_resource_path
+from hailo_apps.hailo_app_python.core.common.defines import RESOURCES_VIDEOS_DIR_NAME, SIMPLE_DETECTION_VIDEO_NAME, SIMPLE_DETECTION_APP_TITLE, SIMPLE_DETECTION_PIPELINE, RESOURCES_MODELS_DIR_NAME, RESOURCES_SO_DIR_NAME, SIMPLE_DETECTION_POSTPROCESS_SO_FILENAME, SIMPLE_DETECTION_POSTPROCESS_FUNCTION
+from hailo_apps.hailo_app_python.core.gstreamer.gstreamer_helper_pipelines import SOURCE_PIPELINE, INFERENCE_PIPELINE, USER_CALLBACK_PIPELINE, DISPLAY_PIPELINE
+from hailo_apps.hailo_app_python.core.gstreamer.gstreamer_app import GStreamerApp, app_callback_class, dummy_callback
+# endregion imports
 
 # -----------------------------------------------------------------------------------------------
 # User Gstreamer Application
