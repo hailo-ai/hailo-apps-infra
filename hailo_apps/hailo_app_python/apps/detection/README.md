@@ -4,7 +4,7 @@
 
 #### Run the detection example:
 ```bash
-hailo-detection
+hailo-detect
 ```
 To close the application, press `Ctrl+C`.
 
@@ -12,7 +12,7 @@ This is the full detection example, including object tracker and multiple video 
 
 #### Running with Raspberry Pi Camera input:
 ```bash
-hailo-detection --input rpi
+hailo-detect --input rpi
 ```
 
 #### Running with USB camera input (webcam):
@@ -20,7 +20,7 @@ There are 2 ways:
 
 Specify the argument `--input` to `usb`:
 ```bash
-hailo-detection --input usb
+hailo-detect --input usb
 ```
 
 This will automatically detect the available USB camera (if multiple are connected, it will use the first detected).
@@ -33,17 +33,17 @@ get-usb-camera
 ```
 Run example using USB camera input - Use the device found by the previous script:
 ```bash
-hailo-detection --input /dev/video<X>
+hailo-detect --input /dev/video<X>
 ```
 
 For additional options, execute:
 ```bash
-hailo-detection --help
+hailo-detect --help
 ```
 
 #### Running as Python script
 
-For examples: 
+For examples:
 ```bash
 python detection.py --input usb
 ```
@@ -95,7 +95,7 @@ self.video_height
 
 #### Running with different models
 
-See our [hailo_model_zoo](https://github.com/hailo-ai/hailo_model_zoo) for additional supported models. 
+See our [hailo_model_zoo](https://github.com/hailo-ai/hailo_model_zoo) for additional supported models.
 
 #### Retrained Networks Support
 This application includes support for using retrained detection models. For more information, see [Using Retrained Models](../../../../doc/developer_guide/retraining_example.md).

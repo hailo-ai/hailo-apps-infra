@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 from pathlib import Path
 import sys
-# Ensure hailo_core is importable from anywhere
-PROJECT_ROOT = Path(__file__).resolve().parents[2]  # ~/dev/hailo-apps-infra/hailo_apps_infra
-sys.path.insert(0, str(PROJECT_ROOT))
 
 # ─── other imports ────────────────────────────────────────────────────────────
 
@@ -73,8 +70,8 @@ def download_resources(group: str = None,
     else:
         print(f"Using architecture from command line: {arch}")
         hailo_arch = arch
-         
-    
+
+
     if not hailo_arch:
         print("❌ Hailo architecture could not be detected.")
         hailo_arch = HAILO8_ARCH
@@ -110,7 +107,7 @@ def download_resources(group: str = None,
     else:
         print(f"Unknown architecture: {hailo_arch}, only default resources will be downloaded")
 
-            
+
 
     # 4) Flatten + dedupe
     seen = set()
@@ -163,7 +160,7 @@ def download_resources(group: str = None,
 
         logger.info(f"Downloading {url} → {dest}")
         download_file(url, dest)
-        
+
 def main():
     parser = argparse.ArgumentParser(
         description="Install and download Hailo resources"
