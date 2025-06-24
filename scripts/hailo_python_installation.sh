@@ -38,9 +38,8 @@ done
 
 # Ensure you haven't disabled both
 if [[ "$INSTALL_TAPPAS" = false && "$INSTALL_HAILORT" = false ]]; then
-  # By default install both
-  INSTALL_TAPPAS=true
-  INSTALL_HAILORT=true
+  echo "Warning: No installation selected."
+  exit 0
 fi
 
 echo "→ HAILORT_VERSION    = $HAILORT_VERSION"
