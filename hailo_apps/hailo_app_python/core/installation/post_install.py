@@ -30,6 +30,7 @@ from hailo_apps.hailo_app_python.core.common.defines import (
     REPO_ROOT,
     RESOURCES_GROUP_DEFAULT,
     DEFAULT_CONFIG_PATH,
+    DEFAULT_DOTENV_PATH,
 )
 from hailo_apps.hailo_app_python.core.installation.set_env import (
     handle_dot_env,
@@ -96,11 +97,17 @@ def post_install():
         type=str,
         default=RESOURCES_GROUP_DEFAULT,
         help="HailoRT version to install"
-    )  
+    )
+    parser.add_argument(
+        "--dotenv",
+        type=str,
+        default=DEFAULT_DOTENV_PATH,
+        help="Path to the .env file to load environment variables from"
+    )          
     args = parser.parse_args()
     handle_dot_env()  # this loads the .env file if it exists
     config = load_and_validate_config(args.config)
-    set_environment_vars(config)  # this sets env vars like HAILO_ARCH
+    set_environment_vars(config, args.dotenv)  # this sets env vars like HAILO_ARCH
 
     load_environment()  # this sets env vars like HAILO_ARCH
 
