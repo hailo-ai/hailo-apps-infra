@@ -23,10 +23,11 @@ is_sourced() {
 
 # Check kernel version
 check_kernel_version() {
-    REQUIRED_VERSION="6.12.20"
-    CURRENT_VERSION=$(uname -r)
+    MIN_VERSION="6.12.25"
+    CURRENT_VERSION=$(uname -r | cut -d '+' -f 1) # Extract numeric version part
 
-    if [[ "$(printf '%s\n' "$REQUIRED_VERSION" "$CURRENT_VERSION" | sort -V | head -n1)" == "$REQUIRED_VERSION" ]]; then
+    # Check if CURRENT_VERSION is less than MIN_VERSION
+    if [[ "$(printf '%s\n' "$CURRENT_VERSION" "$MIN_VERSION" | sort -V | head -n1)" == "$CURRENT_VERSION" ]]; then
         echo "Error: Kernel version $CURRENT_VERSION detected. This version is incompatible."
         echo "Please refer to the following link for more information:"
         echo "https://community.hailo.ai/t/raspberry-pi-kernel-compatibility-issue-temporary-fix/15322"
@@ -37,6 +38,12 @@ check_kernel_version() {
 # Only proceed if the script is being sourced
 if is_sourced; then
     echo "Setting up the environment..."
+    echo "Checking kernel version..."
+    # Call the kernel version check function
+    check_kernel_version || {
+        echo "Exiting due to incompatible kernel version."
+        return 1
+    }
 else
     echo "This script should be sourced, not executed directly."
     exit 1
