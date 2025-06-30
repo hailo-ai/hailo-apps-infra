@@ -23,11 +23,11 @@ is_sourced() {
 
 # Check kernel version
 check_kernel_version() {
-    MIN_VERSION="6.12.25"
+    MAX_VERSION="6.12.25"
     CURRENT_VERSION=$(uname -r | cut -d '+' -f 1) # Extract numeric version part
 
-    # Check if CURRENT_VERSION is less than MIN_VERSION
-    if [[ "$(printf '%s\n' "$CURRENT_VERSION" "$MIN_VERSION" | sort -V | head -n1)" == "$CURRENT_VERSION" ]]; then
+    # Check if CURRENT_VERSION is greater than or equal to MAX_VERSION
+    if [[ "$(printf '%s\n' "$CURRENT_VERSION" "$MAX_VERSION" | sort -V | tail -n1)" == "$CURRENT_VERSION" ]]; then
         echo "Error: Kernel version $CURRENT_VERSION detected. This version is incompatible."
         echo "Please refer to the following link for more information:"
         echo "https://community.hailo.ai/t/raspberry-pi-kernel-compatibility-issue-temporary-fix/15322"
