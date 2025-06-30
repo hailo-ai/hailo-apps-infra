@@ -9,6 +9,10 @@
 # 2. Example: source setup_env.sh
 #
 # After sourcing, your PYTHONPATH will be set for the current terminal session.
+
+# Define virtual environment name
+VENV_NAME="venv_hailo_apps"
+
 # Function to check if the script is being sourced
 is_sourced() {
     if [ -n "$ZSH_VERSION" ]; then
@@ -23,15 +27,20 @@ is_sourced() {
 
 # Check kernel version
 check_kernel_version() {
-    MAX_VERSION="6.12.25"
-    CURRENT_VERSION=$(uname -r | cut -d '+' -f 1) # Extract numeric version part
+    # check if running on Raspberry Pi
+    if uname -a | grep -q "Linux raspberrypi"; then
 
-    # Check if CURRENT_VERSION is greater than or equal to MAX_VERSION
-    if [[ "$(printf '%s\n' "$CURRENT_VERSION" "$MAX_VERSION" | sort -V | tail -n1)" == "$CURRENT_VERSION" ]]; then
-        echo "Error: Kernel version $CURRENT_VERSION detected. This version is incompatible."
-        echo "Please refer to the following link for more information:"
-        echo "https://community.hailo.ai/t/raspberry-pi-kernel-compatibility-issue-temporary-fix/15322"
-        return 1
+        # Check if CURRENT_VERSION is one of the invalid versions
+        INVALID_KERNELS=("6.12.21" "6.12.22" "6.12.23" "6.12.24" "6.12.25")
+        CURRENT_VERSION=$(uname -r | cut -d '+' -f 1) # Extract numeric version part
+
+        if [[ " ${INVALID_KERNELS[@]} " =~ " ${CURRENT_VERSION} " ]]; then
+            # If the current version is in the list of invalid versions, print an error message
+            echo "Error: Kernel version $CURRENT_VERSION detected. This version is incompatible."
+            echo "Please refer to the following link for more information:"
+            echo "https://community.hailo.ai/t/raspberry-pi-kernel-compatibility-issue-temporary-fix/15322"
+            return 1
+        fi
     fi
 }
 
@@ -60,10 +69,10 @@ echo "Project directory added to PYTHONPATH for this session:"
 echo "${PROJECT_ROOT}"
 
 # Activate the virtual environment
-if [ -d "venv_hailo_apps" ]; then
-    source venv_hailo_apps/bin/activate
-    echo "Virtual environment activated"
+if [ -d "$VENV_NAME" ]; then
+    source $VENV_NAME/bin/activate
+    echo "Virtual environment '$VENV_NAME' activated"
 else
-    echo "Virtual environment directory 'venv_hailo_apps' not found. Please ensure it is created and try again."
+    echo "Virtual environment directory '$VENV_NAME' not found. Please ensure it is created and try again."
     return 1
 fi
