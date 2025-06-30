@@ -9,7 +9,7 @@ from gi.repository import Gst
 # Local application-specific imports
 import hailo
 from hailo_apps.hailo_app_python.core.gstreamer.gstreamer_app import app_callback_class
-from hailo_apps.hailo_app_python.apps.detection.detection_pipeline import GStreamerDetectionApp
+from hailo_apps.hailo_app_python.apps.detection_simple.detection_pipeline_simple import GStreamerDetectionApp
 # endregion imports
 
 # User-defined class to be used in the callback function: Inheritance from the app_callback_class
