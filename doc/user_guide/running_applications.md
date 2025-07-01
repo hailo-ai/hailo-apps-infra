@@ -15,12 +15,12 @@ The following applications are available. Each one is a self-contained GStreamer
 
 | CLI Command           | Application             | Description                                                                                                                                                       |
 | --------------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `hailo-detect-simple` | Simple Object Detection | A lightweight version focused on demonstrating raw Hailo performance with minimal CPU overhead. It uses a YOLOv6-Nano model and does not include object tracking. |
-| `hailo-detect`        | Full Object Detection   | A comprehensive detection application featuring object tracking and support for multiple video resolutions.                                                       |
-| `hailo-pose`          | Pose Estimation         | Detects human pose keypoints (e.g., joints and limbs) in real-time.                                                                                               |
-| `hailo-seg`           | Instance Segmentation   | Provides pixel-level masks for each detected object, distinguishing different instances from one another.                                                         |
-| `hailo-depth`         | Depth Estimation        | Estimates the depth of a scene from a single 2D camera input.                                                                                                     |
-| `hailo-face-recon`    | Face Recognition        | A face recognition application that identifies and verifies faces in real-time. This application is currently in BETA.                                            |
+| `hailo-detect-simple` | [Simple Object Detection](../../hailo_apps/hailo_app_python/apps/detection_simple/README.md) | A lightweight version focused on demonstrating raw Hailo performance with minimal CPU overhead. It uses a YOLOv6-Nano model and does not include object tracking. |
+| `hailo-detect`        | [Full Object Detection](../../hailo_apps/hailo_app_python/apps/detection/README.md)   | A comprehensive detection application featuring object tracking and support for multiple video resolutions.                                                       |
+| `hailo-pose`          | [Pose Estimation](../../hailo_apps/hailo_app_python/apps/pose_estimation/README.md)         | Detects human pose keypoints (e.g., joints and limbs) in real-time.                                                                                               |
+| `hailo-seg`           | [Instance Segmentation](../../hailo_apps/hailo_app_python/apps/instance_segmentation/README.md)   | Provides pixel-level masks for each detected object, distinguishing different instances from one another.                                                         |
+| `hailo-depth`         | [Depth Estimation](../../hailo_apps/hailo_app_python/apps/depth/README.md)        | Estimates the depth of a scene from a single 2D camera input.                                                                                                     |
+| `hailo-face-recon`    | [Face Recognition](../../hailo_apps/hailo_app_python/apps/face_recognition/README.md)        | A face recognition application that identifies and verifies faces in real-time. This application is currently in BETA.                                            |
 
 ## How to Run an Application
 

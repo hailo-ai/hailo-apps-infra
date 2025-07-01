@@ -73,7 +73,7 @@ To run the example with a custom model (adjust paths and specify the required 'l
 cd hailo_apps/hailo_app_python/apps/detection
 python detection.py --labels-json local_resources/barcode_labels.json --hef-path resources/yolov8s-hailo8l-barcode.hef --input resources/barcode.mp4
 ```
-By default, the package contains the following YOLO-based detection models: YOLOv6n, YOLOv8s, YOLOv8m, YOLOv11n, and YOLOv11s. The files located under the `resources` directory, for example: [yolov8m](../../../hailo-apps-internal/resources/models/hailo8/yolov8m.hef). 
+By default, the package contains the following YOLO-based detection models: YOLOv6n, YOLOv8s, YOLOv8m, YOLOv11n, and YOLOv11s. The files located under the `resources` directory.
 
 Example output: 
 

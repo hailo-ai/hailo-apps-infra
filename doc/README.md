@@ -20,3 +20,13 @@ Welcome to the complete documentation for the Hailo Applications repository. Thi
 *   **[Application Development](./developer_guide/app_development.md)**: The primary guide for developers. It covers the core concepts of the Python framework and how to build new applications.
 *   **[Writing a C++ Post-Process](./developer_guide/writing_postprocess.md)**: A step-by-step tutorial for creating custom C++ post-processing functions for new or unsupported neural networks.
 *   **[Retraining Models](./developer_guide/retraining_example.md)**: A step-by-step tutorial for retraining models.
+
+### ✔️ Applications Guide
+**References for applications guides.**
+
+*   **[Detection simple](../hailo_apps/hailo_app_python/apps/detection_simple/README.md)**
+*   **[Detection](../hailo_apps/hailo_app_python/apps/detection/README.md)**
+*   **[Depth](../hailo_apps/hailo_app_python/apps/depth/README.md)**
+*   **[Instance Segmentation](../hailo_apps/hailo_app_python/apps/instance_segmentation/README.md)**
+*   **[Pose Estimation](../hailo_apps/hailo_app_python/apps/pose_estimation/README.md)**
+*   **[Face Recognition](../hailo_apps/hailo_app_python/apps/face_recognition/README.md)**
