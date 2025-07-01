@@ -5,7 +5,7 @@ set -e
 BASE_URL="http://dev-public.hailo.ai/2025_01"
 HAILORT_VERSION="4.20.0"
 TAPPAS_CORE_VERSION="3.31.0"
-DOWNLOAD_DIR="usr/local/hailo/resources/deb_whl_packages"
+DOWNLOAD_DIR="/usr/local/hailo/resources/deb_whl_packages"
 # Default download directory
 
 INSTALL_TAPPAS=false

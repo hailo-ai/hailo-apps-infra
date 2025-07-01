@@ -2,6 +2,7 @@ import os
 from hailo_apps.hailo_app_python.core.common.defines import (
     TAPPAS_POSTPROC_PATH_KEY,
     GST_VIDEO_SINK,
+    TAPPAS_POSTPROC_PATH_DEFAULT,
 )
 
 
@@ -226,7 +227,7 @@ def INFERENCE_PIPELINE_WRAPPER(inner_pipeline, bypass_max_size_buffers=20, name=
         str: A string representing the GStreamer pipeline for the inference wrapper.
     """
     # Get the directory for post-processing shared objects
-    tappas_post_process_dir = os.environ.get(TAPPAS_POSTPROC_PATH_KEY, '')
+    tappas_post_process_dir = os.environ.get(TAPPAS_POSTPROC_PATH_KEY, TAPPAS_POSTPROC_PATH_DEFAULT)
     whole_buffer_crop_so = os.path.join(tappas_post_process_dir, 'cropping_algorithms/libwhole_buffer.so')
 
     # Construct the inference wrapper pipeline string

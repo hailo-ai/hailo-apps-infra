@@ -97,6 +97,13 @@ SERVER_URL_DEFAULT = "http://dev-public.hailo.ai/2025_01"
 RESOURCES_PATH_DEFAULT = str(REPO_ROOT / "resources")
 VIRTUAL_ENV_NAME_DEFAULT = "hailo_infra_venv"
 STORAGE_PATH_DEFAULT = str(REPO_ROOT /"storage_deb_whl_dir")
+# Default Tappas post-processing directory
+import subprocess
+
+TAPPAS_POSTPROC_PATH_DEFAULT = subprocess.check_output(
+    ["pkg-config", "--variable=tappas_postproc_lib_dir", "hailo-tappas-core"],
+    text=True
+).strip()
 
 # Resource groups for download_resources
 RESOURCES_GROUP_DEFAULT = "default"

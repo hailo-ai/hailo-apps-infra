@@ -77,6 +77,9 @@ def set_environment_vars(config, env_path: Path = None) -> None:
         tappas_version = auto_detect_tappas_version(tappas_variant)
    
     tappas_postproc_dir = auto_detect_tappas_postproc_dir(tappas_variant)
+    print(f"Using Tappas post-processing directory: {tappas_postproc_dir}")
+    if not tappas_postproc_dir:
+        logger.warning("Tappas post-processing directory not found. Using default.")
     
     env_vars = {
         HOST_ARCH_KEY: host_arch,
