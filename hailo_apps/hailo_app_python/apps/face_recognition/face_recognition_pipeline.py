@@ -67,7 +67,7 @@ class GStreamerFaceRecognitionApp(GStreamerApp):
         self.embedding_queue = multiprocessing.Queue()  # Create a queue for sending embeddings to the visualization process
 
         # Criteria for when a candidate frame is good enough to try recognize a person from it (e.g., skip the first few frames since in them person only entered the frame and usually is blurry)
-        self.json_file = open(get_resource_path(pipeline_name=None, resource_type=DEFAULT_LOCAL_RESOURCES_PATH, model=FACE_ALGO_PARAMS_JSON_NAME), "r+")
+        self.json_file = open(get_resource_path(pipeline_name=None, resource_type=RESOURCES_JSON_DIR_NAME, model=FACE_ALGO_PARAMS_JSON_NAME), "r+")
         self.algo_params = json.load(self.json_file)
         # 1. How many frames to skip between detection attempts: avoid porocessing first frames since usually they are blurry since person just entered the frame, see self.track_id_frame_count
         self.skip_frames = self.algo_params['skip_frames']

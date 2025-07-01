@@ -8,7 +8,7 @@ import sys
 # Local application-specific imports
 from hailo_apps.hailo_app_python.core.common.installation_utils import detect_hailo_arch
 from hailo_apps.hailo_app_python.core.common.core import get_default_parser, get_resource_path
-from hailo_apps.hailo_app_python.core.common.defines import HAILO_ARCH_KEY, INSTANCE_SEGMENTATION_APP_TITLE, INSTANCE_SEGMENTATION_PIPELINE, RESOURCES_MODELS_DIR_NAME, RESOURCES_SO_DIR_NAME, INSTANCE_SEGMENTATION_MODEL_NAME_H8, INSTANCE_SEGMENTATION_MODEL_NAME_H8L, INSTANCE_SEGMENTATION_POSTPROCESS_SO_FILENAME, INSTANCE_SEGMENTATION_POSTPROCESS_FUNCTION, DEFAULT_LOCAL_RESOURCES_PATH, JSON_FILE_EXTENSION
+from hailo_apps.hailo_app_python.core.common.defines import RESOURCES_JSON_DIR_NAME, HAILO_ARCH_KEY, INSTANCE_SEGMENTATION_APP_TITLE, INSTANCE_SEGMENTATION_PIPELINE, RESOURCES_MODELS_DIR_NAME, RESOURCES_SO_DIR_NAME, INSTANCE_SEGMENTATION_MODEL_NAME_H8, INSTANCE_SEGMENTATION_MODEL_NAME_H8L, INSTANCE_SEGMENTATION_POSTPROCESS_SO_FILENAME, INSTANCE_SEGMENTATION_POSTPROCESS_FUNCTION, DEFAULT_LOCAL_RESOURCES_PATH, JSON_FILE_EXTENSION
 from hailo_apps.hailo_app_python.core.gstreamer.gstreamer_helper_pipelines import SOURCE_PIPELINE, INFERENCE_PIPELINE, INFERENCE_PIPELINE_WRAPPER, TRACKER_PIPELINE, USER_CALLBACK_PIPELINE, DISPLAY_PIPELINE
 from hailo_apps.hailo_app_python.core.gstreamer.gstreamer_app import GStreamerApp, app_callback_class, dummy_callback
 # endregion imports
@@ -52,10 +52,10 @@ class GStreamerInstanceSegmentationApp(GStreamerApp):
         # Determine which JSON config to use based on HEF filename
         hef_name = Path(self.hef_path).name
         if INSTANCE_SEGMENTATION_MODEL_NAME_H8 in hef_name:
-            self.config_file = (Path(DEFAULT_LOCAL_RESOURCES_PATH) / (INSTANCE_SEGMENTATION_MODEL_NAME_H8 + JSON_FILE_EXTENSION))
+            self.config_file = get_resource_path(INSTANCE_SEGMENTATION_PIPELINE, RESOURCES_JSON_DIR_NAME , (INSTANCE_SEGMENTATION_MODEL_NAME_H8 + JSON_FILE_EXTENSION))
             print(f"Using config file: {self.config_file}")
         elif INSTANCE_SEGMENTATION_MODEL_NAME_H8L in hef_name:
-            self.config_file = (Path(DEFAULT_LOCAL_RESOURCES_PATH) / (INSTANCE_SEGMENTATION_MODEL_NAME_H8L + JSON_FILE_EXTENSION))
+            self.config_file = get_resource_path(INSTANCE_SEGMENTATION_PIPELINE, RESOURCES_JSON_DIR_NAME , (INSTANCE_SEGMENTATION_MODEL_NAME_H8L + JSON_FILE_EXTENSION))
         else:
             raise ValueError("HEF version not supported; please provide a compatible segmentation HEF or config file.")
 
