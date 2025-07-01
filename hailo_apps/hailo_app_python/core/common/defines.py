@@ -96,7 +96,7 @@ MODEL_ZOO_VERSION_DEFAULT = "v2.14.0"
 SERVER_URL_DEFAULT = "http://dev-public.hailo.ai/2025_01"
 RESOURCES_PATH_DEFAULT = RESOURCES_ROOT_PATH_DEFAULT
 VIRTUAL_ENV_NAME_DEFAULT = "hailo_infra_venv"
-STORAGE_PATH_DEFAULT = str(RESOURCES_ROOT_PATH_DEFAULT /"storage_deb_whl_dir")
+STORAGE_PATH_DEFAULT = str(RESOURCES_ROOT_PATH_DEFAULT / "storage_deb_whl_dir")
 # Default Tappas post-processing directory
 import subprocess
 
