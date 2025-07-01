@@ -70,8 +70,7 @@ The default package installation downloads the network trained in the retraining
 
 To run the example with a custom model (adjust paths and specify the required 'labels_json' file.):
 ```bash
-cd hailo_apps/hailo_app_python/apps/detection
-python detection.py --labels-json local_resources/barcode_labels.json --hef-path resources/yolov8s-hailo8l-barcode.hef --input resources/barcode.mp4
+python hailo_apps/hailo_app_python/apps/detection.py --labels-json resources/json/barcode_labels.json --hef-path resources/models/hailo8l/yolov8s-hailo8l-barcode.hef --input resources/videos/barcode.mp4
 ```
 By default, the package contains the following YOLO-based detection models: YOLOv6n, YOLOv8s, YOLOv8m, YOLOv11n, and YOLOv11s. The files located under the `resources` directory.
 

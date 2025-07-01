@@ -97,6 +97,11 @@ self.video_height
 
 See our [hailo_model_zoo](https://github.com/hailo-ai/hailo_model_zoo) for additional supported models.
 
+By default, the package contains a single model depending on the device architecture.
+You can download additional models by running `hailo-download-resources --all`.
+The models are downloaded to the `resources/models/` directory.
+This application supports all models that are compiled with HailoRT NMS post process.
+
 #### Retrained Networks Support
 This application includes support for using retrained detection models. For more information, see [Using Retrained Models](../../../../doc/developer_guide/retraining_example.md).
 
