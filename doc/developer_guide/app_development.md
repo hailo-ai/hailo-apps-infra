@@ -23,26 +23,29 @@ The framework provides many specialized GStreamer elements.
 <summary><strong>Click to see the list of Core Tappas Elements</strong></summary>
 
 *   **AI/ML Processing Elements**
-    *   **[HailoNet](https://github.com/hailo-ai/tappas/blob/master/docs/elements/hailo_net.rst)**: The core inference element. It receives video frames, sends them to the Hailo hardware, and outputs the raw inference results. (This element is relased as part of HailoRT)
-    *   **[HailoFilter](https://github.com/hailo-ai/tappas/blob/master/docs/elements/hailo_filter.rst)**: Applies C++ post-processing functions to the raw output from `HailoNet`, converting it into structured data like detection objects.
-    *   **[HailoOverlay](https://github.com/hailo-ai/tappas/blob/master/docs/elements/hailo_overlay.rst)**: Draws the structured AI metadata (bounding boxes, masks, labels) onto the video frames for visualization.
+    *   **[HailoNet](https://github.com/hailo-ai/tappas/blob/master/docs/elements/hailo_net.rst)**: Runs neural network inference on input video frames using a Hailo device.(This element is relased as part of HailoRT)
+    *   **[HailoFilter](https://github.com/hailo-ai/tappas/blob/master/docs/elements/hailo_filter.rst)**: Applies
+    C++ post-processing functions to the raw output from `HailoNet`, converting it into structured data like
+    detection objects.
+    *   **[HailoOverlay](https://github.com/hailo-ai/tappas/blob/master/docs/elements/hailo_overlay.rst)**: Draws
+    the structured Hailo AI metadata (bounding boxes, masks, labels) onto the video frames for visualization.
 
 *   **Multi-Device & Routing Elements**
-    *   **[HailoMuxer](https://github.com/hailo-ai/tappas/blob/master/docs/elements/hailo_muxer.rst)**: Muxer element for Multi-Hailo-8 setups.
-    *   **[HailoRoundRobin](https://github.com/hailo-ai/tappas/blob/master/docs/elements/hailo_roundrobin.rst)**: Provides muxing functionality in a round-robin method.
-    *   **[HailoStreamRouter](https://github.com/hailo-ai/tappas/blob/master/docs/elements/hailo_stream_router.rst)**: Provides de-muxing functionality.
+    *   **[HailoMuxer](https://github.com/hailo-ai/tappas/blob/master/docs/elements/hailo_muxer.rst)**: Combines multiple metadata streams into a single output stream.
+    *   **[HailoRoundRobin](https://github.com/hailo-ai/tappas/blob/master/docs/elements/hailo_roundrobin.rst)**: An element that provides muxing functionality. It receives input from one or more sink pads and forwards them into a single src pad in round-robin method.
+    *   **[HailoStreamRouter](https://github.com/hailo-ai/tappas/blob/master/docs/elements/hailo_stream_router.rst)**: Routes video or metadata streams dynamically based on user-defined rules.
 
 *   **Cascading Networks Elements**
-    *   **[HailoCropper](https://github.com/hailo-ai/tappas/blob/master/docs/elements/hailo_cropper.rst)**: Designed for cascading networks with 1 sink and 2 sources.
-    *   **[HailoAggregator](https://github.com/hailo-ai/tappas/blob/master/docs/elements/hailo_aggregator.rst)**: Designed for cascading networks with 2 sink pads and 1 source.
+    *   **[HailoCropper](https://github.com/hailo-ai/tappas/blob/master/docs/elements/hailo_cropper.rst)**: Crops regions of interest from video frames for further processing based on the output of the previous network.
+    *   **[HailoAggregator](https://github.com/hailo-ai/tappas/blob/master/docs/elements/hailo_aggregator.rst)**: Merges multiple input streams or metadata into a single output stream.
 
 *   **Tiling Elements**
-    *   **[HailoTileCropper](https://github.com/hailo-ai/tappas/blob/master/docs/elements/hailo_tile_cropper.rst)**: Designed for tiled applications with 1 sink and 2 sources.
-    *   **[HailoTileAggregator](https://github.com/hailo-ai/tappas/blob/master/docs/elements/hailo_tile_aggregator.rst)**: Designed for tiled applications with 2 sink pads and 1 source.
+    *   **[HailoTileCropper](https://github.com/hailo-ai/tappas/blob/master/docs/elements/hailo_tile_cropper.rst)**: Crops tiled regions from input frames, to allow processing each tiles independently.
+    *   **[HailoTileAggregator](https://github.com/hailo-ai/tappas/blob/master/docs/elements/hailo_tile_aggregator.rst)**: Combines multiple cropped tiles into a single output frame.
 
 *   **Tracking & Monitoring Elements**
-    *   **[HailoTracker](https://github.com/hailo-ai/tappas/blob/master/docs/elements/hailo_tracker.rst)**: Applies Joint Detection and Embedding (JDE) with Kalman filtering for object tracking.
-    *   **[HailoDeviceStats](https://github.com/hailo-ai/tappas/blob/master/docs/elements/hailo_device_stats.rst)**: Samples power and temperature from Hailo devices.
+    *   **[HailoTracker](https://github.com/hailo-ai/tappas/blob/master/docs/elements/hailo_tracker.rst)**: Tracks detected objects across video frames, assigning unique IDs to each object.
+    *   **[HailoDeviceStats](https://github.com/hailo-ai/tappas/blob/master/docs/elements/hailo_device_stats.rst)**: Reports real-time statistics and health information from the Hailo device.
 
 </details>
 
@@ -51,91 +54,154 @@ This layer is developed in this repository to simplify the process of building a
 *   **The Application Runner (`gstreamer_app.py`)**: This component features the `GStreamerApp` class, which serves as the core engine of the application. It is responsible for managing the pipeline's lifecycle, handling bus messages (such as errors or End-Of-Stream), and integrating your Python callback functions.
 *   **The Pipeline Factory (`gstreamer_helper_pipelines.py`)**: This module provides a set of Python functions that facilitate the creation of GStreamer pipeline strings in a modular and easily understandable manner.
 *   **Hailo Pipelines**: These are pre-configured, ready-to-use AI pipelines that leverage the helper functions from the factory to form complete, executable applications for common scenarios like object detection or pose estimation. You can connect to their outputs with a simple callback, allowing you to easily integrate custom logic or processing steps.
+For example, `hailo_apps/hailo_app_python/apps/detection/detection_pipeline.py`.
 
 ## Development Path 1: Basic (Callback-based)
 
-This is the fastest way to build an application. The core idea is to start from one of our pre-built examples and inject your custom logic by writing a simple Python callback function. Each pipeline is designed to be runnable with a simple callback.
+This is the quickest way to build an application. The core concept is to begin with one of our pre-built pipeline examples and incorporate your custom logic by writing a simple Python callback function. Each pipeline is designed to be executed with a straightforward callback.
 
-We recommend copying one of our example applications, like `hailo_apps/hailo_app_python/apps/detection/detection.py`, as your starting point.
+We suggest using one of our example callback applications, such as `hailo_apps/hailo_app_python/apps/detection/detection.py`, as your starting point. Each pipeline in this repository includes an example callback file (e.g., `detection.py`, `pose_estimation.py`, etc.). These files demonstrate the relevant callback code for that specific pipeline and can serve as a reference or starting point for your own application.
+
+### The Callback Mechanism Explained
+The GStreamer pipeline handles all complex tasks, including video decoding, inference, and rendering. Your Python **callback** function is invoked for each frame processed by the pipeline, receiving both the video frame and the AI metadata.
+
+1.  **Data Production**: The pipeline processes a video frame, and the C++ post-processing library generates structured metadata (containing detections, etc.).
+2.  **Callback Invocation**: An `identity` element in the pipeline intercepts the GStreamer buffer and triggers your Python function, passing the metadata object to it.
+3.  **Your Custom Logic**: Within your callback, you parse the metadata and perform any necessary actions.
+
+> **IMPORTANT**: The callback function must be non-blocking. Long-running tasks should be dispatched to a separate thread or process to prevent stalling the video pipeline.
 
 ### The User Application Workflow
 
 A user application script typically has three parts: an optional custom data class, a callback function, and a main execution block.
 
 #### 1. (Optional) Create a Custom Data Class
-To maintain state between callback calls (e.g., counting frames or objects), you can create a class that inherits from `app_callback_class`. This object is passed to every invocation of your callback.
+This class lets you keep track of information between frames, such as the total number of people detected and the number of frames processed. By inheriting from `app_callback_class`, you can also use built-in features like frame counting. You can add any attributes you want to store custom statistics or state.
 
 ```python
-from hailo_apps_infra.hailo_rpi_common import app_callback_class
+from hailo_apps.hailo_app_python.core.gstreamer.gstreamer_app import app_callback_class
 
 class user_app_callback_class(app_callback_class):
     def __init__(self):
         super().__init__()
-        self.total_person_count = 0
-
-    def increment_person_count(self, count):
-        self.total_person_count += count
+        self.total_people = 0
+        self.total_frames = 0
 ```
 
 #### 2. Implement the Callback Function
-This is where your custom logic lives. The function receives the raw GStreamer buffer, from which you can extract the AI metadata (`HailoROI`).
+This function is called for every frame processed by the pipeline. This is where you put your custom logic for handling detections or other AI results.
+In this toy example, the callback function receives the GStreamer buffer, extracts detection results, counts how many people are detected in the frame, updates the running totals, and prints out statistics.
 
 ```python
+import gi
+gi.require_version('Gst', '1.0')
+from gi.repository import Gst
 import hailo
 
 def app_callback(pad, info, user_data):
-    # Get the processed data from the buffer
-    roi = hailo.get_roi_from_buffer(info.get_buffer())
-
-    # Get all detection objects from the HailoROI
-    detections = roi.get_objects_typed(hailo.HAILO_DETECTION)
-
-    person_count = 0
+    user_data.increment()  # Count the number of frames
+    buffer = info.get_buffer()  # Get the GstBuffer from the probe info
+    if buffer is None:
+        return Gst.PadProbeReturn.OK
+    detections = hailo.get_roi_from_buffer(buffer).get_objects_typed(hailo.HAILO_DETECTION)
+    people_count = 0
+    for det in detections:
+        if det.get_label() == "person":
+            people_count = people_count + 1
+    user_data.total_people = user_data.total_people + people_count
+    user_data.total_frames = user_data.total_frames + 1
+    if user_data.total_frames > 0:
+        running_average = user_data.total_people / user_data.total_frames
+    else:
+        running_average = 0.0
+    string_to_print = (
+        "Frame count: " + str(user_data.get_count()) + "\n"
+        + "People detected in frame: " + str(people_count) + "\n"
+        + "Running average people per frame: " + str(round(running_average, 2)) + "\n"
+    )
     for detection in detections:
-        if detection.get_label() == "person":
-            person_count += 1
-            print(f"Found a person with confidence {detection.get_confidence():.2f}")
-
-    # Use the custom data class to update the total count
-    if person_count > 0:
-        user_data.increment_person_count(person_count)
-
-    # The function must return Gst.PadProbeReturn.OK
+        string_to_print = string_to_print + (
+            "Detection: " + detection.get_label() + " Confidence: " + str(round(detection.get_confidence(), 2)) + "\n"
+        )
+    print(string_to_print)
     return Gst.PadProbeReturn.OK
 ```
 
 #### 3. Write the Main Execution Block
-The main block ties everything together. You import a pre-built application pipeline (like `GStreamerDetectionApp`), instantiate your custom data class, and pass them along with your callback function to the application constructor before calling `.run()`.
+This part ties everything together. It creates an instance of your callback class, sets up the detection pipeline, and starts the application. This is the entry point of your script.
 
 ```python
+from hailo_apps.hailo_app_python.apps.detection_simple.detection_pipeline_simple import GStreamerDetectionApp
+
 if __name__ == "__main__":
-    # Import the pre-built pipeline application
-    from hailo_apps_infra.detection_pipeline import GStreamerDetectionApp
-
-    # Create an instance of your custom data class
     user_data = user_app_callback_class()
-
-    # Pass your callback and data class to the pre-built application
     app = GStreamerDetectionApp(app_callback, user_data)
     app.run()
 ```
 
-### How to Run Your Application
-To run your application, you simply execute your Python script from the terminal. The application will automatically handle command-line arguments for inputs, HEF files, and other parameters.
-For example:
-```bash
-python hailo_apps/hailo_app_python/apps/detection/detection.py --input </path/to/your/video.mp4>
+### Putting It All Together
+Below is a complete, minimal example you can copy and run. It combines the custom class, callback function, and main block into a single script. This is a good starting point for your own application—just modify the callback logic as needed for your use case.
+
+```python
+import gi
+gi.require_version('Gst', '1.0')
+from gi.repository import Gst
+import hailo
+from hailo_apps.hailo_app_python.core.gstreamer.gstreamer_app import app_callback_class
+from hailo_apps.hailo_app_python.apps.detection_simple.detection_pipeline_simple import GStreamerDetectionApp
+
+class user_app_callback_class(app_callback_class):
+    def __init__(self):
+        super().__init__()
+        self.total_people = 0
+        self.total_frames = 0
+
+def app_callback(pad, info, user_data):
+    user_data.increment()
+    buffer = info.get_buffer()
+    if buffer is None:
+        return Gst.PadProbeReturn.OK
+    detections = hailo.get_roi_from_buffer(buffer).get_objects_typed(hailo.HAILO_DETECTION)
+    people_count = 0
+    for det in detections:
+        if det.get_label() == "person":
+            people_count = people_count + 1
+    user_data.total_people = user_data.total_people + people_count
+    user_data.total_frames = user_data.total_frames + 1
+    if user_data.total_frames > 0:
+        running_average = user_data.total_people / user_data.total_frames
+    else:
+        running_average = 0.0
+    string_to_print = (
+        "Frame count: " + str(user_data.get_count()) + "\n"
+        + "People detected in frame: " + str(people_count) + "\n"
+        + "Running average people per frame: " + str(round(running_average, 2)) + "\n"
+    )
+    for detection in detections:
+        string_to_print = string_to_print + (
+            "Detection: " + detection.get_label() + " Confidence: " + str(round(detection.get_confidence(), 2)) + "\n"
+        )
+    print(string_to_print)
+    return Gst.PadProbeReturn.OK
+
+if __name__ == "__main__":
+    user_data = user_app_callback_class()
+    app = GStreamerDetectionApp(app_callback, user_data)
+    app.run()
 ```
 
-### The Callback Mechanism Explained
-The GStreamer pipeline handles all the heavy lifting (video decoding, inference, rendering). When it has new AI metadata available, it triggers your Python **callback** function.
+This script demonstrates how to:
+- Define a callback class to keep state.
+- Implement a simple callback function to process detections and print statistics.
+- Set up and run the detection pipeline.
 
-1.  **Data Production**: The pipeline processes a video frame, and the C++ post-processing library creates structured `HailoROI` metadata (containing detections, landmarks, etc.).
-2.  **Callback Invocation**: An `identity` element in the pipeline intercepts the GStreamer buffer and triggers your Python function, passing the `HailoROI` object to it.
-3.  **Your Custom Logic**: Inside your callback, you parse the `HailoROI` and perform any action you need.
 
-> **IMPORTANT**: The callback function must be non-blocking. Long-running tasks must be dispatched to a separate thread or process to avoid stalling the video pipeline.
-
+### How to Run Your Application
+To run your application, execute your Python script from the terminal. The application will automatically handle command-line arguments for inputs, HEF files, and other parameters.
+For example, to run the example code above paste it in 'example.py' and run the application with the USB camera as input:
+```bash
+python example.py --input usb
+```
 
 ---
 
@@ -328,8 +394,7 @@ flowchart LR
 ```
 ## Additional Topics
 ### Retraining your own models
-TBD fix this section.
-Add link to retraining guide.
+See [Retraining your own models](retraining_example.md) for more information.
 
 ### Bring you own models
 Compiling your own models is out of the scope of this repository.
