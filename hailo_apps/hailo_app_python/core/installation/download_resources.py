@@ -59,10 +59,10 @@ def create_default_config():
             'https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/video/example.mp4',
             'https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/video/example_640.mp4',
             'https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/video/face_recognition.mp4',
-            'https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/configs/scrfd.json'
-            'https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/configs/barcode_labels.json'
-            'https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/configs/face_recon_algo_params.json'
-            'https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/configs/yolov5m_seg.json'
+            'https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/configs/scrfd.json',
+            'https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/configs/barcode_labels.json',
+            'https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/configs/face_recon_algo_params.json',
+            'https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/configs/yolov5m_seg.json',
             'https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/configs/yolov5n_seg.json'
         ],
         'hailo8': [
@@ -106,13 +106,13 @@ def create_config_at_path(config_path: str = None):
         cfg_path = Path("/usr/local/hailo/resources/resources_config.yaml")
     else:
         cfg_path = Path(config_path)
-    
+
     cfg_path.parent.mkdir(parents=True, exist_ok=True)
-    
+
     default_config = create_default_config()
     with open(cfg_path, 'w') as f:
         yaml.dump(default_config, f, default_flow_style=False, indent=2)
-    
+
     print(f"Default configuration created at {cfg_path}")
     return cfg_path  # Return Path object
 
