@@ -7,6 +7,11 @@ This guide provides comprehensive instructions for installing the Hailo Applicat
 - [Hailo Software Installation Guide](#hailo-software-installation-guide)
   - [Table of Contents](#table-of-contents)
   - [Automated Installation (Recommended)](#automated-installation-recommended)
+  - [Download Resources](#download-resources)
+    - [Usage](#usage)
+    - [Available Options](#available-options)
+    - [Resource Groups](#resource-groups)
+    - [Examples](#examples)
   - [Raspberry Pi Installation](#raspberry-pi-installation)
     - [Hardware Setup for RPi](#hardware-setup-for-rpi)
     - [Software Setup for RPi](#software-setup-for-rpi)
@@ -90,6 +95,53 @@ Note that also on the x86_64 Ubuntu, the gi library is installed on the system (
     ```
 
 </details>
+
+---
+## Download Resources
+
+The Hailo Apps Infrastructure includes a resource downloader utility that automatically fetches AI models, configuration files, and test videos optimized for your Hailo hardware. You can access this tool through the Python script `hailo_apps/hailo_app_python/core/installation/download_resources.py` or via the command-line tool `hailo-download-resources`.
+
+### Usage
+
+```bash
+hailo-download-resources [OPTIONS]
+```
+
+### Available Options
+
+- `--all`: Download all available resources across all architectures
+- `--group <GROUP>`: Specify which resource group to download (see groups below)
+- `--config <PATH>`: Use a custom resources configuration file (defaults to system config)
+- `--arch <ARCHITECTURE>`: Force a specific Hailo architecture (hailo8, hailo8l, hailo10h). If not specified, the architecture will be auto-detected
+
+### Resource Groups
+
+- **default**: Core models and videos needed for basic functionality (yolov6n, scdepthv3, sample videos)
+- **hailo8**: Models optimized for Hailo-8 (yolov8m, scrfd_10g, arcface_mobilefacenet)
+- **hailo8l**: Models optimized for Hailo-8L (yolov8s, scrfd_2.5g, arcface_mobilefacenet_h8l)
+- **all**: Complete model collection including all architectures and specialized models
+- **retrain**: Additional resources for model retraining examples (custom barcode detection model and test video)
+
+By default, we download models that support real-time frame rates for your device. Note that larger models can also be used, but the frame rate might be lower. If you need more accuracy, you can download a larger model. Additional models can be downloaded from the [Hailo Model Zoo](https://github.com/hailo-ai/hailo_model_zoo).
+
+
+### Examples
+
+```bash
+# Download default resources for your detected hardware
+hailo-download-resources
+
+# Download all available resources
+hailo-download-resources --all
+
+# Download only Hailo-8L specific resources
+hailo-download-resources --group hailo8l
+
+# Force download for specific architecture
+hailo-download-resources --arch hailo8 --group hailo8
+```
+
+The downloader automatically organizes resources into appropriate directories under the `resources/` folder, with models separated by architecture and videos/configs in dedicated subdirectories.
 
 ---
 
