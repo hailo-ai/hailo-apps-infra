@@ -21,7 +21,7 @@ os.makedirs(log_dir, exist_ok=True)
 def pipeline():
     return {
         'name': 'face_recognition',
-        'module': 'hailo_apps_infra.hailo_apps.apps.face_recognition.face_recognition',
+        'module': 'hailo_apps.hailo_app_python.apps.face_recognition.face_recognition',
         'script': 'hailo_apps_infra/hailo_apps/apps/face_recognition/face_recognition.py',
         'cli': 'hailo-face-recon'
     }
