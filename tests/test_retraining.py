@@ -13,10 +13,10 @@ def test_retraining_defaults():
     log_dir = "logs"
     os.makedirs(log_dir, exist_ok=True)
     args = get_pipeline_args(
-        suite="labels,video_file,hef_path", 
-        hef_path=str(get_resource_path(pipeline_name=None, resource_type=RESOURCES_MODELS_DIR_NAME, model=RETRAINING_MODEL_NAME)), 
-        override_usb_camera=None, 
-        override_video_input=str(Path(RESOURCES_ROOT_PATH_DEFAULT)/BARCODE_VIDEO_EXAMPLE_NAME),
+        suite="labels,video_file,hef_path",
+        hef_path="/usr/local/hailo/resources/models/hailo8l/yolov8s-hailo8l-barcode.hef",
+        override_usb_camera=None,
+        override_video_input=str(Path(RESOURCES_ROOT_PATH_DEFAULT)/"videos"/BARCODE_VIDEO_EXAMPLE_NAME),
         override_labels_json=str(get_resource_path(pipeline_name=None, resource_type=DEFAULT_LOCAL_RESOURCES_PATH, model=RETRAINING_BARCODE_LABELS_JSON_NAME))
     )
     log_file_path_empty = os.path.join(log_dir, "retraining.log")
