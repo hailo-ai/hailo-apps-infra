@@ -2,41 +2,40 @@ import os
 import pytest
 import logging
 from hailo_apps.hailo_app_python.core.common.test_utils import run_pipeline_pythonpath_with_args, get_pipeline_args
-from hailo_apps.hailo_app_python.core.common.core import get_resource_path
-from hailo_apps.hailo_app_python.core.common.defines import RETRAINING_MODEL_NAME, RESOURCES_MODELS_DIR_NAME, BARCODE_VIDEO_EXAMPLE_NAME, RESOURCES_ROOT_PATH_DEFAULT, DEFAULT_LOCAL_RESOURCES_PATH, RETRAINING_BARCODE_LABELS_JSON_NAME
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("test_run_everything")
+log_dir = "logs"
+os.makedirs(log_dir, exist_ok=True)
+log_file_path = os.path.join(log_dir, "hef_tests.log")
 
-def test_hef_8():
-    log_dir = "logs"
-    os.makedirs(log_dir, exist_ok=True)
-    args = get_pipeline_args(suite="hef_path", hef_path="/usr/local/hailo/resources/models/hailo8/yolov8s.hef")
-    log_file_path_empty = os.path.join(log_dir, "hef_8.log")
-    stdout, stderr = b"", b""
-    cmd = ['python', '-u', "hailo_apps/hailo_app_python/apps/detection/detection_pipeline.py"] + args
-    print(f"Running Hef 8 command: {' '.join(cmd)}")
-    stdout, stderr = run_pipeline_pythonpath_with_args("hailo_apps/hailo_app_python/apps/detection/detection_pipeline.py", args, log_file_path_empty)
-    out_str = stdout.decode().lower() if stdout else ""
-    err_str = stderr.decode().lower() if stderr else ""
-    print(f"Hef 8 Output:\n{out_str}")
-    assert "error" not in err_str, f"Reported an error in Hef 8 run: {err_str}"
-    assert "traceback" not in err_str, f"Traceback in Hef 8 run: {err_str}"
+params = [
+    {"pipeline": "detection/detection_pipeline",             "arch": "hailo8",  "hef": "yolov8m"},
+    {"pipeline": "detection/detection_pipeline",             "arch": "hailo8l", "hef": "yolov8s_h8l"},
 
-def test_hef_8l():
-    log_dir = "logs"
-    os.makedirs(log_dir, exist_ok=True)
-    args = get_pipeline_args(suite="hef_path", hef_path="/usr/local/hailo/resources/models/hailo8l/yolov8s.hef")
-    log_file_path_empty = os.path.join(log_dir, "hef_8l.log")
+    # {"pipeline": "detection/detection_pipeline_simple",      "arch": "hailo8",  "hef": "yolov8m"},
+    # {"pipeline": "detection/detection_pipeline_simple",      "arch": "hailo8l", "hef": "yolov8l"},
+
+    # {"pipeline": "detection/depth_pipeline",                 "arch": "hailo8",  "hef": "yolov8m"},
+    # {"pipeline": "detection/depth_pipeline",                 "arch": "hailo8l", "hef": "yolov8l"},
+
+    # {"pipeline": "detection/instance_segmentation_pipeline", "arch": "hailo8",  "hef": "yolov8m"},
+    # {"pipeline": "detection/instance_segmentation_pipeline", "arch": "hailo8l", "hef": "yolov8l"},
+
+    # {"pipeline": "detection/pose_estimation_pipeline",       "arch": "hailo8",  "hef": "yolov8m"},
+    # {"pipeline": "detection/pose_estimation_pipeline",       "arch": "hailo8l", "hef": "yolov8l"}
+]
+
+@pytest.mark.parametrize("params", params)
+def test_hef(params):
+    args = get_pipeline_args(suite="hef_path", hef_path=f"/usr/local/hailo/resources/models/{params['arch']}/{params['hef']}.hef")
     stdout, stderr = b"", b""
-    cmd = ['python', '-u', "hailo_apps/hailo_app_python/apps/detection/detection_pipeline.py"] + args
-    print(f"Running Hef 8l command: {' '.join(cmd)}")
-    stdout, stderr = run_pipeline_pythonpath_with_args("hailo_apps/hailo_app_python/apps/detection/detection_pipeline.py", args, log_file_path_empty)
-    out_str = stdout.decode().lower() if stdout else ""
+    stdout, stderr = run_pipeline_pythonpath_with_args("../hailo_apps/hailo_app_python/apps/detection/detection_pipeline.py", args, log_file_path)
     err_str = stderr.decode().lower() if stderr else ""
-    print(f"Hef 8l Output:\n{out_str}")
-    assert "error" not in err_str, f"Reported an error in Hef 8l run: {err_str}"
-    assert "traceback" not in err_str, f"Traceback in Hef 8l run: {err_str}"
+    assert "error" not in err_str, f"Error: {params['arch']} app {params['pipeline']} with hef {params['hef']}: {err_str}"
+    assert "traceback" not in err_str, f"Traceback: {params['arch']} app {params['pipeline']} with hef {params['hef']}: {err_str}"
+    assert "frame" in stdout.decode().lower(), f"No frames: {params['arch']} app {params['pipeline']} with hef {params['hef']}"
+    assert "detection" in stdout.decode().lower(), f"No detections: {params['arch']} app {params['pipeline']} with hef {params['hef']}"
 
 if __name__ == "__main__":
     pytest.main(["-v", __file__])
