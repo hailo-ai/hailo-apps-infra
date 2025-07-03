@@ -1,6 +1,7 @@
 import os
 import pytest
 import logging
+from pathlib import Path
 
 
 from hailo_apps.hailo_app_python.core.common.test_utils import (
@@ -21,7 +22,7 @@ from hailo_apps.hailo_app_python.core.common.defines import (
 
 from hailo_apps.hailo_app_python.core.common.test_utils import run_pipeline_pythonpath_with_args, get_pipeline_args
 from hailo_apps.hailo_app_python.core.common.core import get_resource_path
-from hailo_apps.hailo_app_python.core.common.defines import RETRAINING_MODEL_NAME, RESOURCES_MODELS_DIR_NAME, BARCODE_VIDEO_EXAMPLE_NAME, RESOURCES_ROOT_PATH_DEFAULT, DEFAULT_LOCAL_RESOURCES_PATH, RETRAINING_BARCODE_LABELS_JSON_NAME
+from hailo_apps.hailo_app_python.core.common.defines import RETRAINING_MODEL_NAME, RESOURCES_MODELS_DIR_NAME, BARCODE_VIDEO_EXAMPLE_NAME, RESOURCES_ROOT_PATH_DEFAULT, RESOURCES_JSON_DIR_NAME, RETRAINING_BARCODE_LABELS_JSON_NAME
 
 
 # Configure logging as needed.
@@ -382,23 +383,70 @@ def test_all_hefs_comprehensive():
 def test_retraining_defaults():
     log_dir = "logs"
     os.makedirs(log_dir, exist_ok=True)
+
+    # build each path component-wise
+    hef_path = str(
+        Path(RESOURCES_ROOT_PATH_DEFAULT)
+        / "models"
+        / "hailo8l"
+        / "yolov8s-hailo8l-barcode.hef"
+    )
+    video_input = str(
+        Path(RESOURCES_ROOT_PATH_DEFAULT)
+        / "videos"
+        / BARCODE_VIDEO_EXAMPLE_NAME
+    )
+    labels_json = str(
+        get_resource_path(
+            pipeline_name=None,
+            resource_type=RESOURCES_JSON_DIR_NAME,
+            model=RETRAINING_BARCODE_LABELS_JSON_NAME
+        )
+    )
+
     args = get_pipeline_args(
         suite="labels,video_file,hef_path",
-        hef_path=str(Path(RESOURCES_ROOT_PATH_DEFAULT)/"models/hailo8l/yolov8s-hailo8l-barcode.hef"),
+        hef_path=hef_path,
         override_usb_camera=None,
-        override_video_input=str(Path(RESOURCES_ROOT_PATH_DEFAULT)/"videos"/BARCODE_VIDEO_EXAMPLE_NAME),
-        override_labels_json=str(get_resource_path(pipeline_name=None, resource_type=DEFAULT_LOCAL_RESOURCES_PATH, model=RETRAINING_BARCODE_LABELS_JSON_NAME))
+        override_video_input=video_input,
+        override_labels_json=labels_json,
     )
-    log_file_path_empty = os.path.join(log_dir, "retraining.log")
-    stdout, stderr = b"", b""
-    cmd = ['python', '-u', "hailo_apps/hailo_app_python/apps/detection/detection_pipeline.py"] + args
-    print(f"Running retraining command: {' '.join(cmd)}")
-    stdout, stderr = run_pipeline_pythonpath_with_args("hailo_apps/hailo_app_python/apps/detection/detection_pipeline.py", args, log_file_path_empty)
+
+    log_file = os.path.join(log_dir, "retraining.log")
+    print(f"Running retraining with args: {args}")
+    stdout, stderr = run_pipeline_pythonpath_with_args(
+        "hailo_apps/hailo_app_python/apps/detection/detection_pipeline.py",
+        args,
+        log_file
+    )
+
     out_str = stdout.decode().lower() if stdout else ""
     err_str = stderr.decode().lower() if stderr else ""
-    print(f"Retraining Output:\n{out_str}")
-    assert "error" not in err_str, f"Reported an error in retraining run: {err_str}"
+    print(f"Retraining stdout:\n{out_str}")
+
+    assert "error" not in err_str,     f"Reported an error in retraining run: {err_str}"
     assert "traceback" not in err_str, f"Traceback in retraining run: {err_str}"
+
+def test_hailo8l_models_on_hailo8():
+    hailo_arch = detect_hailo_arch()
+    if hailo_arch != HAILO8_ARCH:
+        pytest.skip(f"Skipping Hailo-8L model test on {hailo_arch}")
+
+    log_dir = "logs"
+    os.makedirs(log_dir, exist_ok=True)
+
+    # For each Hailo-8L detection HEF, try running it on the Hailo-8
+    for hef in HEF_CONFIG[HAILO8L_ARCH]["detection"]:
+        cli_cmd = PIPELINE_CLI_MAP["detection"]
+        hef_path = os.path.join(RESOURCES_ROOT_PATH_DEFAULT, "models", HAILO8L_ARCH, hef)
+        args = ["--hef-path", hef_path]
+        log_file = os.path.join(log_dir, f"h8l_on_h8_{hef.replace('.hef','')}.log")
+
+        stdout, stderr = run_pipeline_cli_with_args(cli_cmd, args, log_file)
+        err_str = stderr.decode().lower() if stderr else ""
+
+        assert "error" not in err_str,      f"{hef} raised an error: {err_str}"
+        assert "traceback" not in err_str,  f"{hef} had a traceback: {err_str}"
 
 if __name__ == "__main__":
     # You can run specific tests like this:
