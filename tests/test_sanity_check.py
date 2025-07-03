@@ -129,7 +129,7 @@ def test_check_hailo_runtime_installed():
 
 def test_check_resource_directory():
     """Test if the resources directory exists and has expected subdirectories."""
-    resource_dir = Path("../resources")
+    resource_dir = Path("resources") or Path("/usr/local/hailo/resources")
     
     # Check if the resources directory exists
     if not resource_dir.exists():

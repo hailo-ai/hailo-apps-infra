@@ -11,10 +11,18 @@ from hailo_apps.hailo_app_python.core.common.test_utils import (
 )
 
 # Import installation utilities
-
-from hailo_apps.hailo_app_python.core.common.installation_utils import detect_hailo_arch , detect_host_arch
-
+from hailo_apps.hailo_app_python.core.common.installation_utils import detect_hailo_arch, detect_host_arch
 from hailo_apps.hailo_app_python.core.common.camera_utils import is_rpi_camera_available
+
+from hailo_apps.hailo_app_python.core.common.defines import (
+    HAILO8_ARCH,
+    HAILO8L_ARCH,
+)
+
+from hailo_apps.hailo_app_python.core.common.test_utils import run_pipeline_pythonpath_with_args, get_pipeline_args
+from hailo_apps.hailo_app_python.core.common.core import get_resource_path
+from hailo_apps.hailo_app_python.core.common.defines import RETRAINING_MODEL_NAME, RESOURCES_MODELS_DIR_NAME, BARCODE_VIDEO_EXAMPLE_NAME, RESOURCES_ROOT_PATH_DEFAULT, DEFAULT_LOCAL_RESOURCES_PATH, RETRAINING_BARCODE_LABELS_JSON_NAME
+
 
 # Configure logging as needed.
 logging.basicConfig(level=logging.INFO)
@@ -67,6 +75,62 @@ run_methods = {
     "cli": run_pipeline_cli_with_args,
 }
 
+h8_hefs_detection = [
+    "yolov5m_wo_spp.hef",
+    "yolov6n.hef",
+    "yolov8s.hef",
+    "yolov8m.hef",
+    "yolov11n.hef",
+    "yolov11s.hef"
+]
+
+h8l_hefs_detection = [
+    "yolov5m_wo_spp.hef",
+    "yolov6n.hef",
+    "yolov8s.hef",
+    "yolov8m.hef",
+    "yolov11n.hef",
+    "yolov11s.hef"
+]
+
+h8_hefs_pose_estimation = [
+    "yolov8s_pose.hef",
+    "yolov8m_pose.hef",
+]
+
+h8l_hefs_pose_estimation = [
+    "yolov8s_pose.hef",
+]
+
+h8l_hefs_segmentation = [
+    "yolov5m_seg.hef",
+    "yolov5n_seg.hef",
+]
+
+h8_hefs_segmentation = [
+    "yolov5n_seg.hef",
+]
+
+# HEF configurations mapping pipeline types to their HEF lists
+HEF_CONFIG = {
+    HAILO8_ARCH: {
+        "detection": h8_hefs_detection,
+        "pose_estimation": h8_hefs_pose_estimation,
+        "segmentation": h8_hefs_segmentation,
+    },
+    HAILO8L_ARCH: {
+        "detection": h8l_hefs_detection,
+        "pose_estimation": h8l_hefs_pose_estimation,
+        "segmentation": h8l_hefs_segmentation,
+    }
+}
+
+# Pipeline to CLI mapping
+PIPELINE_CLI_MAP = {
+    "detection": "hailo-detect",
+    "pose_estimation": "hailo-pose",
+    "segmentation": "hailo-seg",
+}
 
 # Parameterize the test so that 'pipeline' and 'run_method_name' are provided.
 @pytest.mark.parametrize("pipeline", pipelines, ids=[p["name"] for p in pipelines])
@@ -162,5 +226,182 @@ def test_pipeline_run_defaults(pipeline, run_method_name):
         print("Not running on Raspberry Pi; skipping RPi camera run.")
 
 
+def run_hef_with_pipeline(pipeline_type, hef_file, extra_args=None, hailo_arch=None):
+    """
+    Helper function to run a specific HEF with a pipeline.
+    """
+    cli_command = PIPELINE_CLI_MAP.get(pipeline_type)
+    if not cli_command:
+        logger.error(f"Unknown pipeline type: {pipeline_type}")
+        return b"", b"", False
+
+    # Determine architecture if not provided
+    if hailo_arch is None:
+        hailo_arch = detect_hailo_arch()
+
+    # Create logs directory
+    log_dir = "logs/hef_tests"
+    os.makedirs(log_dir, exist_ok=True)
+
+    # Build full HEF path
+    resources_root = RESOURCES_ROOT_PATH_DEFAULT
+    hef_full_path = os.path.join(resources_root, "models", hailo_arch, hef_file)
+
+    # Prepare CLI arguments
+    args = ["--hef-path", hef_full_path]
+    if extra_args:
+        args.extend(extra_args)
+
+    # Create log file path
+    log_file_path = os.path.join(log_dir, f"{pipeline_type}_{hef_file.replace('.hef', '')}.log")
+
+    try:
+        logger.info(f"Testing {pipeline_type} with HEF: {hef_file}")
+        stdout, stderr = run_pipeline_cli_with_args(cli_command, args, log_file_path)
+
+        # Check for errors
+        err_str = stderr.decode().lower() if stderr else ""
+        success = "error" not in err_str and "traceback" not in err_str
+        return stdout, stderr, success
+
+    except Exception as e:
+        logger.error(f"Exception while testing {hef_file}: {e}")
+        return b"", str(e).encode(), False
+
+
+
+@pytest.mark.parametrize("pipeline_type", ["detection", "pose_estimation", "segmentation"])
+def test_all_hefs_by_pipeline(pipeline_type):
+    """
+    Test all HEFs for a specific pipeline type.
+    This creates separate test cases for each pipeline type.
+    """
+    # Detect the architecture of the Hailo device
+    hailo_arch = detect_hailo_arch()
+    
+    if hailo_arch not in HEF_CONFIG:
+        pytest.skip(f"Unsupported Hailo architecture: {hailo_arch}")
+    
+    # Get HEFs for the current architecture and pipeline type
+    hef_list = HEF_CONFIG[hailo_arch].get(pipeline_type, [])
+    
+    if not hef_list:
+        pytest.skip(f"No HEFs configured for {pipeline_type} on {hailo_arch}")
+    
+    logger.info(f"Testing {len(hef_list)} HEFs for {pipeline_type} on {hailo_arch}")
+    
+    # Test each HEF individually
+    failed_hefs = []
+    for hef in hef_list:
+        stdout, stderr, success = run_hef_with_pipeline(pipeline_type, hef)
+        
+        if not success:
+            failed_hefs.append({
+                'hef': hef,
+                'stderr': stderr.decode() if stderr else "",
+                'stdout': stdout.decode() if stdout else ""
+            })
+            logger.error(f"Failed to run {hef} with {pipeline_type}")
+        else:
+            logger.info(f"Successfully ran {hef} with {pipeline_type}")
+    
+    # Assert that all HEFs passed
+    if failed_hefs:
+        failure_details = "\n".join([
+            f"HEF: {fail['hef']}\nError: {fail['stderr']}\n" 
+            for fail in failed_hefs
+        ])
+        pytest.fail(f"Failed HEFs for {pipeline_type}:\n{failure_details}")
+
+
+def test_all_hefs_comprehensive():
+    """
+    Comprehensive test that runs all HEFs for all supported pipeline types.
+    This is a single test that gives you an overview of all HEF testing.
+    """
+    # Detect the architecture of the Hailo device
+    hailo_arch = detect_hailo_arch()
+    
+    if hailo_arch not in HEF_CONFIG:
+        pytest.skip(f"Unsupported Hailo architecture: {hailo_arch}")
+    
+    logger.info(f"Running comprehensive HEF test for {hailo_arch}")
+    
+    all_results = {}
+    total_tests = 0
+    total_passed = 0
+    
+    # Test each pipeline type
+    for pipeline_type, hef_list in HEF_CONFIG[hailo_arch].items():
+        if not hef_list:
+            continue
+            
+        logger.info(f"Testing {pipeline_type} pipeline with {len(hef_list)} HEFs")
+        all_results[pipeline_type] = {}
+        
+        for hef in hef_list:
+            total_tests += 1
+            stdout, stderr, success = run_hef_with_pipeline(pipeline_type, hef)
+            
+            all_results[pipeline_type][hef] = {
+                'success': success,
+                'stdout': stdout.decode() if stdout else "",
+                'stderr': stderr.decode() if stderr else ""
+            }
+            
+            if success:
+                total_passed += 1
+                logger.info(f"✓ {pipeline_type}: {hef}")
+            else:
+                logger.error(f"✗ {pipeline_type}: {hef}")
+    
+    # Generate summary report
+    logger.info(f"\nHEF Test Summary:")
+    logger.info(f"Total tests: {total_tests}")
+    logger.info(f"Passed: {total_passed}")
+    logger.info(f"Failed: {total_tests - total_passed}")
+    
+    # Log detailed results
+    for pipeline_type, results in all_results.items():
+        failed_hefs = [hef for hef, result in results.items() if not result['success']]
+        if failed_hefs:
+            logger.error(f"{pipeline_type} failed HEFs: {failed_hefs}")
+    
+    # Assert overall success
+    if total_passed < total_tests:
+        failed_details = []
+        for pipeline_type, results in all_results.items():
+            for hef, result in results.items():
+                if not result['success']:
+                    failed_details.append(f"{pipeline_type}/{hef}: {result['stderr']}")
+        
+        failure_summary = "\n".join(failed_details)
+        pytest.fail(f"HEF testing failed. {total_passed}/{total_tests} tests passed.\n\nFailures:\n{failure_summary}")
+
+
+def test_retraining_defaults():
+    log_dir = "logs"
+    os.makedirs(log_dir, exist_ok=True)
+    args = get_pipeline_args(
+        suite="labels,video_file,hef_path",
+        hef_path=str(Path(RESOURCES_ROOT_PATH_DEFAULT)/"models/hailo8l/yolov8s-hailo8l-barcode.hef"),
+        override_usb_camera=None,
+        override_video_input=str(Path(RESOURCES_ROOT_PATH_DEFAULT)/"videos"/BARCODE_VIDEO_EXAMPLE_NAME),
+        override_labels_json=str(get_resource_path(pipeline_name=None, resource_type=DEFAULT_LOCAL_RESOURCES_PATH, model=RETRAINING_BARCODE_LABELS_JSON_NAME))
+    )
+    log_file_path_empty = os.path.join(log_dir, "retraining.log")
+    stdout, stderr = b"", b""
+    cmd = ['python', '-u', "hailo_apps/hailo_app_python/apps/detection/detection_pipeline.py"] + args
+    print(f"Running retraining command: {' '.join(cmd)}")
+    stdout, stderr = run_pipeline_pythonpath_with_args("hailo_apps/hailo_app_python/apps/detection/detection_pipeline.py", args, log_file_path_empty)
+    out_str = stdout.decode().lower() if stdout else ""
+    err_str = stderr.decode().lower() if stderr else ""
+    print(f"Retraining Output:\n{out_str}")
+    assert "error" not in err_str, f"Reported an error in retraining run: {err_str}"
+    assert "traceback" not in err_str, f"Traceback in retraining run: {err_str}"
+
 if __name__ == "__main__":
+    # You can run specific tests like this:
+    # pytest test_file.py::test_all_hefs_by_pipeline -v
+    # pytest test_file.py::test_all_hefs_comprehensive -v
     pytest.main(["-v", __file__])

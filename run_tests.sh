@@ -18,6 +18,8 @@ python -m pip install -r tests/test_resources/requirements.txt
 echo "Downloading resources..."
 python -m hailo_apps.hailo_app_python.core.installation.download_resources --group all
 
+python -m hailo_apps.hailo_app_python.core.installation.download_resources --arch hailo8l --group all # this download to test hailo8l models on hailo8 
+
 # Run pytest via the Python module so it’s guaranteed to run in this venv
 echo "Running tests..."
 python -m pytest --log-cli-level=INFO \
