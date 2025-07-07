@@ -203,8 +203,8 @@ std::vector<HailoDetection> yolov5_decoding(xt::xarray<uint16_t> &output, const 
 std::vector<HailoDetection> post_per_branch(std::string branch_name, const int index, std::map<std::string, HailoTensorPtr> tensors, std::vector<xt::xarray<float>> anchor_list, std::vector<int> stride_list, const float iou_threshold, const float score_threshold, std::vector<xt::xarray<float>> grids, std::vector<xt::xarray<float>> anchor_grids, const int num_anchors, const int input_width, const int input_height)
 {
     auto output = common::get_xtensor_uint16(tensors[branch_name]);
-    float qp_zp = tensors[branch_name]->vstream_info().quant_info.qp_zp;
-    float qp_scale = tensors[branch_name]->vstream_info().quant_info.qp_scale;
+    float qp_zp = tensors[branch_name]->quant_info().qp_zp;
+    float qp_scale = tensors[branch_name]->quant_info().qp_scale;
     return yolov5_decoding(output, stride_list[index], anchor_list[index], grids[index], anchor_grids[index], num_anchors, score_threshold, qp_zp, qp_scale, input_width, input_height);
 }
 
@@ -214,7 +214,7 @@ std::vector<HailoDetection> post_per_branch(std::string branch_name, const int i
  *  */
 std::vector<HailoDetection> yolov5seg_post(auto &tensors, auto &anchor_list, auto &stride_list, const float iou_threshold, const float score_threshold, auto &grids, auto &anchor_grids, const int num_anchors, const int input_width, const int input_height, auto &outputs_name)
 {
-    auto proto_tensor = common::dequantize(common::get_xtensor(tensors[outputs_name[0]]), tensors[outputs_name[0]]->vstream_info().quant_info.qp_scale, tensors[outputs_name[0]]->vstream_info().quant_info.qp_zp);
+    auto proto_tensor = common::dequantize(common::get_xtensor(tensors[outputs_name[0]]), tensors[outputs_name[0]]->quant_info().qp_scale, tensors[outputs_name[0]]->quant_info().qp_zp);
 
     // run the postprocess for each branch seperately
     std::future<std::vector<HailoDetection>> t2 = std::async(post_per_branch, outputs_name[1], 2, tensors, anchor_list, stride_list, iou_threshold, score_threshold, grids, anchor_grids, num_anchors, input_width, input_height);

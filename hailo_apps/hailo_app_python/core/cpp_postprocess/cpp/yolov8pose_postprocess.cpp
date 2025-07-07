@@ -212,8 +212,8 @@ std::vector<Decodings> decode_boxes_and_keypoints(std::vector<HailoTensorPtr> ra
     for (uint i = 0; i < raw_boxes_outputs.size(); i++)
     {
         // Boxes setup
-        float32_t qp_scale = raw_boxes_outputs[i]->vstream_info().quant_info.qp_scale;
-        float32_t qp_zp = raw_boxes_outputs[i]->vstream_info().quant_info.qp_zp;
+        float32_t qp_scale = raw_boxes_outputs[i]->quant_info().qp_scale;
+        float32_t qp_zp = raw_boxes_outputs[i]->quant_info().qp_zp;
 
         auto output_b = common::get_xtensor(raw_boxes_outputs[i]);
         int num_proposals = output_b.shape(0) * output_b.shape(1);
@@ -223,8 +223,8 @@ std::vector<Decodings> decode_boxes_and_keypoints(std::vector<HailoTensorPtr> ra
         auto shape = {quantized_boxes.shape(1), quantized_boxes.shape(2)};
 
         // Keypoints setup
-        float32_t qp_scale_kpts = raw_keypoints[i]->vstream_info().quant_info.qp_scale;
-        float32_t qp_zp_kpts = raw_keypoints[i]->vstream_info().quant_info.qp_zp;
+        float32_t qp_scale_kpts = raw_keypoints[i]->quant_info().qp_scale;
+        float32_t qp_zp_kpts = raw_keypoints[i]->quant_info().qp_zp;
         hailo_format_type_t keypoints_format = raw_keypoints[i]->vstream_info().format.type;
         if (keypoints_format == HAILO_FORMAT_TYPE_UINT8)
         {
@@ -323,7 +323,7 @@ Triple get_boxes_scores_keypoints(std::vector<HailoTensorPtr> &tensors, int num_
         outputs_boxes[i / 3] = tensors[i];
 
         // Extract and dequantize the scores outputs
-        auto dequantized_output_s = common::dequantize(common::get_xtensor(tensors[i + 1]), tensors[i + 1]->vstream_info().quant_info.qp_scale, tensors[i + 1]->vstream_info().quant_info.qp_zp);
+        auto dequantized_output_s = common::dequantize(common::get_xtensor(tensors[i + 1]), tensors[i + 1]->quant_info().qp_scale, tensors[i + 1]->quant_info().qp_zp);
         int num_proposals_scores = dequantized_output_s.shape(0) * dequantized_output_s.shape(1);
 
         // From the layer extract the scores
