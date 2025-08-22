@@ -16,7 +16,10 @@ VENV_NAME="venv_hailo_apps"
 # Function to check if the script is being sourced
 is_sourced() {
     if [ -n "$ZSH_VERSION" ]; then
-        [[ -o sourced ]]
+        case "$ZSH_EVAL_CONTEXT" in
+            *:file*) return 0 ;;  # Match any context containing ':file'
+            *) return 1 ;;
+        esac
     elif [ -n "$BASH_VERSION" ]; then
         [[ "${BASH_SOURCE[0]}" != "$0" ]]
     else
@@ -55,7 +58,7 @@ if is_sourced; then
     }
 else
     echo "This script should be sourced, not executed directly."
-    exit 1
+    return 1 2>/dev/null || exit 1
 fi
 
 # Get the absolute path of the project's root directory (where this script is located).
