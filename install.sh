@@ -12,7 +12,7 @@ NO_INSTALL=false
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    -n|--venv-name)
+    -v|--venv-name)
       VENV_NAME="$2"
       shift 2
       ;;
@@ -28,7 +28,8 @@ while [[ $# -gt 0 ]]; do
       DOWNLOAD_GROUP="all"
       shift
       ;;
-    -x)
+    -n | --no-install)
+      # Skip installation of Python packages
       NO_INSTALL=true
       echo "Skipping installation of Python packages."
       shift
