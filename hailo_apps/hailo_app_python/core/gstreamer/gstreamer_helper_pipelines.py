@@ -8,7 +8,7 @@ from hailo_apps.hailo_app_python.core.common.defines import (
 
 def get_source_type(input_source):
     # This function will return the source type based on the input source
-    # return values can be "file", "mipi" or "usb"
+    # return values can be "file", "mipi", "usb" or "rtsp"
     input_source = str(input_source)
     if input_source.startswith("/dev/video"):
         return 'usb'
@@ -18,6 +18,8 @@ def get_source_type(input_source):
         return 'libcamera'
     elif input_source.startswith('0x'):
         return 'ximage'
+    elif input_source.startswith("rtsp://") or input_source.startswith("rtspt://"):
+        return 'rtsp'
     else:
         return 'file'
 
@@ -106,6 +108,12 @@ def SOURCE_PIPELINE(video_source, video_width=640, video_height=640,
             f'{QUEUE(name=f"{name}queue_scale_")} ! '
             f'videoscale ! '
         )
+    elif source_type == 'rtsp':
+        source_element = (
+            f'uridecodebin uri="{video_source}" name={name}_udb use-buffering=false ! '
+            'videoconvert qos=false ! '
+            'videoflip name=videoflip video-direction=horiz ! '
+    )    
     else:
         source_element = (
             f'filesrc location="{video_source}" name={name} ! '
