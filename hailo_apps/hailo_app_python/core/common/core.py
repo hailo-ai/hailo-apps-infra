@@ -100,6 +100,8 @@ def get_default_parser():
         For manually specifying a connected usb camera, use '-i /dev/video<X>' \
         Defaults to application specific video."
     )
+    parser.add_argument('--vflip', action='store_true', help='Enable vertical flip of the frame')
+    parser.add_argument('--hflip', action='store_true', help='Enable horizontal flip of the frame')
     parser.add_argument("--use-frame", "-u", action="store_true", help="Use frame from the callback function")
     parser.add_argument("--show-fps", "-f", action="store_true", help="Print FPS on sink")
     parser.add_argument(
