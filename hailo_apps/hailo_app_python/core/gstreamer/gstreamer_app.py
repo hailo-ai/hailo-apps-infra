@@ -4,6 +4,7 @@ import setproctitle
 import signal
 import os
 import gi
+from libcamera import Transform
 import threading
 import sys
 import cv2
@@ -151,6 +152,8 @@ class GStreamerApp:
         # Set user data parameters
         user_data.use_frame = self.options_menu.use_frame
 
+        self.hflip = self.options_menu.hflip
+        self.vflip = self.options_menu.vflip
         self.sync = "false" if (self.options_menu.disable_sync or self.source_type != "file") else "true"
         self.show_fps = self.options_menu.show_fps
 
@@ -332,8 +335,9 @@ class GStreamerApp:
             display_process = multiprocessing.Process(target=display_user_data_frame, args=(self.user_data,))
             display_process.start()
 
+        transform = Transform(vflip=self.vflip, hflip=self.hflip)
         if self.source_type == RPI_NAME_I:
-            picam_thread = threading.Thread(target=picamera_thread, args=(self.pipeline, self.video_width, self.video_height, self.video_format))
+            picam_thread = threading.Thread(target=picamera_thread, args=(self.pipeline, self.video_width, self.video_height, self.video_format, transform))
             self.threads.append(picam_thread)
             picam_thread.start()
 
@@ -373,7 +377,7 @@ class GStreamerApp:
                 print("Exiting...")
                 sys.exit(0)
 
-def picamera_thread(pipeline, video_width, video_height, video_format, picamera_config=None):
+def picamera_thread(pipeline, video_width, video_height, video_format, transform, picamera_config=None):
     appsrc = pipeline.get_by_name("app_source")
     appsrc.set_property("is-live", True)
     appsrc.set_property("format", Gst.Format.TIME)
@@ -385,7 +389,7 @@ def picamera_thread(pipeline, video_width, video_height, video_format, picamera_
             main = {'size': (1280, 720), 'format': 'RGB888'}
             lores = {'size': (video_width, video_height), 'format': 'RGB888'}
             controls = {'FrameRate': 30}
-            config = picam2.create_preview_configuration(main=main, lores=lores, controls=controls)
+            config = picam2.create_preview_configuration(main=main, lores=lores, controls=controls, transform=transform)
         else:
             config = picamera_config
         # Configure the camera with the created configuration

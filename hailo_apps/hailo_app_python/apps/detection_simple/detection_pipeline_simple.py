@@ -22,7 +22,7 @@ class GStreamerDetectionApp(GStreamerApp):
         parser.add_argument(
             "--labels-json",
             default=None,
-            help="Path to costume labels JSON file",
+            help="Path to custom labels JSON file",
         )
         # Call the parent class constructor
         super().__init__(parser, user_data)
