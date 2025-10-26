@@ -30,10 +30,10 @@ def app_callback(pad, info, user_data):
     return Gst.PadProbeReturn.OK
 
 def main():
+    """Main function for CLI entry point."""
     user_data = user_app_callback_class()  # Create an instance of the user app callback class
     app = GStreamerTilingApp(app_callback, user_data)
     app.run()
-
 
 if __name__ == "__main__":
     main()

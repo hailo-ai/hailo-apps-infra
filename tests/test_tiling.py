@@ -8,9 +8,9 @@ import pytest
 
 # Local application-specific imports
 from hailo_apps.hailo_app_python.core.common.test_utils import (
-    run_pipeline_module_with_args, 
-    run_pipeline_pythonpath_with_args, 
-    run_pipeline_cli_with_args, 
+    run_pipeline_module_with_args,
+    run_pipeline_pythonpath_with_args,
+    run_pipeline_cli_with_args,
     get_pipeline_args
 )
 # endregion imports
@@ -43,7 +43,7 @@ def run_test(pipeline, run_method_name, test_name, args):
     Helper function to run the test logic.
     """
     log_file_path = os.path.join(log_dir, f"{pipeline['name']}_{test_name}_{run_method_name}.log")
-    
+
     if run_method_name == 'module':
         stdout, stderr = run_methods[run_method_name](pipeline['module'], args, log_file_path)
     elif run_method_name == 'pythonpath':
@@ -52,7 +52,7 @@ def run_test(pipeline, run_method_name, test_name, args):
         stdout, stderr = run_methods[run_method_name](pipeline['cli'], args, log_file_path)
     else:
         pytest.fail(f"Unknown run method: {run_method_name}")
-    
+
     out_str = stdout.decode().lower() if stdout else ""
     err_str = stderr.decode().lower() if stderr else ""
     print(f"Completed: {test_name}, {pipeline['name']}, {run_method_name}: {out_str}")
@@ -60,18 +60,33 @@ def run_test(pipeline, run_method_name, test_name, args):
     assert 'traceback' not in err_str, f"{pipeline['name']} ({run_method_name}) traceback in {test_name} : {err_str}"
 
 
+# Tests based on README.md examples
+
 @pytest.mark.parametrize('run_method_name', list(run_methods.keys()))
-def test_train_singlescale(pipeline, run_method_name):
-    test_name = 'test_singlescale_tiling'
-    args = get_pipeline_args(suite='single_scaling')
+def test_default_visdrone_detection(pipeline, run_method_name):
+    """Test default VisDrone aerial detection mode from README example."""
+    test_name = 'test_default_visdrone_detection'
+    args = []  # Default behavior - uses VisDrone MobileNetSSD + VisDrone video
     run_test(pipeline, run_method_name, test_name, args)
 
 
 @pytest.mark.parametrize('run_method_name', list(run_methods.keys()))
-def test_train_multiscale(pipeline, run_method_name):
-    test_name = 'test_multiscale_tiling'
-    args = []
+def test_general_detection_mode(pipeline, run_method_name):
+    """Test general detection mode from README example."""
+    test_name = 'test_general_detection_mode'
+    args = ['--general-detection']  # Uses YOLO + COCO dataset + multi-scale
     run_test(pipeline, run_method_name, test_name, args)
+
+
+@pytest.mark.parametrize('run_method_name', list(run_methods.keys()))
+def test_live_camera_general_detection(pipeline, run_method_name):
+    """Test live camera with general detection from README example."""
+    test_name = 'test_live_camera_general_detection'
+    # Get proper USB camera arguments using the same method as test_all_pipelines.py
+    usb_args = get_pipeline_args(suite="usb_camera")
+    args = usb_args + ['--general-detection']  # Uses YOLO + COCO dataset + multi-scale
+    run_test(pipeline, run_method_name, test_name, args)
+
 
 if __name__ == "__main__":
     pytest.main(["-v", __file__])

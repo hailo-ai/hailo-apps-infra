@@ -244,9 +244,25 @@ RTSP_APP_TITLE = "Hailo RTSP App"
 
 # TILING pipeline defaults
 TILING_APP_TITLE = "Hailo Tiling App"
-TILING_MODEL_NAME = "ssd_mobilenet_v1"
-TILING_POSTPROCESS_SO_FILENAME = "libmobilenet_ssd_postprocess.so"
-TILING_POSTPROCESS_FUNCTION = "mobilenet_ssd"
+TILING_VIDEO_EXAMPLE_NAME = "tiling_visdrone_720p.mp4"
+
+# YOLO model definitions
+TILING_YOLO_MODEL_NAME_H8 = "yolov6n"
+TILING_YOLO_MODEL_NAME_H8L = "yolov6n"
+TILING_YOLO_POSTPROCESS_SO_FILENAME = "libyolo_hailortpp_postprocess.so"
+TILING_YOLO_POSTPROCESS_FUNCTION = "filter"
+TILING_YOLO_DEFAULT_MODEL_INPUT_SIZE = 640
+
+# MobileNetSSD model definitions
+TILING_MOBILENET_MODEL_NAME_H8 = "ssd_mobilenet_v1_visdrone"
+TILING_MOBILENET_MODEL_NAME_H8L = "ssd_mobilenet_v1_visdrone"
+TILING_MOBILENET_POSTPROCESS_SO_FILENAME = "libmobilenet_ssd_postprocess.so"
+TILING_MOBILENET_POSTPROCESS_FUNCTION = "mobilenet_ssd_visdrone"
+TILING_MOBILENET_DEFAULT_MODEL_INPUT_SIZE = 300
+
+# Default model type and size (for backward compatibility)
+TILING_DEFAULT_MODEL_TYPE = "mobilenet"
+TILING_DEFAULT_MODEL_INPUT_SIZE = 300
 
 # Installation & subprocess defaults
 PIP_SHOW_TIMEOUT = 5  # seconds

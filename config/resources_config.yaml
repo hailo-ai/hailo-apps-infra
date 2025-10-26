@@ -6,6 +6,7 @@ default:
   - https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/video/example.mp4
   - https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/video/example_640.mp4
   - https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/video/face_recognition.mp4
+  - https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/video/tiling_visdrone_720p.mp4
   - https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/configs/scrfd.json
   - https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/configs/barcode_labels.json
   - https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/configs/face_recon_algo_params.json
@@ -19,6 +20,7 @@ hailo8:
   - yolov8m_pose
   - scrfd_10g
   - arcface_mobilefacenet
+  - https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/hefs/h8/ssd_mobilenet_v1_visdrone.hef
 
 hailo8l:
   - yolov8s
@@ -26,7 +28,8 @@ hailo8l:
   - yolov8s_pose
   - scrfd_2.5g
   - arcface_mobilefacenet
-  
+  - https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/hefs/h8l_rpi/ssd_mobilenet_v1_visdrone.hef
+
 all:
   - yolov8s_pose
   - yolov8s
@@ -39,7 +42,7 @@ all:
   - yolov11s
   - yolov11n
   - scdepthv3
-  
+
 retrain:
   - https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/hefs/h8l_rpi/yolov8s-hailo8l-barcode.hef
   - https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/video/barcode.mp4
