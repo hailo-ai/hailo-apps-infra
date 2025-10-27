@@ -2,8 +2,6 @@
 # Standard library imports
 import datetime
 from datetime import datetime
-import threading
-from pathlib import Path
 
 # Third-party imports
 import gi
@@ -16,12 +14,9 @@ from hailo_apps.hailo_app_python.core.gstreamer.gstreamer_app import app_callbac
 from hailo_apps.hailo_app_python.apps.face_recognition.face_recognition_pipeline import GStreamerFaceRecognitionApp
 from hailo_apps.hailo_app_python.core.common.telegram_handler import TelegramHandler
 from hailo_apps.hailo_app_python.core.common.defines import HAILO_LOGO_PHOTO_NAME
-from hailo_apps.hailo_app_python.apps.face_recognition.face_ui_elements import UIElements
-from hailo_apps.hailo_app_python.apps.face_recognition.face_ui_callbacks import UICallbacks
 # endregion
 
 # region Constants
-MAX_UI_TEXT_MESSAGES = 10  # Maximum number of UI text messages to store
 TELEGRAM_ENABLED = False  # Enable Telegram notifications
 TELEGRAM_TOKEN = ''  # Telegram bot token
 TELEGRAM_CHAT_ID = ''  # Telegram chat ID
@@ -32,7 +27,6 @@ class user_callbacks_class(app_callback_class):
         super().__init__()
         self.frame = None
         self.latest_track_id = -1
-        self.ui_text_message = []  # Store detected persons
 
         # Telegram settings as instance attributes
         self.telegram_enabled = TELEGRAM_ENABLED
@@ -82,28 +76,20 @@ def app_callback(pad, info, user_data):
                         string_to_print += f'Person recognition: {classification.get_label()} (Confidence: {classification.get_confidence():.1f})'
                     if track_id > user_data.latest_track_id:
                         user_data.latest_track_id = track_id
-                        if len(user_data.ui_text_message) >= MAX_UI_TEXT_MESSAGES:
-                            user_data.ui_text_message.pop(0)  # Remove the oldest entry to maintain size
-                        user_data.ui_text_message.append(string_to_print)
+                        print(string_to_print)
     return Gst.PadProbeReturn.OK
 
 def main():  
     user_data = user_callbacks_class()
     pipeline = GStreamerFaceRecognitionApp(app_callback, user_data)  # appsink_callback argument provided anyway although in non UI interface where eventually not used - since here we don't have access to requested UI/CLI mode
-    if pipeline.options_menu.mode == 'delete':  # always CLI even if mistakenly GUI mode is selected
+    if pipeline.options_menu.mode == 'delete':
         pipeline.db_handler.clear_table()
         exit(0)
-    elif pipeline.options_menu.mode == 'train':  # always CLI even if mistakenly GUI mode is selected
+    elif pipeline.options_menu.mode == 'train':
         pipeline.run()
         exit(0)
-    elif not pipeline.options_menu.ui:  # must be then run in CLI interface
+    else:  # 'run' mode
         pipeline.run()
-    else:  # must be then run in GUI interface
-        ui_elements = UIElements()  # Instantiate the UIElements and UICallbacks classes
-        ui_interface = ui_elements.create_interface(UICallbacks(pipeline), pipeline)  # Create the Gradio interface
-        ui_thread = threading.Thread(target=lambda: ui_interface.launch(allowed_paths=[Path(Path(__file__).parent, HAILO_LOGO_PHOTO_NAME)]), daemon=False)  # Launch the stream UI in a separate thread from the GStreamer pipeline
-        ui_thread.start()
-        ui_thread.join()  # otherwise not working
 
 if __name__ == "__main__": 
     main()

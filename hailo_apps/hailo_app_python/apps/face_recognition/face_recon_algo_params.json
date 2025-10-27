@@ -1,0 +1,8 @@
+{
+    "min_face_pixels_tolerance": 12000,
+    "blurriness_tolerance": 150,
+    "procrustes_distance_threshold": 0.3,
+    "skip_frames": 30,
+    "lance_db_vector_search_classificaiton_confidence_threshold": 0.5,
+    "batch_size": 1
+}

@@ -21,10 +21,7 @@ dependencies = [
     "opencv-python",
     "python-dotenv",
     "pyyaml",
-    "gradio",
-    "fastrtc",
     "lancedb",
-    "matplotlib",
     "Pillow",
     "ruff>=0.5.7",
     "pre-commit>=3.7.0"

@@ -2,12 +2,15 @@
 # Standard library imports
 import os
 
-import matplotlib.pyplot as plt
-
 # Third-party imports
 import numpy as np
-from matplotlib.offsetbox import AnnotationBbox, OffsetImage
-from matplotlib.patches import Ellipse
+try:
+    import matplotlib.pyplot as plt
+    from matplotlib.offsetbox import AnnotationBbox, OffsetImage
+except ImportError as e:
+    print("Please install matplotlib: pip install matplotlib")
+    exit(1)
+
 from PIL import Image, ImageDraw
 
 # endregion imports
@@ -46,7 +49,7 @@ class DatabaseVisualizer:
         return self.global_fig  # Return the blank figure
 
     def add_embeddings_to_existing_plot(
-        self, embeddings, labels=None, cropped_frames=None, mode="cli"
+        self, embeddings, labels=None, cropped_frames=None
     ):
         """Adds multiple embeddings as black points to the existing plot created by visualize.
 
@@ -54,7 +57,6 @@ class DatabaseVisualizer:
             embeddings (list of numpy.ndarray): The embeddings to add to the plot.
             labels (list of str, optional): The labels corresponding to the embeddings.
             cropped_frames (list of numpy.ndarray, optional): Cropped frames corresponding to the embeddings.
-            mode (str): The mode of visualization ('cli' or 'ui').
         """
         if self.global_ax is None or self.global_pca is None:
             print("Error: The plot has not been initialized. Call visualize first.")
@@ -121,12 +123,10 @@ class DatabaseVisualizer:
                 self.global_ax.add_artist(ab)
 
         # Update the plot dynamically
-        if mode == "cli":
-            self.global_fig.canvas.draw_idle()  # Redraw the canvas
-        else:  # UI
-            return self.global_fig
+        self.global_fig.canvas.draw_idle()  # Redraw the canvas
 
-    def visualize(self, mode="cli"):
+
+    def visualize(self):
         """Creates a 2D visualization of records with their embeddings, confidence circles, and their first sample near the point."""
         # Extract all embeddings and perform PCA for dimensionality reduction
         all_embeddings = []
@@ -147,8 +147,6 @@ class DatabaseVisualizer:
             print(
                 "No embeddings found. The plot can't be visualized. Run in 'save' or 'train' mode first to populate the database with samples."
             )
-            if mode == "ui":  # UI
-                return self.create_blank_figure()  # Return the blank figure
             return
 
         # Perform PCA to reduce embeddings to 2D
@@ -279,16 +277,6 @@ class DatabaseVisualizer:
         plt.grid(True)
         plt.tight_layout()
 
-        if mode == "cli":
-            plt.ion()
-            plt.show(block=False)  # Show the plot
-        else:  # UI
-            # Ensure grid is always visible (if this is a matplotlib figure)
-            if hasattr(self.global_fig, "gca"):
-                ax = self.global_fig.gca()
-                ax.grid(True)
-            return self.global_fig
-
     def perform_pca(self, embeddings, n_components=2):
         """Perform PCA to reduce the dimensionality of embeddings.
 
@@ -322,3 +310,46 @@ class DatabaseVisualizer:
         reduced_embeddings = np.dot(centered_embeddings, principal_components)
 
         return reduced_embeddings, principal_components, mean
+
+
+if __name__ == "__main__":
+    from hailo_apps.hailo_app_python.core.common.db_handler import DatabaseHandler, Record
+    from hailo_apps.hailo_app_python.core.common.core import get_resource_path
+    from hailo_apps.hailo_app_python.core.common.defines import (
+        FACE_RECON_DATABASE_DIR_NAME,
+        FACE_RECON_DIR_NAME,
+        FACE_RECON_SAMPLES_DIR_NAME,
+    )    
+    # Initialize database handler
+    db_handler = DatabaseHandler(
+        db_name='persons.db', 
+        table_name='persons', 
+        schema=Record,
+        threshold=0.5,  # Default threshold value
+        database_dir=get_resource_path(
+            pipeline_name=None, 
+            resource_type=FACE_RECON_DIR_NAME, 
+            model=FACE_RECON_DATABASE_DIR_NAME
+        ),
+        samples_dir=get_resource_path(
+            pipeline_name=None, 
+            resource_type=FACE_RECON_DIR_NAME, 
+            model=FACE_RECON_SAMPLES_DIR_NAME
+        )
+    )
+    
+    # Get database records
+    db_records = db_handler.get_all_records()
+    
+    # Create visualizer and set records
+    visualizer = DatabaseVisualizer()
+    visualizer.set_db_records(db_records)
+    
+    # Create visualization
+    fig = visualizer.visualize()
+    
+    # Show the plot
+    if fig is not None:
+        plt.show()
+    else:
+        print("No visualization created - check if database has records")

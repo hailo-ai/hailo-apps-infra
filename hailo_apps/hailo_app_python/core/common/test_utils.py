@@ -32,8 +32,6 @@ def get_pipeline_args(
       - "show_fps": Append the flag "--show-fps".
       - "dump_dot": Append the flag "--dump-dot".
       - "labels": Append the flag "--labels-json" followed by "resources/labels.json".
-      - "ui": Append the flag "--ui".
-      - "visualize": Append the flag "--visualize".
       - "mode-train": Set the '--mode' argument to train.
       - "mode-delete": Set the '--mode' argument to delete.
       - "mode-run": Set the '--mode' argument to run.
@@ -84,10 +82,6 @@ def get_pipeline_args(
                 json_file = "resources/labels.json"
             # Append or override --input (here we simply add the argument)
             args += ["--labels-json", json_file]
-        elif s == "ui":
-            args.append("--ui")
-        elif s == "visualize":
-            args.append("--visualize")
         elif s == "mode-train":
             args += ["--mode", "train"]
         elif s == "mode-delete":

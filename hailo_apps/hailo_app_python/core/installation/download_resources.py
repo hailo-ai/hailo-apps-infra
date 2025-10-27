@@ -27,7 +27,6 @@ def create_default_config():
             "https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/video/face_recognition.mp4",
             "https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/configs/scrfd.json",
             "https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/configs/barcode_labels.json",
-            "https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/configs/face_recon_algo_params.json",
             "https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/configs/yolov5m_seg.json",
             "https://hailo-csdata.s3.eu-west-2.amazonaws.com/resources/configs/yolov5n_seg.json",
         ],

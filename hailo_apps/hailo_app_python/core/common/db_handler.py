@@ -6,21 +6,18 @@ import time
 import uuid
 from typing import Any
 
-import lancedb
-
 # Third-party imports
 import numpy as np
+import lancedb
 from lancedb.pydantic import LanceModel, Vector
 
 # Local application-specific imports
 from hailo_apps.hailo_app_python.core.common.core import get_resource_path
-from hailo_apps.hailo_app_python.core.common.db_visualizer import DatabaseVisualizer
 from hailo_apps.hailo_app_python.core.common.defines import (
     FACE_RECON_DATABASE_DIR_NAME,
     FACE_RECON_DIR_NAME,
     FACE_RECON_SAMPLES_DIR_NAME,
 )
-
 # endregion
 
 
@@ -553,6 +550,3 @@ if __name__ == "__main__":
     )
     all_records = database_handler.get_all_records()
     alice = database_handler.get_record_by_label(label="Alice")
-    db_visualizer = DatabaseVisualizer()
-    db_visualizer.set_db_records(all_records)
-    db_visualizer.visualize(mode="cli")
