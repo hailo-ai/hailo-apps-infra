@@ -8,7 +8,7 @@ set -euo pipefail
 # ------------------------------------------------------------------------------
 
 # Base URL of the deb server
-BASE_URL="http://dev-public.hailo.ai/2025-07"
+BASE_URL="http://dev-public.hailo.ai/2025_10"
 
 # Default version numbers for packages (if using --version, you can adjust these)
 

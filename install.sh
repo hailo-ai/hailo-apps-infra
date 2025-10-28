@@ -11,6 +11,31 @@ NO_INSTALL=false
 NO_SYSTEM_PYTHON=false
 ENV_FILE="${SCRIPT_DIR}/.env"
 
+# Detect if running with sudo and get original user and group
+if [[ ${EUID:-$(id -u)} -eq 0 ]]; then
+  if [[ -z "${SUDO_USER:-}" ]]; then
+    echo "❌ This script must not be run as root directly. Please run with sudo as a regular user:"
+    echo "   sudo $0"
+    exit 1
+  fi
+  ORIGINAL_USER="${SUDO_USER}"
+  # Get the primary group of the original user
+  ORIGINAL_GROUP=$(id -gn "${SUDO_USER}")
+else
+  echo "❌ This script requires sudo privileges. Please run with sudo:"
+  echo "   sudo $0 $*"
+  exit 1
+fi
+
+echo "🔍 Detected user: ${ORIGINAL_USER}"
+echo "🔍 Detected primary group: ${ORIGINAL_GROUP}"
+
+# Check if group name is different from username
+if [[ "${ORIGINAL_USER}" == "${ORIGINAL_GROUP}" ]]; then
+  echo "✅ User's primary group matches username"
+else
+  echo "✅ User's primary group is different from username: ${ORIGINAL_GROUP}"
+fi
 
 as_original_user() {
   if [[ ${EUID:-$(id -u)} -eq 0 && -n "${SUDO_USER:-}" ]]; then
@@ -20,11 +45,21 @@ as_original_user() {
   fi
 }
 
+# Function to fix ownership of files/directories to original user and group
+fix_ownership() {
+  local target="$1"
+  if [[ -e "$target" ]]; then
+    sudo chown -R "${ORIGINAL_USER}:${ORIGINAL_GROUP}" "$target" 2>/dev/null || true
+  fi
+}
+
 show_help() {
     cat << EOF
-Usage: $0 [OPTIONS]
+Usage: sudo $0 [OPTIONS]
 
 Install Hailo Apps Infrastructure with virtual environment setup.
+
+⚠️  This script MUST be run with sudo.
 
 OPTIONS:
     -n, --venv-name NAME        Set virtual environment name (default: venv_hailo_apps)
@@ -36,12 +71,12 @@ OPTIONS:
     -h, --help                  Show this help message and exit
 
 EXAMPLES:
-    $0                          # Basic installation with default settings
-    $0 -n my_venv               # Use custom virtual environment name
-    $0 --all                    # Install with all models/resources
-    $0 -x                       # Skip Python package installation
-    $0 --no-system-python       # Don't use system site-packages
-    $0 -ph /path/to/pyhailort.whl -pt /path/to/pytappas.whl  # Use custom wheel files
+    sudo $0                          # Basic installation with default settings
+    sudo $0 -n my_venv               # Use custom virtual environment name
+    sudo $0 --all                    # Install with all models/resources
+    sudo $0 -x                       # Skip Python package installation
+    sudo $0 --no-system-python       # Don't use system site-packages
+    sudo $0 -ph /path/to/pyhailort.whl -pt /path/to/pytappas.whl  # Use custom wheel files
 
 DESCRIPTION:
     This script sets up a Python virtual environment for Hailo Apps Infrastructure.
@@ -49,13 +84,19 @@ DESCRIPTION:
     missing Python bindings in the virtual environment.
 
     The script will:
-    1. Check installed Hailo components
-    2. Create/recreate virtual environment
-    3. Install required Python packages
-    4. Download models and resources
-    5. Run post-installation setup
+    1. Detect the original user and their primary group
+    2. Check installed Hailo components
+    3. Create/recreate virtual environment
+    4. Install required Python packages
+    5. Download models and resources
+    6. Run post-installation setup
+    7. Set correct ownership for all created files
+
+    Operations requiring root privileges (like creating directories in /usr/local)
+    are executed with sudo, while all other operations are executed as the original user.
 
 REQUIREMENTS:
+    - Must be run with sudo
     - Hailo PCI driver must be installed
     - HailoRT must be installed
     - TAPPAS core must be installed
@@ -183,8 +224,8 @@ if [[ -d "${VENV_PATH}" ]]; then
   echo "🗑️  Removing existing virtualenv at ${VENV_PATH}"
   # Try removing as regular user first, fallback to sudo if needed
   if ! as_original_user rm -rf "${VENV_PATH}" 2>/dev/null; then
-    echo "  ⚠️  Regular user removal failed, trying with sudo..."
-    sudo chown -R "${SUDO_USER:-$USER}:${SUDO_USER:-$USER}" "${VENV_PATH}" 2>/dev/null || true
+    echo "  ⚠️  Regular user removal failed, fixing ownership..."
+    fix_ownership "${VENV_PATH}"
     as_original_user rm -rf "${VENV_PATH}"
   fi
 fi
@@ -193,13 +234,13 @@ echo "🧹 Cleaning up build artifacts..."
 # Try cleaning as regular user first, fallback to sudo if needed
 if ! as_original_user find . -name "*.egg-info" -type d -exec rm -rf {} + 2>/dev/null; then
   echo "  ⚠️  Regular user cleanup failed, fixing ownership..."
-  sudo chown -R "${SUDO_USER:-$USER}:${SUDO_USER:-$USER}" . 2>/dev/null || true
+  fix_ownership .
   as_original_user find . -name "*.egg-info" -type d -exec rm -rf {} + 2>/dev/null || true
 fi
 
 if ! as_original_user rm -rf build/ dist/ 2>/dev/null; then
   echo "  ⚠️  Regular user cleanup failed, fixing ownership..."
-  sudo chown -R "${SUDO_USER:-$USER}:${SUDO_USER:-$USER}" . 2>/dev/null || true
+  fix_ownership .
   as_original_user rm -rf build/ dist/ 2>/dev/null || true
 fi
 echo "✅ Build artifacts cleaned"
@@ -208,8 +249,8 @@ echo "✅ Build artifacts cleaned"
 if [[ -f "${ENV_FILE}" ]]; then
   echo "🗑️  Removing existing .env file at ${ENV_FILE}"
   if ! as_original_user rm -f "${ENV_FILE}" 2>/dev/null; then
-    echo "  ⚠️  Regular user removal failed, trying with sudo..."
-    sudo chown "${SUDO_USER:-$USER}:${SUDO_USER:-$USER}" "${ENV_FILE}" 2>/dev/null || true
+    echo "  ⚠️  Regular user removal failed, fixing ownership..."
+    fix_ownership "${ENV_FILE}"
     as_original_user rm -f "${ENV_FILE}"
   fi
 fi
@@ -284,15 +325,14 @@ as_original_user bash -c "source '${VENV_PATH}/bin/activate' && pip install -e .
 echo "📁 Creating Hailo resources directories..."
 
 RESOURCES_ROOT="/usr/local/hailo/resources"
-ORIGINAL_USER="${SUDO_USER:-$USER}"
 
-# Create the directory structure
+# Create the directory structure (requires sudo)
 sudo mkdir -p ${RESOURCES_ROOT}/models/{hailo8,hailo8l,hailo10h}
 sudo mkdir -p ${RESOURCES_ROOT}/{videos,so,photos,json,packages}
 sudo mkdir -p ${RESOURCES_ROOT}/face_recon/{train,samples}
 
 # Set ownership to current user and their primary group
-sudo chown -R ${ORIGINAL_USER}:${ORIGINAL_USER} ${RESOURCES_ROOT}
+sudo chown -R ${ORIGINAL_USER}:${ORIGINAL_GROUP} ${RESOURCES_ROOT}
 
 # Set permissions: rwxr-xr-x for directories (775 for group access)
 sudo chmod -R 775 ${RESOURCES_ROOT}
@@ -301,7 +341,7 @@ sudo chmod -R 775 ${RESOURCES_ROOT}
 sudo chmod -R u+w ${RESOURCES_ROOT}
 
 echo "✅ Hailo resources directories created successfully"
-echo "   Owner: ${ORIGINAL_USER}:${ORIGINAL_USER}"
+echo "   Owner: ${ORIGINAL_USER}:${ORIGINAL_GROUP}"
 echo "   Location: ${RESOURCES_ROOT}"
 
 echo "🔧 Running post-install script…"
@@ -316,18 +356,18 @@ if [[ -d "resources" ]]; then
         # Test if user can write to the target directory
         if ! as_original_user test -w "$target_dir" 2>/dev/null; then
             echo "  ⚠️  Target directory requires sudo permissions, fixing ownership..."
-            sudo chown -R "${SUDO_USER:-$USER}:${SUDO_USER:-$USER}" "$target_dir" 2>/dev/null || true
+            fix_ownership "$target_dir"
         fi
         # Also fix the symlink itself
         if ! as_original_user test -w "resources" 2>/dev/null; then
             echo "  ⚠️  Symlink requires sudo permissions, fixing ownership..."
-            sudo chown -R "${SUDO_USER:-$USER}:${SUDO_USER:-$USER}" "resources" 2>/dev/null || true
+            fix_ownership "resources"
         fi
     else
         # It's a regular directory
         if ! as_original_user test -w "resources" 2>/dev/null; then
             echo "  ⚠️  Resources directory requires sudo permissions, fixing ownership..."
-            sudo chown -R "${SUDO_USER:-$USER}:${SUDO_USER:-$USER}" "resources" 2>/dev/null || true
+            fix_ownership "resources"
         fi
     fi
 fi
@@ -426,10 +466,18 @@ verify_installation() {
 # Run verification
 verify_installation
 
+# Final ownership fix for all project files
+echo ""
+echo "🔧 Ensuring all project files have correct ownership..."
+fix_ownership "${SCRIPT_DIR}"
+echo "✅ Project files ownership fixed to ${ORIGINAL_USER}:${ORIGINAL_GROUP}"
+
 echo ""
 echo "✅ Installation process completed!"
 echo "Virtual environment: ${VENV_NAME}"
 echo "Location: ${VENV_PATH}"
+echo "User: ${ORIGINAL_USER}"
+echo "Group: ${ORIGINAL_GROUP}"
 
 echo "✅ All done! Your package is now in '${VENV_NAME}'."
 echo "source setup_env.sh to setup the environment"

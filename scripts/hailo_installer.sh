@@ -23,7 +23,7 @@ set -e
 # --- Configurable Variables ---
 
 # Base URL of the deb server
-BASE_URL="http://dev-public.hailo.ai/2025-10"
+BASE_URL="http://dev-public.hailo.ai/2025_10"
 declare -a DOWNLOADED_URLS=()
 
 
