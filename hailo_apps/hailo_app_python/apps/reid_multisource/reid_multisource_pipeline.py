@@ -16,7 +16,7 @@ import hailo
 from hailo import HailoTracker
 from hailo_apps.hailo_app_python.core.common.core import get_default_parser, get_resource_path
 from hailo_apps.hailo_app_python.core.common.db_handler import DatabaseHandler, Record
-from hailo_apps.hailo_app_python.core.common.installation_utils import detect_hailo_arch
+from hailo_apps.hailo_app_python.core.common.installation_utils import detect_hailo_arch, detect_host_arch
 from hailo_apps.hailo_app_python.core.common.defines import (
     ALL_DETECTIONS_CROPPER_POSTPROCESS_SO_FILENAME,
     ARCFACE_MOBILEFACENET_POSTPROCESS_FUNCTION,
@@ -42,7 +42,8 @@ from hailo_apps.hailo_app_python.core.common.defines import (
     SCRFD_8_POSTPROCESS_FUNCTION,
     TAPPAS_POSTPROC_PATH_KEY,
     TAPPAS_STREAM_ID_TOOL_SO_FILENAME,
-    VMS_CROPPER_POSTPROCESS_FUNCTION
+    VMS_CROPPER_POSTPROCESS_FUNCTION,
+    RPI_NAME_I
 )
 from hailo_apps.hailo_app_python.core.gstreamer.gstreamer_helper_pipelines import (
     CROPPER_PIPELINE,
@@ -106,7 +107,11 @@ class GStreamerREIDMultisourceApp(GStreamerApp):
         self.lance_db_vector_search_classificaiton_confidence_threshold = 0.1
         self.video_height = self.options_menu.height
         self.video_width = self.options_menu.width
-        self.frame_rate = 15  # ovverdide the default of the argument
+        self.host_arch = detect_host_arch()
+        if self.host_arch == RPI_NAME_I:
+            self.frame_rate = 12  # override the default of the argument
+        else:
+            self.frame_rate = 15  # override the default of the argument
         self.tracker = HailoTracker.get_instance()  # tracker object
 
         self.app_callback = app_callback
