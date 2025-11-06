@@ -90,6 +90,18 @@ hailo-seg
 
 ![Instance Segmentation Example](doc/images/instance_segmentation.gif)
 
+#### Tiling
+Detects small objects in high-resolution frames.
+
+**Command:**
+```bash
+hailo-tiling
+```
+**Output:**
+
+![Tiling Example](local_resources/tiling.gif)
+
+#### Wait there's more!
 For a complete list of all available applications and their features, please see the [Running Applications Guide](./doc/user_guide/running_applications.md).
 
 ## Full Documentation

@@ -1,6 +1,6 @@
 # Tiling Application
 
-![Tiling Example](../../../../doc/images/tiling.png)
+![Tiling Example](../../../../local_resources/tiling.gif)
 
 ## Overview
 
@@ -76,10 +76,10 @@ Multi-scale adds these predefined grids:
 - **scale-level 2**: Adds 1×1 + 2×2 = +5 tiles
 - **scale-level 3**: Adds 1×1 + 2×2 + 3×3 = +14 tiles
 
-**Example:** With auto mode (2×2 custom grid) and `--multi-scale --scale-levels 2`:
-- Custom tiles: 2×2 = 4 tiles
+**Example:** With 4×3 custom grid and `--multi-scale --scale-levels 2`:
+- Custom tiles: 4×3 = 12 tiles
 - Additional: 1×1 + 2×2 = 5 tiles
-- **Total: 9 tiles per frame**
+- **Total: 17 tiles per frame**
 
 The pipeline performs: Crop → Inference → Post-process → Aggregate → Remove border objects → Perform NMS
 
