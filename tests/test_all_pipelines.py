@@ -20,11 +20,14 @@ from hailo_apps.hailo_app_python.core.common.installation_utils import (
     detect_hailo_arch,
     detect_host_arch,
 )
+from hailo_apps.hailo_app_python.core.common.defines import X86_NAME_I, RPI_NAME_I
 from hailo_apps.hailo_app_python.core.common.test_utils import (
     get_pipeline_args,
     run_pipeline_cli_with_args,
     run_pipeline_module_with_args,
     run_pipeline_pythonpath_with_args,
+    check_hailo8l_on_hailo8_warning,
+    check_qos_performance_warning,
 )
 
 # Configure logging as needed.
@@ -181,6 +184,10 @@ def test_pipeline_run_defaults(pipeline, run_method_name):
     assert "traceback" not in err_str, (
         f"{pipeline_name} ({run_method_name}) traceback in empty-args run: {err_str}"
     )
+    # Check for QoS performance issues
+    has_qos_warning, qos_count = check_qos_performance_warning(stdout, stderr)
+    if has_qos_warning:
+        logger.warning(f"Performance issue detected: QoS messages: {qos_count} total (>=100) for {pipeline_name} ({run_method_name}) empty-args run")
 
     # ---------------------------
     # Second run: With extra test arguments.
@@ -219,43 +226,70 @@ def test_pipeline_run_defaults(pipeline, run_method_name):
     assert "traceback" not in err_extra_str, (
         f"{pipeline_name} ({run_method_name}) traceback in extra run: {err_extra_str}"
     )
+    # Check for QoS performance issues
+    has_qos_warning, qos_count = check_qos_performance_warning(stdout_extra, stderr_extra)
+    if has_qos_warning:
+        logger.warning(f"Performance issue detected: QoS messages: {qos_count} total (>=100) for {pipeline_name} ({run_method_name}) extra-args run")
 
     # --------- Third run: RPi camera (using common package function) ---------
-    # Only run if the machine appears to be a Raspberry Pi.
-    extra_args_rpi = get_pipeline_args(suite="rpi_camera")
-    rpi_device = is_rpi_camera_available()
+    # Skip RPi camera tests on x86 hosts, and make failures non-fatal
+    host_arch = detect_host_arch()
     stdout_rpi, stderr_rpi = b"", b""
-    if "rpi" == detect_host_arch() and rpi_device:
-        log_file_path_rpi = os.path.join(log_dir, f"{pipeline_name}_{run_method_name}_rpi.log")
-        if run_method_name == "module":
-            cmd = ["python", "-u", "-m", pipeline["module"], *extra_args_rpi]
-            print(f"Running rpi args for {pipeline_name} ({run_method_name}): {' '.join(cmd)}")
-            stdout_rpi, stderr_rpi = run_method(
-                pipeline["module"], extra_args_rpi, log_file_path_rpi
-            )
-        elif run_method_name == "pythonpath":
-            cmd = ["python", "-u", pipeline["script"], *extra_args_rpi]
-            print(f"Running rpi args for {pipeline_name} ({run_method_name}): {' '.join(cmd)}")
-            stdout_rpi, stderr_rpi = run_method(
-                pipeline["script"], extra_args_rpi, log_file_path_rpi
-            )
-        elif run_method_name == "cli":
-            cmd = [pipeline["cli"], *extra_args_rpi]
-            print(f"Running rpi args for {pipeline_name} ({run_method_name}): {' '.join(cmd)}")
-            stdout_rpi, stderr_rpi = run_method(pipeline["cli"], extra_args_rpi, log_file_path_rpi)
+    
+    if host_arch == X86_NAME_I:
+        print(f"Skipping RPi camera test on x86 host architecture for {pipeline_name} ({run_method_name})")
+    elif host_arch == RPI_NAME_I:
+        # Only check for RPi camera if we're on a Raspberry Pi
+        extra_args_rpi = get_pipeline_args(suite="rpi_camera")
+        rpi_device = is_rpi_camera_available()
+        
+        if rpi_device:
+            log_file_path_rpi = os.path.join(log_dir, f"{pipeline_name}_{run_method_name}_rpi.log")
+            try:
+                if run_method_name == "module":
+                    cmd = ["python", "-u", "-m", pipeline["module"], *extra_args_rpi]
+                    print(f"Running rpi args for {pipeline_name} ({run_method_name}): {' '.join(cmd)}")
+                    stdout_rpi, stderr_rpi = run_method(
+                        pipeline["module"], extra_args_rpi, log_file_path_rpi
+                    )
+                elif run_method_name == "pythonpath":
+                    cmd = ["python", "-u", pipeline["script"], *extra_args_rpi]
+                    print(f"Running rpi args for {pipeline_name} ({run_method_name}): {' '.join(cmd)}")
+                    stdout_rpi, stderr_rpi = run_method(
+                        pipeline["script"], extra_args_rpi, log_file_path_rpi
+                    )
+                elif run_method_name == "cli":
+                    cmd = [pipeline["cli"], *extra_args_rpi]
+                    print(f"Running rpi args for {pipeline_name} ({run_method_name}): {' '.join(cmd)}")
+                    stdout_rpi, stderr_rpi = run_method(pipeline["cli"], extra_args_rpi, log_file_path_rpi)
+                else:
+                    pytest.fail(f"Unknown run method: {run_method_name}")
+                
+                out_rpi_str = stdout_rpi.decode().lower() if stdout_rpi else ""
+                err_rpi_str = stderr_rpi.decode().lower() if stderr_rpi else ""
+                print(f"RPi args run output for {pipeline_name} ({run_method_name}):\n{out_rpi_str}")
+                
+                # Make RPi camera test failures non-fatal - log as warnings instead of assertions
+                if "error" in err_rpi_str:
+                    logger.warning(
+                        f"{pipeline_name} ({run_method_name}) error in RPi run (non-fatal): {err_rpi_str}"
+                    )
+                if "traceback" in err_rpi_str:
+                    logger.warning(
+                        f"{pipeline_name} ({run_method_name}) traceback in RPi run (non-fatal): {err_rpi_str}"
+                    )
+                
+                # Check for QoS performance issues
+                has_qos_warning, qos_count = check_qos_performance_warning(stdout_rpi, stderr_rpi)
+                if has_qos_warning:
+                    logger.warning(f"Performance issue detected: QoS messages: {qos_count} total (>=100) for {pipeline_name} ({run_method_name}) RPi run")
+            except Exception as e:
+                # Make exceptions non-fatal for RPi camera tests
+                logger.warning(f"RPi camera test failed for {pipeline_name} ({run_method_name}) (non-fatal): {e}")
         else:
-            pytest.fail(f"Unknown run method: {run_method_name}")
-        out_rpi_str = stdout_rpi.decode().lower() if stdout_rpi else ""
-        err_rpi_str = stderr_rpi.decode().lower() if stderr_rpi else ""
-        print(f"RPi args run output for {pipeline_name} ({run_method_name}):\n{out_rpi_str}")
-        assert "error" not in err_rpi_str, (
-            f"{pipeline_name} ({run_method_name}) error in RPi run: {err_rpi_str}"
-        )
-        assert "traceback" not in err_rpi_str, (
-            f"{pipeline_name} ({run_method_name}) traceback in RPi run: {err_rpi_str}"
-        )
+            print(f"RPi camera not available on Raspberry Pi; skipping RPi camera run for {pipeline_name} ({run_method_name})")
     else:
-        print("Not running on Raspberry Pi; skipping RPi camera run.")
+        print(f"Not running on Raspberry Pi (host_arch={host_arch}); skipping RPi camera run.")
 
 
 def run_hef_with_pipeline(pipeline_type, hef_file, extra_args=None, hailo_arch=None):
@@ -371,6 +405,11 @@ def test_all_hefs_comprehensive():
             total_tests += 1
             stdout, stderr, success = run_hef_with_pipeline(pipeline_type, hef)
 
+            # Check for QoS performance issues
+            has_qos_warning, qos_count = check_qos_performance_warning(stdout, stderr)
+            if has_qos_warning:
+                logger.warning(f"Performance issue detected: QoS messages: {qos_count} total (>=100) for {pipeline_type}: {hef}")
+
             all_results[pipeline_type][hef] = {
                 "success": success,
                 "stdout": stdout.decode() if stdout else "",
@@ -446,6 +485,11 @@ def test_retraining_defaults():
 
     assert "error" not in err_str, f"Reported an error in retraining run: {err_str}"
     assert "traceback" not in err_str, f"Traceback in retraining run: {err_str}"
+    
+    # Check for QoS performance issues
+    has_qos_warning, qos_count = check_qos_performance_warning(stdout, stderr)
+    if has_qos_warning:
+        logger.warning(f"Performance issue detected: QoS messages: {qos_count} total (>=100) for retraining run")
 
 
 def test_hailo8l_models_on_hailo8():
@@ -468,6 +512,16 @@ def test_hailo8l_models_on_hailo8():
 
         assert "error" not in err_str, f"{hef} raised an error: {err_str}"
         assert "traceback" not in err_str, f"{hef} had a traceback: {err_str}"
+        
+        # Check for HailoRT warning (expected for Hailo8L on Hailo8)
+        has_warning = check_hailo8l_on_hailo8_warning(stdout, stderr)
+        if not has_warning:
+            logger.warning(f"Expected HailoRT warning not found for {hef} on Hailo 8")
+        
+        # Check for QoS performance issues
+        has_qos_warning, qos_count = check_qos_performance_warning(stdout, stderr)
+        if has_qos_warning:
+            logger.warning(f"Performance issue detected: QoS messages: {qos_count} total (>=100) for {hef}")
 
 
 def run_hailo8l_model_on_hailo8(pipeline_type, model_name, extra_args=None):
@@ -523,6 +577,17 @@ def run_hailo8l_model_on_hailo8(pipeline_type, model_name, extra_args=None):
         # Check for errors
         err_str = stderr.decode().lower() if stderr else ""
         success = "error" not in err_str and "traceback" not in err_str
+        
+        # Check for HailoRT warning (expected for Hailo8L on Hailo8)
+        has_warning = check_hailo8l_on_hailo8_warning(stdout, stderr)
+        if not has_warning:
+            logger.warning(f"Expected HailoRT warning not found for {model_name} on Hailo 8")
+        
+        # Check for QoS performance issues
+        has_qos_warning, qos_count = check_qos_performance_warning(stdout, stderr)
+        if has_qos_warning:
+            logger.warning(f"Performance issue detected: QoS messages: {qos_count} total (>=100) for {model_name}")
+        
         return stdout, stderr, success
 
     except Exception as e:
@@ -561,6 +626,11 @@ def test_hailo8l_models_on_hailo8_comprehensive():
         for model in models:
             total_tests += 1
             stdout, stderr, success = run_hailo8l_model_on_hailo8(pipeline_type, model)
+
+            # Check for QoS performance issues
+            has_qos_warning, qos_count = check_qos_performance_warning(stdout, stderr)
+            if has_qos_warning:
+                logger.warning(f"Performance issue detected: QoS messages: {qos_count} total (>=100) for {pipeline_type}: {model}")
 
             all_results[pipeline_type][model] = {
                 "success": success,

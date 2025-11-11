@@ -126,3 +126,45 @@ def run_pipeline_pythonpath_with_args(script: str, args: list[str], log_file: st
 
 def run_pipeline_cli_with_args(cli: str, args: list[str], log_file: str, **kwargs):
     return run_pipeline_generic([cli, *args], log_file, **kwargs)
+
+
+def check_hailo8l_on_hailo8_warning(stdout: bytes, stderr: bytes) -> bool:
+    """Check if the HailoRT warning about Hailo8L HEF on Hailo8 device is present.
+    
+    Args:
+        stdout: Standard output from the pipeline
+        stderr: Standard error from the pipeline
+    
+    Returns:
+        bool: True if the warning is found, False otherwise
+    """
+    warning_pattern = "HEF was compiled for Hailo8L device, while the device itself is Hailo8"
+    output = (stdout.decode() if stdout else "") + (stderr.decode() if stderr else "")
+    return warning_pattern in output
+
+
+def check_qos_performance_warning(stdout: bytes, stderr: bytes) -> tuple[bool, int]:
+    """Check for QoS messages indicating performance issues.
+    
+    Args:
+        stdout: Standard output from the pipeline
+        stderr: Standard error from the pipeline
+    
+    Returns:
+        tuple: (has_warning, qos_count) where has_warning is True if QoS >= 100, 
+               and qos_count is the number of QoS messages found
+    """
+    import re
+    output = (stdout.decode() if stdout else "") + (stderr.decode() if stderr else "")
+    
+    # Look for "QoS messages: X total" pattern
+    pattern = r"QoS messages:\s*(\d+)\s+total"
+    matches = re.findall(pattern, output)
+    
+    if matches:
+        # Get the highest count found (in case there are multiple)
+        qos_count = max(int(match) for match in matches)
+        has_warning = qos_count >= 100
+        return has_warning, qos_count
+    
+    return False, 0

@@ -7,7 +7,14 @@ import logging
 import pytest
 
 # Local application-specific imports
-from hailo_apps.hailo_app_python.core.common.test_utils import run_pipeline_module_with_args, run_pipeline_pythonpath_with_args, run_pipeline_cli_with_args, get_pipeline_args
+from hailo_apps.hailo_app_python.core.common.test_utils import (
+    run_pipeline_module_with_args, 
+    run_pipeline_pythonpath_with_args, 
+    run_pipeline_cli_with_args, 
+    get_pipeline_args,
+    check_hailo8l_on_hailo8_warning,
+    check_qos_performance_warning,
+)
 from hailo_apps.hailo_app_python.core.common.installation_utils import detect_hailo_arch
 from hailo_apps.hailo_app_python.core.common.defines import HAILO8_ARCH, HAILO8L_ARCH, RESOURCES_ROOT_PATH_DEFAULT
 # endregion imports
@@ -55,6 +62,10 @@ def test_train(pipeline, run_method_name):
     print(f"Completed: {test_name}, {pipeline['name']}, {run_method_name}: {out_str}")
     assert 'error' not in err_str, f"{pipeline['name']} ({run_method_name}) reported an error in {test_name}: {err_str}"
     assert 'traceback' not in err_str, f"{pipeline['name']} ({run_method_name}) traceback in {test_name} : {err_str}"
+    # Check for QoS performance issues
+    has_qos_warning, qos_count = check_qos_performance_warning(stdout, stderr)
+    if has_qos_warning:
+        logger.warning(f"Performance issue detected: QoS messages: {qos_count} total (>=100) for {pipeline['name']} ({run_method_name}) {test_name}")
 
 @pytest.mark.parametrize('run_method_name', list(run_methods.keys()))
 def test_default(pipeline, run_method_name):
@@ -76,6 +87,10 @@ def test_default(pipeline, run_method_name):
     print(f"Completed: {test_name}, {pipeline['name']}, {run_method_name}: {out_str}")
     assert 'error' not in err_str, f"{pipeline['name']} ({run_method_name}) reported an error in {test_name}: {err_str}"
     assert 'traceback' not in err_str, f"{pipeline['name']} ({run_method_name}) traceback in {test_name} : {err_str}"
+    # Check for QoS performance issues
+    has_qos_warning, qos_count = check_qos_performance_warning(stdout, stderr)
+    if has_qos_warning:
+        logger.warning(f"Performance issue detected: QoS messages: {qos_count} total (>=100) for {pipeline['name']} ({run_method_name}) {test_name}")
 
 @pytest.mark.parametrize('run_method_name', list(run_methods.keys()))
 def test_cli_usb(pipeline, run_method_name):
@@ -97,6 +112,10 @@ def test_cli_usb(pipeline, run_method_name):
     print(f"Completed: {test_name}, {pipeline['name']}, {run_method_name}: {out_str}")
     assert 'error' not in err_str, f"{pipeline['name']} ({run_method_name}) reported an error in {test_name}: {err_str}"
     assert 'traceback' not in err_str, f"{pipeline['name']} ({run_method_name}) traceback in {test_name} : {err_str}"
+    # Check for QoS performance issues
+    has_qos_warning, qos_count = check_qos_performance_warning(stdout, stderr)
+    if has_qos_warning:
+        logger.warning(f"Performance issue detected: QoS messages: {qos_count} total (>=100) for {pipeline['name']} ({run_method_name}) {test_name}")
 
 @pytest.mark.parametrize('run_method_name', list(run_methods.keys()))
 def test_delete(pipeline, run_method_name):
@@ -118,6 +137,10 @@ def test_delete(pipeline, run_method_name):
     print(f"Completed: {test_name}, {pipeline['name']}, {run_method_name}: {out_str}")
     assert 'error' not in err_str, f"{pipeline['name']} ({run_method_name}) reported an error in {test_name}: {err_str}"
     assert 'traceback' not in err_str, f"{pipeline['name']} ({run_method_name}) traceback in {test_name} : {err_str}"
+    # Check for QoS performance issues
+    has_qos_warning, qos_count = check_qos_performance_warning(stdout, stderr)
+    if has_qos_warning:
+        logger.warning(f"Performance issue detected: QoS messages: {qos_count} total (>=100) for {pipeline['name']} ({run_method_name}) {test_name}")
 
 
 def run_hailo8l_model_on_hailo8_face_recon(model_name, extra_args=None):
@@ -157,6 +180,17 @@ def run_hailo8l_model_on_hailo8_face_recon(model_name, extra_args=None):
         # Check for errors
         err_str = stderr.decode().lower() if stderr else ""
         success = "error" not in err_str and "traceback" not in err_str
+        
+        # Check for HailoRT warning (expected for Hailo8L on Hailo8)
+        has_warning = check_hailo8l_on_hailo8_warning(stdout, stderr)
+        if not has_warning:
+            logger.warning(f"Expected HailoRT warning not found for {model_name} on Hailo 8")
+        
+        # Check for QoS performance issues
+        has_qos_warning, qos_count = check_qos_performance_warning(stdout, stderr)
+        if has_qos_warning:
+            logger.warning(f"Performance issue detected: QoS messages: {qos_count} total (>=100) for {model_name}")
+        
         return stdout, stderr, success
 
     except Exception as e:
@@ -179,6 +213,11 @@ def test_hailo8l_models_on_hailo8_face_recon():
     
     for model in h8l_models:
         stdout, stderr, success = run_hailo8l_model_on_hailo8_face_recon(model)
+        
+        # Check for QoS performance issues
+        has_qos_warning, qos_count = check_qos_performance_warning(stdout, stderr)
+        if has_qos_warning:
+            logger.warning(f"Performance issue detected: QoS messages: {qos_count} total (>=100) for {model}")
         
         if not success:
             failed_models.append({

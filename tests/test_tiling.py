@@ -11,7 +11,8 @@ from hailo_apps.hailo_app_python.core.common.test_utils import (
     run_pipeline_module_with_args,
     run_pipeline_pythonpath_with_args,
     run_pipeline_cli_with_args,
-    get_pipeline_args
+    get_pipeline_args,
+    check_qos_performance_warning,
 )
 # endregion imports
 
@@ -58,6 +59,10 @@ def run_test(pipeline, run_method_name, test_name, args):
     print(f"Completed: {test_name}, {pipeline['name']}, {run_method_name}: {out_str}")
     assert 'error' not in err_str, f"{pipeline['name']} ({run_method_name}) reported an error in {test_name}: {err_str}"
     assert 'traceback' not in err_str, f"{pipeline['name']} ({run_method_name}) traceback in {test_name} : {err_str}"
+    # Check for QoS performance issues
+    has_qos_warning, qos_count = check_qos_performance_warning(stdout, stderr)
+    if has_qos_warning:
+        logger.warning(f"Performance issue detected: QoS messages: {qos_count} total (>=100) for {pipeline['name']} ({run_method_name}) {test_name}")
 
 
 # Tests based on README.md examples

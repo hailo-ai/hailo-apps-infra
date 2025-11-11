@@ -18,7 +18,11 @@ from hailo_apps.hailo_app_python.core.common.defines import (
     HAILO8L_ARCH,
     RESOURCES_ROOT_PATH_DEFAULT,
 )
-from hailo_apps.hailo_app_python.core.common.test_utils import run_pipeline_cli_with_args
+from hailo_apps.hailo_app_python.core.common.test_utils import (
+    run_pipeline_cli_with_args,
+    check_hailo8l_on_hailo8_warning,
+    check_qos_performance_warning,
+)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -105,6 +109,81 @@ class Hailo8LOnHailo8Tester:
             # Check for errors
             err_str = stderr.decode().lower() if stderr else ""
             success = "error" not in err_str and "traceback" not in err_str
+            
+            # Check for HailoRT warning (expected for Hailo8L on Hailo8)
+            has_warning = check_hailo8l_on_hailo8_warning(stdout, stderr)
+            if not has_warning:
+                logger.warning(f"Expected HailoRT warning not found for {model_name} on Hailo 8")
+            
+            # Check for QoS performance issues
+            has_qos_warning, qos_count = check_qos_performance_warning(stdout, stderr)
+            if has_qos_warning:
+                logger.warning(f"Performance issue detected: QoS messages: {qos_count} total (>=100) for {model_name}")
+            
+            return stdout, stderr, success
+
+        except Exception as e:
+            logger.error(f"Exception while testing {model_name} on Hailo 8: {e}")
+            return b"", str(e).encode(), False
+
+    def run_model_with_arch(self, pipeline_type, model_name, extra_args=None):
+        """Run a specific Hailo8L model on Hailo 8 using --arch hailo8l instead of --hef-path.
+
+        Args:
+            pipeline_type: Type of pipeline (detection, pose_estimation, etc.)
+            model_name: Name of the Hailo8L model to run
+            extra_args: Additional arguments to pass to the pipeline
+
+        Returns:
+            tuple: (stdout, stderr, success)
+        """
+        if self.hailo_arch != HAILO8_ARCH:
+            logger.warning(f"Not running on Hailo 8 architecture (current: {self.hailo_arch})")
+            return b"", b"", False
+
+        # Get CLI command
+        cli_command = self.cli_commands.get(pipeline_type)
+        if not cli_command:
+            logger.error(f"Unknown pipeline type: {pipeline_type}")
+            return b"", b"", False
+
+        # Prepare CLI arguments - use --arch hailo8l instead of --hef-path
+        args = ["--arch", HAILO8L_ARCH]
+
+        # Add tiling-specific arguments for better testing
+        if pipeline_type == "tiling":
+            # Test different tiling configurations based on model type
+            if "mobilenet" in model_name.lower():
+                # For MobileNetSSD models, test single-scale mode
+                args.extend(["--tiles-x", "2", "--tiles-y", "2"])
+            else:
+                # For YOLO models, test multi-scale mode
+                args.extend(["--general-detection", "--multi-scale", "--scale-levels", "2"])
+
+        if extra_args:
+            args.extend(extra_args)
+
+        # Create log file path
+        log_file_path = os.path.join(self.log_dir, f"{pipeline_type}_{model_name}_arch.log")
+
+        try:
+            logger.info(f"Testing {pipeline_type} with Hailo8L model: {model_name} on Hailo 8 (using --arch)")
+            stdout, stderr = run_pipeline_cli_with_args(cli_command, args, log_file_path)
+
+            # Check for errors
+            err_str = stderr.decode().lower() if stderr else ""
+            success = "error" not in err_str and "traceback" not in err_str
+            
+            # Check for HailoRT warning (expected for Hailo8L on Hailo8)
+            has_warning = check_hailo8l_on_hailo8_warning(stdout, stderr)
+            if not has_warning:
+                logger.warning(f"Expected HailoRT warning not found for {model_name} on Hailo 8 (--arch mode)")
+            
+            # Check for QoS performance issues
+            has_qos_warning, qos_count = check_qos_performance_warning(stdout, stderr)
+            if has_qos_warning:
+                logger.warning(f"Performance issue detected: QoS messages: {qos_count} total (>=100) for {model_name} (--arch mode)")
+            
             return stdout, stderr, success
 
         except Exception as e:
@@ -142,6 +221,40 @@ class Hailo8LOnHailo8Tester:
                 logger.info(f"✓ {pipeline_type}: {model}")
             else:
                 logger.error(f"✗ {pipeline_type}: {model}")
+
+        return results
+
+    def run_pipeline_tests_with_arch(self, pipeline_type):
+        """Run all Hailo8L models for a specific pipeline type using --arch instead of --hef-path.
+
+        Args:
+            pipeline_type: Type of pipeline to test
+
+        Returns:
+            dict: Results for each model
+        """
+        if pipeline_type not in self.h8l_models:
+            logger.error(f"Unknown pipeline type: {pipeline_type}")
+            return {}
+
+        models = self.h8l_models[pipeline_type]
+        results = {}
+
+        logger.info(f"Testing {pipeline_type} pipeline with {len(models)} Hailo8L models (using --arch)")
+
+        for model in models:
+            stdout, stderr, success = self.run_model_with_arch(pipeline_type, model)
+
+            results[model] = {
+                "success": success,
+                "stdout": stdout.decode() if stdout else "",
+                "stderr": stderr.decode() if stderr else "",
+            }
+
+            if success:
+                logger.info(f"✓ {pipeline_type}: {model} (--arch)")
+            else:
+                logger.error(f"✗ {pipeline_type}: {model} (--arch)")
 
         return results
 
@@ -282,6 +395,16 @@ def test_hailo8l_on_hailo8_tiling_configurations(h8l_tester):
             logger.info(f"Testing tiling {model} with {config_name} configuration")
             stdout, stderr, success = h8l_tester.run_model("tiling", model, extra_args)
 
+            # Check for HailoRT warning (expected for Hailo8L on Hailo8)
+            has_warning = check_hailo8l_on_hailo8_warning(stdout, stderr)
+            if not has_warning:
+                logger.warning(f"Expected HailoRT warning not found for {model} with {config_name} configuration")
+            
+            # Check for QoS performance issues
+            has_qos_warning, qos_count = check_qos_performance_warning(stdout, stderr)
+            if has_qos_warning:
+                logger.warning(f"Performance issue detected: QoS messages: {qos_count} total (>=100) for {model} with {config_name} configuration")
+
             model_results[config_name] = {
                 "success": success,
                 "stdout": stdout.decode() if stdout else "",
@@ -353,6 +476,161 @@ def test_hailo8l_on_hailo8_comprehensive(h8l_tester):
         failure_summary = "\n".join(failed_details)
         pytest.fail(
             f"Hailo8L on Hailo 8 comprehensive testing failed. {total_passed}/{total_tests} tests passed.\n\nFailures:\n{failure_summary}"
+        )
+
+
+# New test functions using --arch instead of --hef-path
+def test_hailo8l_on_hailo8_detection_with_arch(h8l_tester):
+    """Test Hailo8L detection models on Hailo 8 using --arch hailo8l."""
+    if h8l_tester.hailo_arch != HAILO8_ARCH:
+        pytest.skip(f"Skipping Hailo-8L model test on {h8l_tester.hailo_arch}")
+
+    results = h8l_tester.run_pipeline_tests_with_arch("detection")
+
+    failed_models = [model for model, result in results.items() if not result["success"]]
+    if failed_models:
+        failure_details = "\n".join(
+            [f"Model: {model}\nError: {results[model]['stderr']}\n" for model in failed_models]
+        )
+        pytest.fail(f"Failed Hailo8L detection models on Hailo 8 (--arch):\n{failure_details}")
+
+
+def test_hailo8l_on_hailo8_pose_estimation_with_arch(h8l_tester):
+    """Test Hailo8L pose estimation models on Hailo 8 using --arch hailo8l."""
+    if h8l_tester.hailo_arch != HAILO8_ARCH:
+        pytest.skip(f"Skipping Hailo-8L model test on {h8l_tester.hailo_arch}")
+
+    results = h8l_tester.run_pipeline_tests_with_arch("pose_estimation")
+
+    failed_models = [model for model, result in results.items() if not result["success"]]
+    if failed_models:
+        failure_details = "\n".join(
+            [f"Model: {model}\nError: {results[model]['stderr']}\n" for model in failed_models]
+        )
+        pytest.fail(f"Failed Hailo8L pose estimation models on Hailo 8 (--arch):\n{failure_details}")
+
+
+def test_hailo8l_on_hailo8_segmentation_with_arch(h8l_tester):
+    """Test Hailo8L segmentation models on Hailo 8 using --arch hailo8l."""
+    if h8l_tester.hailo_arch != HAILO8_ARCH:
+        pytest.skip(f"Skipping Hailo-8L model test on {h8l_tester.hailo_arch}")
+
+    results = h8l_tester.run_pipeline_tests_with_arch("segmentation")
+
+    failed_models = [model for model, result in results.items() if not result["success"]]
+    if failed_models:
+        failure_details = "\n".join(
+            [f"Model: {model}\nError: {results[model]['stderr']}\n" for model in failed_models]
+        )
+        pytest.fail(f"Failed Hailo8L segmentation models on Hailo 8 (--arch):\n{failure_details}")
+
+
+def test_hailo8l_on_hailo8_face_recognition_with_arch(h8l_tester):
+    """Test Hailo8L face recognition models on Hailo 8 using --arch hailo8l."""
+    if h8l_tester.hailo_arch != HAILO8_ARCH:
+        pytest.skip(f"Skipping Hailo-8L model test on {h8l_tester.hailo_arch}")
+
+    results = h8l_tester.run_pipeline_tests_with_arch("face_recognition")
+
+    failed_models = [model for model, result in results.items() if not result["success"]]
+    if failed_models:
+        failure_details = "\n".join(
+            [f"Model: {model}\nError: {results[model]['stderr']}\n" for model in failed_models]
+        )
+        pytest.fail(f"Failed Hailo8L face recognition models on Hailo 8 (--arch):\n{failure_details}")
+
+
+def test_hailo8l_on_hailo8_multisource_with_arch(h8l_tester):
+    """Test Hailo8L models on Hailo 8 for multisource pipeline using --arch hailo8l."""
+    if h8l_tester.hailo_arch != HAILO8_ARCH:
+        pytest.skip(f"Skipping Hailo-8L model test on {h8l_tester.hailo_arch}")
+
+    results = h8l_tester.run_pipeline_tests_with_arch("multisource")
+
+    failed_models = [model for model, result in results.items() if not result["success"]]
+    if failed_models:
+        failure_details = "\n".join(
+            [f"Model: {model}\nError: {results[model]['stderr']}\n" for model in failed_models]
+        )
+        pytest.fail(f"Failed Hailo8L multisource models on Hailo 8 (--arch):\n{failure_details}")
+
+
+def test_hailo8l_on_hailo8_reid_with_arch(h8l_tester):
+    """Test Hailo8L models on Hailo 8 for REID pipeline using --arch hailo8l."""
+    if h8l_tester.hailo_arch != HAILO8_ARCH:
+        pytest.skip(f"Skipping Hailo-8L model test on {h8l_tester.hailo_arch}")
+
+    results = h8l_tester.run_pipeline_tests_with_arch("reid")
+
+    failed_models = [model for model, result in results.items() if not result["success"]]
+    if failed_models:
+        failure_details = "\n".join(
+            [f"Model: {model}\nError: {results[model]['stderr']}\n" for model in failed_models]
+        )
+        pytest.fail(f"Failed Hailo8L REID models on Hailo 8 (--arch):\n{failure_details}")
+
+
+def test_hailo8l_on_hailo8_tiling_with_arch(h8l_tester):
+    """Test Hailo8L models on Hailo 8 for tiling pipeline using --arch hailo8l."""
+    if h8l_tester.hailo_arch != HAILO8_ARCH:
+        pytest.skip(f"Skipping Hailo-8L model test on {h8l_tester.hailo_arch}")
+
+    results = h8l_tester.run_pipeline_tests_with_arch("tiling")
+
+    failed_models = [model for model, result in results.items() if not result["success"]]
+    if failed_models:
+        failure_details = "\n".join(
+            [f"Model: {model}\nError: {results[model]['stderr']}\n" for model in failed_models]
+        )
+        pytest.fail(f"Failed Hailo8L tiling models on Hailo 8 (--arch):\n{failure_details}")
+
+
+def test_hailo8l_on_hailo8_comprehensive_with_arch(h8l_tester):
+    """Comprehensive test that runs all Hailo8L models on Hailo 8 using --arch hailo8l for all supported pipeline types."""
+    if h8l_tester.hailo_arch != HAILO8_ARCH:
+        pytest.skip(f"Skipping Hailo-8L model test on {h8l_tester.hailo_arch}")
+
+    logger.info("Running comprehensive Hailo8L model test on Hailo 8 (using --arch)")
+
+    all_results = {}
+    total_tests = 0
+    total_passed = 0
+
+    # Test each pipeline type
+    for pipeline_type in h8l_tester.h8l_models.keys():
+        results = h8l_tester.run_pipeline_tests_with_arch(pipeline_type)
+        all_results[pipeline_type] = results
+
+        for model, result in results.items():
+            total_tests += 1
+            if result["success"]:
+                total_passed += 1
+
+    # Generate summary report
+    logger.info("\nHailo8L on Hailo 8 Comprehensive Test Summary (--arch):")
+    logger.info(f"Total tests: {total_tests}")
+    logger.info(f"Passed: {total_passed}")
+    logger.info(f"Failed: {total_tests - total_passed}")
+
+    # Log detailed results by pipeline type
+    for pipeline_type, results in all_results.items():
+        failed_models = [model for model, result in results.items() if not result["success"]]
+        passed_models = [model for model, result in results.items() if result["success"]]
+        logger.info(f"{pipeline_type}: {len(passed_models)}/{len(results)} models passed")
+        if failed_models:
+            logger.error(f"{pipeline_type} failed models: {failed_models}")
+
+    # Assert overall success
+    if total_passed < total_tests:
+        failed_details = []
+        for pipeline_type, results in all_results.items():
+            for model, result in results.items():
+                if not result["success"]:
+                    failed_details.append(f"{pipeline_type}/{model}: {result['stderr']}")
+
+        failure_summary = "\n".join(failed_details)
+        pytest.fail(
+            f"Hailo8L on Hailo 8 comprehensive testing failed (--arch). {total_passed}/{total_tests} tests passed.\n\nFailures:\n{failure_summary}"
         )
 
 
