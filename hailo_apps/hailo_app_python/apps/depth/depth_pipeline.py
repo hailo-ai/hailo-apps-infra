@@ -1,6 +1,5 @@
 # region imports
 # Standard library imports
-import os
 from pathlib import Path
 
 # Third-party imports
@@ -16,7 +15,6 @@ from hailo_apps.hailo_app_python.core.common.defines import (
     DEPTH_PIPELINE,
     DEPTH_POSTPROCESS_FUNCTION,
     DEPTH_POSTPROCESS_SO_FILENAME,
-    HAILO_ARCH_KEY,
     RESOURCES_MODELS_DIR_NAME,
     RESOURCES_SO_DIR_NAME,
 )
@@ -27,7 +25,6 @@ from hailo_apps.hailo_app_python.core.common.hailo_logger import (
     add_logging_cli_args,
     get_logger,
 )
-from hailo_apps.hailo_app_python.core.common.installation_utils import detect_hailo_arch
 from hailo_apps.hailo_app_python.core.gstreamer.gstreamer_app import (
     GStreamerApp,
     app_callback_class,
@@ -66,27 +63,13 @@ class GStreamerDepthApp(GStreamerApp):
             getattr(self, "show_fps", None),
         )
 
-        # Determine the architecture if not specified
-        if self.options_menu.arch is None:    
-            arch = os.getenv(HAILO_ARCH_KEY, detect_hailo_arch())
-            if not arch:
-                hailo_logger.error("Could not detect Hailo architecture.")
-                raise ValueError(
-                    "Could not auto-detect Hailo architecture. Please specify --arch manually."
-                )
-            self.arch = arch
-            hailo_logger.debug(f"Auto-detected Hailo architecture: {self.arch}")
-        else:
-            self.arch = self.options_menu.arch
-            hailo_logger.debug("Using user-specified arch: %s", self.arch)
-
         self.app_callback = app_callback
         setproctitle.setproctitle(DEPTH_APP_TITLE)  # Set the process title
         hailo_logger.debug("Process title set to %s", DEPTH_APP_TITLE)
 
-        self.hef_path = get_resource_path(DEPTH_PIPELINE, RESOURCES_MODELS_DIR_NAME)
+        self.hef_path = get_resource_path(DEPTH_PIPELINE, RESOURCES_MODELS_DIR_NAME, self.arch)
         self.post_process_so = get_resource_path(
-            DEPTH_PIPELINE, RESOURCES_SO_DIR_NAME, DEPTH_POSTPROCESS_SO_FILENAME
+            DEPTH_PIPELINE, RESOURCES_SO_DIR_NAME, self.arch, DEPTH_POSTPROCESS_SO_FILENAME
         )
         self.post_function_name = DEPTH_POSTPROCESS_FUNCTION
         hailo_logger.debug(

@@ -94,25 +94,39 @@ def load_environment(env_file=DEFAULT_DOTENV_PATH, required_vars=None) -> bool:
 def get_default_parser():
     hailo_logger.debug("Creating default argparse parser.")
     parser = argparse.ArgumentParser(description="Hailo App Help")
-    parser.add_argument("--input", "-i", type=str, default=None, help="Input source...")
     parser.add_argument(
-        "--use-frame", "-u", action="store_true", help="Use frame from the callback function"
+        "--input", "-i", type=str, default=None,
+        help="Input source. Can be a file, USB (webcam), RPi camera (CSI camera module) or ximage. \
+        For RPi camera use '-i rpi' \
+        For automatically detect a connected usb camera, use '-i usb' \
+        For manually specifying a connected usb camera, use '-i /dev/video<X>' \
+        Defaults to application specific video."
     )
+    parser.add_argument("--use-frame", "-u", action="store_true", help="Use frame from the callback function")
     parser.add_argument("--show-fps", "-f", action="store_true", help="Print FPS on sink")
     parser.add_argument(
-        "--arch",
-        default=None,
-        choices=["hailo8", "hailo8l", "hailo10h"],
-        help="Specify the Hailo architecture...",
+            "--arch",
+            default=None,
+            choices=['hailo8', 'hailo8l', 'hailo10h'],
+            help="Specify the Hailo architecture (hailo8 or hailo8l or hailo10h). Default is None , app will run check.",
     )
-    parser.add_argument("--hef-path", default=None, help="Path to HEF file")
-    parser.add_argument("--disable-sync", action="store_true", help="Disables display sink sync...")
     parser.add_argument(
-        "--disable-callback", action="store_true", help="Disables the user's custom callback..."
+            "--hef-path",
+            default=None,
+            help="Path to HEF file",
     )
-    parser.add_argument("--dump-dot", action="store_true", help="Dump the pipeline graph...")
     parser.add_argument(
-        "--frame-rate", "-r", type=int, default=30, help="Frame rate of the video source."
+        "--disable-sync", action="store_true",
+        help="Disables display sink sync, will run as fast as possible. Relevant when using file source."
+    )
+    parser.add_argument(
+        "--disable-callback", action="store_true",
+        help="Disables the user's custom callback function in the pipeline. Use this option to run the pipeline without invoking the callback logic."
+    )
+    parser.add_argument("--dump-dot", action="store_true", help="Dump the pipeline graph to a dot file pipeline.dot")
+    parser.add_argument(
+        "--frame-rate", "-r", type=int, default=30,
+        help="Frame rate of the video source. Default is 30."
     )
     return parser
 
@@ -143,13 +157,13 @@ def get_model_name(pipeline_name: str, arch: str) -> str:
 
 
 def get_resource_path(
-    pipeline_name: str, resource_type: str, model: str | None = None
+    pipeline_name: str, resource_type: str,arch: str, model: str | None = None
 ) -> Path | None:
     hailo_logger.debug(
         f"Getting resource path for pipeline={pipeline_name}, resource_type={resource_type}, model={model}"
     )
     root = Path(RESOURCES_ROOT_PATH_DEFAULT)
-    arch = os.getenv(HAILO_ARCH_KEY, detect_hailo_arch())
+    # arch = os.getenv(HAILO_ARCH_KEY, detect_hailo_arch())
     if not arch:
         hailo_logger.error("Could not detect Hailo architecture.")
         return None
@@ -171,14 +185,16 @@ def get_resource_path(
 
     if resource_type == RESOURCES_MODELS_DIR_NAME:
         if model:
-            return (root / RESOURCES_MODELS_DIR_NAME / arch / model).with_suffix(
-                HAILO_FILE_EXTENSION
-            )
+            model_path = root / RESOURCES_MODELS_DIR_NAME / arch / model
+            if "." in model:
+                return model_path.with_name(model_path.name + HAILO_FILE_EXTENSION)
+            return model_path.with_suffix(HAILO_FILE_EXTENSION)
         if pipeline_name:
             name = get_model_name(pipeline_name, arch)
-            return (root / RESOURCES_MODELS_DIR_NAME / arch / name).with_suffix(
-                HAILO_FILE_EXTENSION
-            )
+            name_path = root / RESOURCES_MODELS_DIR_NAME / arch / name
+            if "." in name:
+                return name_path.with_name(name_path.name + HAILO_FILE_EXTENSION)
+            return name_path.with_suffix(HAILO_FILE_EXTENSION)
     return None
 
 

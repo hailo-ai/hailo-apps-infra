@@ -1,13 +1,11 @@
 # region imports
 # Standard library imports
-import os
 from pathlib import Path
 
 import setproctitle
 
 from hailo_apps.hailo_app_python.core.common.core import get_default_parser, get_resource_path
 from hailo_apps.hailo_app_python.core.common.defines import (
-    HAILO_ARCH_KEY,
     INSTANCE_SEGMENTATION_APP_TITLE,
     INSTANCE_SEGMENTATION_MODEL_NAME_H8,
     INSTANCE_SEGMENTATION_MODEL_NAME_H8L,
@@ -22,9 +20,6 @@ from hailo_apps.hailo_app_python.core.common.defines import (
 
 # Logger
 from hailo_apps.hailo_app_python.core.common.hailo_logger import get_logger
-
-# Local application-specific imports
-from hailo_apps.hailo_app_python.core.common.installation_utils import detect_hailo_arch
 from hailo_apps.hailo_app_python.core.gstreamer.gstreamer_app import (
     GStreamerApp,
     app_callback_class,
@@ -75,20 +70,6 @@ class GStreamerInstanceSegmentationApp(GStreamerApp):
             self.video_height,
         )
 
-        # Determine the architecture if not specified
-        if self.options_menu.arch is None:    
-            arch = os.getenv(HAILO_ARCH_KEY, detect_hailo_arch())
-            if not arch:
-                hailo_logger.error("Could not detect Hailo architecture.")
-                raise ValueError(
-                    "Could not auto-detect Hailo architecture. Please specify --arch manually."
-                )
-            self.arch = arch
-            hailo_logger.debug(f"Auto-detected Hailo architecture: {self.arch}")
-        else:
-            self.arch = self.options_menu.arch
-            hailo_logger.debug("Using user-specified arch: %s", self.arch)
-
         # Set HEF path
         if self.options_menu.hef_path:
             self.hef_path = str(self.options_menu.hef_path)
@@ -97,6 +78,7 @@ class GStreamerInstanceSegmentationApp(GStreamerApp):
                 get_resource_path(
                     pipeline_name=INSTANCE_SEGMENTATION_PIPELINE,
                     resource_type=RESOURCES_MODELS_DIR_NAME,
+                    arch=self.arch,
                 )
             )
         hailo_logger.info("HEF path: %s", self.hef_path)
@@ -107,6 +89,7 @@ class GStreamerInstanceSegmentationApp(GStreamerApp):
             self.config_file = get_resource_path(
                 INSTANCE_SEGMENTATION_PIPELINE,
                 RESOURCES_JSON_DIR_NAME,
+                self.arch,
                 INSTANCE_SEGMENTATION_MODEL_NAME_H8 + JSON_FILE_EXTENSION,
             )
             hailo_logger.info("Using config file for H8: %s", self.config_file)
@@ -114,6 +97,7 @@ class GStreamerInstanceSegmentationApp(GStreamerApp):
             self.config_file = get_resource_path(
                 INSTANCE_SEGMENTATION_PIPELINE,
                 RESOURCES_JSON_DIR_NAME,
+                self.arch,
                 INSTANCE_SEGMENTATION_MODEL_NAME_H8L + JSON_FILE_EXTENSION,
             )
             hailo_logger.info("Using config file for H8L: %s", self.config_file)
@@ -127,6 +111,7 @@ class GStreamerInstanceSegmentationApp(GStreamerApp):
         self.post_process_so = get_resource_path(
             INSTANCE_SEGMENTATION_PIPELINE,
             RESOURCES_SO_DIR_NAME,
+            self.arch,
             INSTANCE_SEGMENTATION_POSTPROCESS_SO_FILENAME,
         )
         self.post_function_name = INSTANCE_SEGMENTATION_POSTPROCESS_FUNCTION

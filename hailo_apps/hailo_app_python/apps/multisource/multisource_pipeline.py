@@ -11,8 +11,7 @@ from gi.repository import Gst
 
 # Local application-specific imports
 import hailo
-from hailo_apps.hailo_app_python.core.common.core import get_default_parser, get_resource_path, get_resource_path
-from hailo_apps.hailo_app_python.core.common.installation_utils import detect_hailo_arch
+from hailo_apps.hailo_app_python.core.common.core import get_default_parser, get_resource_path
 from hailo_apps.hailo_app_python.core.common.defines import TAPPAS_STREAM_ID_TOOL_SO_FILENAME, MULTI_SOURCE_APP_TITLE, SIMPLE_DETECTION_PIPELINE, RESOURCES_MODELS_DIR_NAME, RESOURCES_SO_DIR_NAME, DETECTION_POSTPROCESS_SO_FILENAME, DETECTION_POSTPROCESS_FUNCTION, TAPPAS_POSTPROC_PATH_KEY
 from hailo_apps.hailo_app_python.core.gstreamer.gstreamer_helper_pipelines import get_source_type, USER_CALLBACK_PIPELINE, TRACKER_PIPELINE, QUEUE, SOURCE_PIPELINE, INFERENCE_PIPELINE, DISPLAY_PIPELINE
 from hailo_apps.hailo_app_python.core.gstreamer.gstreamer_app import GStreamerApp, app_callback_class, dummy_callback
@@ -30,19 +29,10 @@ class GStreamerMultisourceApp(GStreamerApp):
 
         super().__init__(parser, user_data)  # Call the parent class constructor
 
-        # Determine the architecture if not specified
-        if self.options_menu.arch is None:
-            detected_arch = detect_hailo_arch()
-            if detected_arch is None:
-                raise ValueError('Could not auto-detect Hailo architecture. Please specify --arch manually.')
-            self.arch = detected_arch
-        else:
-            self.arch = self.options_menu.arch
-
         setproctitle.setproctitle(MULTI_SOURCE_APP_TITLE)  # Set the process title
 
-        self.hef_path = get_resource_path(SIMPLE_DETECTION_PIPELINE, RESOURCES_MODELS_DIR_NAME)
-        self.post_process_so = get_resource_path(SIMPLE_DETECTION_PIPELINE, RESOURCES_SO_DIR_NAME, DETECTION_POSTPROCESS_SO_FILENAME)
+        self.hef_path = get_resource_path(SIMPLE_DETECTION_PIPELINE, RESOURCES_MODELS_DIR_NAME, self.arch)
+        self.post_process_so = get_resource_path(SIMPLE_DETECTION_PIPELINE, RESOURCES_SO_DIR_NAME, self.arch, DETECTION_POSTPROCESS_SO_FILENAME)
         self.post_function_name = DETECTION_POSTPROCESS_FUNCTION
         self.video_sources_types = [(video_source, get_source_type(video_source)) for video_source in (self.options_menu.sources.split(',') if self.options_menu.sources else [self.video_source, self.video_source])]  # Default to 2 sources if none specified
         self.num_sources = len(self.video_sources_types)

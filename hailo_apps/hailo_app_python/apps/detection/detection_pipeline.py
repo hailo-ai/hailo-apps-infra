@@ -1,6 +1,5 @@
 # region imports
 # Standard library imports
-import os
 from pathlib import Path
 
 import setproctitle
@@ -11,16 +10,12 @@ from hailo_apps.hailo_app_python.core.common.defines import (
     DETECTION_PIPELINE,
     DETECTION_POSTPROCESS_FUNCTION,
     DETECTION_POSTPROCESS_SO_FILENAME,
-    HAILO_ARCH_KEY,
     RESOURCES_MODELS_DIR_NAME,
     RESOURCES_SO_DIR_NAME,
 )
 
 # Logger
 from hailo_apps.hailo_app_python.core.common.hailo_logger import get_logger
-
-# Local application-specific imports
-from hailo_apps.hailo_app_python.core.common.installation_utils import detect_hailo_arch
 from hailo_apps.hailo_app_python.core.gstreamer.gstreamer_app import (
     GStreamerApp,
     app_callback_class,
@@ -73,28 +68,14 @@ class GStreamerDetectionApp(GStreamerApp):
         nms_score_threshold = 0.3
         nms_iou_threshold = 0.45
 
-        # Determine the architecture if not specified
-        if self.options_menu.arch is None:    
-            arch = os.getenv(HAILO_ARCH_KEY, detect_hailo_arch())
-            if not arch:
-                hailo_logger.error("Could not detect Hailo architecture.")
-                raise ValueError(
-                    "Could not auto-detect Hailo architecture. Please specify --arch manually."
-                )
-            self.arch = arch
-            hailo_logger.debug(f"Auto-detected Hailo architecture: {self.arch}")
-        else:
-            self.arch = self.options_menu.arch
-            hailo_logger.debug("Using user-specified arch: %s", self.arch)
-
         if self.options_menu.hef_path is not None:
             self.hef_path = self.options_menu.hef_path
         else:
-            self.hef_path = get_resource_path(DETECTION_PIPELINE, RESOURCES_MODELS_DIR_NAME)
+            self.hef_path = get_resource_path(DETECTION_PIPELINE, RESOURCES_MODELS_DIR_NAME, self.arch)
 
             # Set the post-processing shared object file
         self.post_process_so = get_resource_path(
-            DETECTION_PIPELINE, RESOURCES_SO_DIR_NAME, DETECTION_POSTPROCESS_SO_FILENAME
+            DETECTION_PIPELINE, RESOURCES_SO_DIR_NAME, self.arch, DETECTION_POSTPROCESS_SO_FILENAME
         )
 
         self.post_function_name = DETECTION_POSTPROCESS_FUNCTION

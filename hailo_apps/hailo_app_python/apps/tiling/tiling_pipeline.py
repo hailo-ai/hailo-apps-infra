@@ -11,7 +11,6 @@ from gi.repository import Gst
 
 # Local application-specific imports
 import hailo
-from hailo_apps.hailo_app_python.core.common.installation_utils import detect_hailo_arch
 from hailo_apps.hailo_app_python.core.common.core import get_default_parser
 from hailo_apps.hailo_app_python.core.common.defines import TILING_APP_TITLE
 from hailo_apps.hailo_app_python.core.gstreamer.gstreamer_helper_pipelines import SOURCE_PIPELINE, INFERENCE_PIPELINE, USER_CALLBACK_PIPELINE, DISPLAY_PIPELINE, TILE_CROPPER_PIPELINE
@@ -42,18 +41,6 @@ class GStreamerTilingApp(GStreamerApp):
 
         # Call the parent class constructor
         super().__init__(parser, user_data)
-
-        # Determine the architecture if not specified
-        if self.options_menu.arch is None:
-            detected_arch = detect_hailo_arch()
-            if detected_arch is None:
-                hailo_logger.error("Could not auto-detect Hailo architecture.")
-                raise ValueError("Could not auto-detect Hailo architecture. Please specify --arch manually.")
-            self.arch = detected_arch
-            hailo_logger.info(f"Auto-detected Hailo architecture: {self.arch}")
-        else:
-            self.arch = self.options_menu.arch
-            hailo_logger.info(f"Using user-specified architecture: {self.arch}")
 
         # Initialize tiling configuration
         self.config = TilingConfiguration(

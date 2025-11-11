@@ -17,7 +17,9 @@ from hailo_apps.hailo_app_python.core.common.defines import (
     FACE_RECON_DATABASE_DIR_NAME,
     FACE_RECON_DIR_NAME,
     FACE_RECON_SAMPLES_DIR_NAME,
+    HAILO_ARCH_KEY,
 )
+from hailo_apps.hailo_app_python.core.common.installation_utils import detect_hailo_arch
 # endregion
 
 
@@ -277,7 +279,7 @@ class DatabaseHandler:
         self.tbl_records.delete(f"global_id IN ({to_delete})")
         # Clear all files from the 'resources/samples' folder
         samples_dir = get_resource_path(
-            pipeline_name=None, resource_type=FACE_RECON_DIR_NAME, model=FACE_RECON_SAMPLES_DIR_NAME
+            pipeline_name=None, resource_type=FACE_RECON_DIR_NAME, arch=os.getenv(HAILO_ARCH_KEY, detect_hailo_arch() or "hailo8"), model=FACE_RECON_SAMPLES_DIR_NAME
         )
         if os.path.exists(samples_dir):
             for filename in os.listdir(samples_dir):
@@ -542,10 +544,11 @@ if __name__ == "__main__":
         database_dir=get_resource_path(
             pipeline_name=None,
             resource_type=FACE_RECON_DIR_NAME,
+            arch=os.getenv(HAILO_ARCH_KEY, detect_hailo_arch() or "hailo8"),
             model=FACE_RECON_DATABASE_DIR_NAME,
         ),
         samples_dir=get_resource_path(
-            pipeline_name=None, resource_type=FACE_RECON_DIR_NAME, model=FACE_RECON_SAMPLES_DIR_NAME
+            pipeline_name=None, resource_type=FACE_RECON_DIR_NAME, arch=os.getenv(HAILO_ARCH_KEY, detect_hailo_arch() or "hailo8"), model=FACE_RECON_SAMPLES_DIR_NAME
         ),
     )
     all_records = database_handler.get_all_records()

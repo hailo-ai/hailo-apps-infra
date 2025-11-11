@@ -1,12 +1,9 @@
 # region imports
 # Standard library imports
-import os
-
 import setproctitle
 
 from hailo_apps.hailo_app_python.core.common.core import get_default_parser, get_resource_path
 from hailo_apps.hailo_app_python.core.common.defines import (
-    HAILO_ARCH_KEY,
     POSE_ESTIMATION_APP_TITLE,
     POSE_ESTIMATION_PIPELINE,
     POSE_ESTIMATION_POSTPROCESS_FUNCTION,
@@ -17,9 +14,6 @@ from hailo_apps.hailo_app_python.core.common.defines import (
 
 # Logger
 from hailo_apps.hailo_app_python.core.common.hailo_logger import get_logger
-
-# Local application-specific imports
-from hailo_apps.hailo_app_python.core.common.installation_utils import detect_hailo_arch
 from hailo_apps.hailo_app_python.core.gstreamer.gstreamer_app import (
     GStreamerApp,
     app_callback_class,
@@ -62,20 +56,6 @@ class GStreamerPoseEstimationApp(GStreamerApp):
             self.batch_size,
         )
 
-        # Determine the architecture if not specified
-        if self.options_menu.arch is None:    
-            arch = os.getenv(HAILO_ARCH_KEY, detect_hailo_arch())
-            if not arch:
-                hailo_logger.error("Could not detect Hailo architecture.")
-                raise ValueError(
-                    "Could not auto-detect Hailo architecture. Please specify --arch manually."
-                )
-            self.arch = arch
-            hailo_logger.debug(f"Auto-detected Hailo architecture: {self.arch}")
-        else:
-            self.arch = self.options_menu.arch
-            hailo_logger.debug("Using user-specified arch: %s", self.arch)
-
         # Set HEF path
         if self.options_menu.hef_path:
             self.hef_path = self.options_menu.hef_path
@@ -84,12 +64,13 @@ class GStreamerPoseEstimationApp(GStreamerApp):
             self.hef_path = get_resource_path(
                 pipeline_name=POSE_ESTIMATION_PIPELINE,
                 resource_type=RESOURCES_MODELS_DIR_NAME,
+                arch=self.arch,
             )
             hailo_logger.debug("Using default HEF path: %s", self.hef_path)
 
         self.app_callback = app_callback
         self.post_process_so = get_resource_path(
-            POSE_ESTIMATION_PIPELINE, RESOURCES_SO_DIR_NAME, POSE_ESTIMATION_POSTPROCESS_SO_FILENAME
+            POSE_ESTIMATION_PIPELINE, RESOURCES_SO_DIR_NAME, self.arch, POSE_ESTIMATION_POSTPROCESS_SO_FILENAME
         )
         self.post_process_function = POSE_ESTIMATION_POSTPROCESS_FUNCTION
         hailo_logger.debug(
