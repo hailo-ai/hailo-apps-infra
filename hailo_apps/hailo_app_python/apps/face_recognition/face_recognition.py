@@ -87,10 +87,22 @@ def app_callback(pad, info, user_data):
                         user_data.ui_text_message.append(string_to_print)
     return Gst.PadProbeReturn.OK
 
-def main():  
+def main():
     user_data = user_callbacks_class()
     pipeline = GStreamerFaceRecognitionApp(app_callback, user_data)  # appsink_callback argument provided anyway although in non UI interface where eventually not used - since here we don't have access to requested UI/CLI mode
-    if pipeline.options_menu.mode == 'delete':  # always CLI even if mistakenly GUI mode is selected
+
+    # Check for delete-name as a standalone command first
+    if pipeline.options_menu.delete_name:
+        # Delete a specific person by name (standalone command)
+        person_record = pipeline.db_handler.get_record_by_label(label=pipeline.options_menu.delete_name)
+        if person_record:
+            pipeline.db_handler.delete_record(global_id=person_record['global_id'])
+            print(f"Person '{pipeline.options_menu.delete_name}' deleted from the database.")
+        else:
+            print(f"Person '{pipeline.options_menu.delete_name}' not found in the database.")
+        exit(0)
+    elif pipeline.options_menu.mode == 'delete':  # always CLI even if mistakenly GUI mode is selected
+        # Delete all records when mode is delete and no specific name is provided
         pipeline.db_handler.clear_table()
         exit(0)
     elif pipeline.options_menu.mode == 'train':  # always CLI even if mistakenly GUI mode is selected
