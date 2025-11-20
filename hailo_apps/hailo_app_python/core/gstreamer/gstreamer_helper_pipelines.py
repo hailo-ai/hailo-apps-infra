@@ -42,7 +42,7 @@ def QUEUE(name, max_size_buffers=3, max_size_bytes=0, max_size_time=0, leaky="no
     return q_string
 
 
-def get_camera_resulotion(video_width=640, video_height=640):
+def get_camera_resolution(video_width=640, video_height=640):
     # This function will return a standard camera resolution based on the video resolution required
     # Standard resolutions are 640x480, 1280x720, 1920x1080, 3840x2160
     # If the required resolution is not standard, it will return the closest standard resolution
@@ -91,7 +91,7 @@ def SOURCE_PIPELINE(
             )
         else:
             # Use compressed format for webcam
-            width, height = get_camera_resulotion(video_width, video_height)
+            width, height = get_camera_resolution(video_width, video_height)
             source_element = (
                 f'v4l2src device={video_source} name={name} ! image/jpeg, framerate=30/1, width={width}, height={height} ! '
                 f'{QUEUE(name=f"{name}_queue_decode")} ! '
@@ -528,32 +528,6 @@ def VIDEO_STREAM_PIPELINE(port=5004, host='127.0.0.1', bitrate=2048):
              f"{encoder} ! video/x-h264,profile=baseline ! " # Add profile for better compatibility potentially
              f"rtph264pay config-interval=1 pt=96 ! "
              f"udpsink host={host} port={port} sync=false async=false")
-
-def VIDEO_STREAM_PIPELINE(port=5004, host="127.0.0.1", bitrate=2048):
-    """Creates a GStreamer pipeline string portion for encoding and streaming video over UDP.
-
-    Args:
-        port (int): UDP port number.
-        host (str): Destination IP address.
-        bitrate (int): Target bitrate for x264enc in kbps.
-
-    Returns:
-        str: GStreamer pipeline string fragment.
-    """
-    # Using x264enc with zerolatency tune. Adjust encoder/params as needed.
-    # Hardware encoders (e.g., omxh264enc, v4l2h264enc, vaapih264enc) are preferable on embedded systems.
-    # Example using omxh264enc (Raspberry Pi):
-    # encoder = f'omxh264enc target-bitrate={bitrate*1000} control-rate=variable'
-    # Example using vaapih264enc (Intel):
-    # encoder = f'vaapih264enc rate-control=cbr bitrate={bitrate}' # May need caps negotiation
-    encoder = f"x264enc tune=zerolatency bitrate={bitrate} speed-preset=ultrafast"
-    return (
-        f"videoconvert ! video/x-raw,format=I420 ! "  # x264enc often prefers I420
-        f"{encoder} ! video/x-h264,profile=baseline ! "  # Add profile for better compatibility potentially
-        f"rtph264pay config-interval=1 pt=96 ! "
-        f"udpsink host={host} port={port} sync=false async=false"
-    )
-
 
 def VIDEO_SHMSINK_PIPELINE(socket_path=None):
     """Creates a GStreamer pipeline string portion for shared memory video transfer using the shm plugins.
