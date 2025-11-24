@@ -1,4 +1,4 @@
-# REID Multisource Application: Beta Version
+# REID Multisource Application (Beta Version)
 
 #### Please note that this is a beta version release; some features may be unstable.
 
