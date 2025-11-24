@@ -118,6 +118,10 @@ class GStreamerTilingApp(GStreamerApp):
         self.iou_threshold = self.config.iou_threshold
         self.border_threshold = self.config.border_threshold
 
+        # Frame rate adjustment for hailo8l with mobilenet
+        if self.model_type == "mobilenet" and self.arch != 'hailo8' and self.batch_size == 15:
+            self.frame_rate = 19  # changing frame rate to support hailo8l lower performance.
+
 
     def _print_configuration(self) -> None:
         """

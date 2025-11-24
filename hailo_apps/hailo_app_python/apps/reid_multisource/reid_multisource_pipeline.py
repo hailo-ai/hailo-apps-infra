@@ -28,6 +28,7 @@ from hailo_apps.hailo_app_python.core.common.defines import (
     FACE_DETECTION_POSTPROCESS_SO_FILENAME,
     FACE_RECOGNITION_PIPELINE,
     FACE_RECOGNITION_POSTPROCESS_SO_FILENAME,
+    FACE_RECOGNITION_VIDEO_NAME,
     MULTI_SOURCE_DATABASE_DIR_NAME,
     MULTI_SOURCE_DIR_NAME,
     REID_CLASSIFICATION_TYPE,
@@ -38,6 +39,7 @@ from hailo_apps.hailo_app_python.core.common.defines import (
     RESOURCES_JSON_DIR_NAME,
     RESOURCES_MODELS_DIR_NAME,
     RESOURCES_SO_DIR_NAME,
+    RESOURCES_VIDEOS_DIR_NAME,
     SCRFD_8L_POSTPROCESS_FUNCTION,
     SCRFD_8_POSTPROCESS_FUNCTION,
     TAPPAS_POSTPROC_PATH_KEY,
@@ -93,6 +95,10 @@ class GStreamerREIDMultisourceApp(GStreamerApp):
         self.post_function_vms_cropper = VMS_CROPPER_POSTPROCESS_FUNCTION
         self.post_function_repvgg_reid = REID_POSTPROCESS_FUNCTION
         self.post_function_cropper = REID_CROPPER_POSTPROCESS_FUNCTION
+
+        # Use face recognition video as default instead of base video
+        if self.options_menu.input is None:
+            self.video_source = get_resource_path(pipeline_name=None, resource_type=RESOURCES_VIDEOS_DIR_NAME, arch=self.arch, model=FACE_RECOGNITION_VIDEO_NAME)
 
         self.video_sources_types = [(video_source, get_source_type(video_source)) for video_source in (self.options_menu.sources.split(',') if self.options_menu.sources else [self.video_source, self.video_source])]  # Default to 2 sources if none specified
         self.num_sources = len(self.video_sources_types)
