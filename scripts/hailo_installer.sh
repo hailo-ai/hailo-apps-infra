@@ -40,7 +40,7 @@ TAPPAS_CORE_VERSION=""
 
 # Defaults (can be overridden by flags)
 HW_ARCHITECTURE=""               # hailo8 | hailo10
-VENV_NAME="hailo_venv"
+VENV_NAME="venv_hailo_apps"
 DOWNLOAD_ONLY="false"
 OUTPUT_DIR_BASE="/usr/local/hailo/resources/packages"
 

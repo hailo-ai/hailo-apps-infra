@@ -8,6 +8,8 @@
 
 We're excited to announce version 25.10.0 of the Hailo Applications Infrastructure! This release brings Hailo10 hardware support, Three powerful new applications, and significant improvements across the entire platform.
 
+#### Important: Trixie support for RPi! Bookworm is no longer supported (Use previous release if need to stay on Bookworm).
+
 ---
 
 ## 🎯 Headline Features
@@ -81,7 +83,7 @@ Cleaned up the face recognition application by removing UI-specific components a
 
 - **HailoRT:** 4.23.0 or 5.1.0
 - **Tappas:** 5.1.0
-- **Python:** 3.7 or higher
+- **Python:** 3.10 or higher
 - **Model Zoo:** v5.0.0 (H10) / v2.17.0 (H8)
 
 ---

@@ -72,8 +72,7 @@ hailo_logger = get_logger(__name__)
 try:
     from picamera2 import Picamera2
 except ImportError:
-    hailo_logger.warning("Picamera2 not available; skipping import (likely non-Pi OS).")
-
+    pass
 
 # -----------------------------------------------------------------------------------------------
 # User-defined class to be used in the callback function

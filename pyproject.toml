@@ -7,7 +7,7 @@ name = "hailo-apps"
 version = "25.10.0"
 description = "Hailo AI applications and pipelines package"
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.10"
 authors = [
     {name = "Hailo"},
 ]
@@ -28,6 +28,7 @@ dependencies = [
 ]
 
 [project.scripts]
+get-usb-camera =            "hailo_apps.python.core.common.camera_utils:main"
 hailo-post-install =        "hailo_apps.hailo_app_python.core.installation.post_install:main"
 hailo-compile-postprocess = "hailo_apps.hailo_app_python.core.installation.compile_cpp:main"
 hailo-set-env =             "hailo_apps.hailo_app_python.core.installation.set_env:main"
