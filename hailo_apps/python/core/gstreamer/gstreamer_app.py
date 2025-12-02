@@ -193,8 +193,11 @@ class GStreamerApp:
         self.batch_size = getattr(self.options_menu, 'batch_size', 1)
         
         # Handle width/height from parser (defaults: 1280x720)
-        self.video_width = getattr(self.options_menu, 'width', 1280)
-        self.video_height = getattr(self.options_menu, 'height', 720)
+        # Check for None explicitly since getattr returns None if attribute exists but is None
+        width = getattr(self.options_menu, 'width', None)
+        self.video_width = width if width is not None else 1280
+        height = getattr(self.options_menu, 'height', None)
+        self.video_height = height if height is not None else 720
         
         self.video_format = HAILO_RGB_VIDEO_FORMAT
         
