@@ -38,6 +38,7 @@ from hailo_apps.python.core.common.defines import (
     RESOURCES_JSON_DIR_NAME,
     RESOURCES_MODELS_DIR_NAME,
     RESOURCES_SO_DIR_NAME,
+    RESOURCES_VIDEOS_DIR_NAME,
     SCRFD_8L_POSTPROCESS_FUNCTION,
     SCRFD_8_POSTPROCESS_FUNCTION,
     SCRFD_10_POSTPROCESS_FUNCTION,
@@ -82,16 +83,16 @@ class GStreamerREIDMultisourceApp(GStreamerApp):
         setproctitle.setproctitle(REID_MULTISOURCE_APP_TITLE)  # Set the process title
 
         # hef paths
-        self.hef_path_scrfd_detection = get_resource_path(pipeline_name=FACE_DETECTION_PIPELINE, resource_type=RESOURCES_MODELS_DIR_NAME)
-        self.hef_path_arcface_mobilefacenet_recognition = get_resource_path(pipeline_name=FACE_RECOGNITION_PIPELINE, resource_type=RESOURCES_MODELS_DIR_NAME)
+        self.hef_path_scrfd_detection = get_resource_path(pipeline_name=FACE_DETECTION_PIPELINE, resource_type=RESOURCES_MODELS_DIR_NAME, arch=self.arch)
+        self.hef_path_arcface_mobilefacenet_recognition = get_resource_path(pipeline_name=FACE_RECOGNITION_PIPELINE, resource_type=RESOURCES_MODELS_DIR_NAME, arch=self.arch)
         # so post process
-        self.post_process_so_yolo_detection = get_resource_path(pipeline_name=None, resource_type=RESOURCES_SO_DIR_NAME, model=DETECTION_POSTPROCESS_SO_FILENAME)
-        self.post_process_so_repvgg_reid = get_resource_path(pipeline_name=None, resource_type=RESOURCES_SO_DIR_NAME, model=REID_POSTPROCESS_SO_FILENAME)
-        self.post_process_so_cropper = get_resource_path(pipeline_name=None, resource_type=RESOURCES_SO_DIR_NAME, model=ALL_DETECTIONS_CROPPER_POSTPROCESS_SO_FILENAME)
-        self.post_process_so_scrfd_detection = get_resource_path(pipeline_name=None, resource_type=RESOURCES_SO_DIR_NAME, model=FACE_DETECTION_POSTPROCESS_SO_FILENAME)
-        self.post_process_so_arcface_mobilefacenet_recognition = get_resource_path(pipeline_name=None, resource_type=RESOURCES_SO_DIR_NAME, model=FACE_RECOGNITION_POSTPROCESS_SO_FILENAME)
-        self.post_process_so_face_align = get_resource_path(pipeline_name=None, resource_type=RESOURCES_SO_DIR_NAME, model=FACE_ALIGN_POSTPROCESS_SO_FILENAME)
-        self.post_process_so_vms_cropper = get_resource_path(pipeline_name=None, resource_type=RESOURCES_SO_DIR_NAME, model=FACE_CROP_POSTPROCESS_SO_FILENAME)
+        self.post_process_so_yolo_detection = get_resource_path(pipeline_name=None, resource_type=RESOURCES_SO_DIR_NAME, arch=self.arch, model=DETECTION_POSTPROCESS_SO_FILENAME)
+        self.post_process_so_repvgg_reid = get_resource_path(pipeline_name=None, resource_type=RESOURCES_SO_DIR_NAME, arch=self.arch, model=REID_POSTPROCESS_SO_FILENAME)
+        self.post_process_so_cropper = get_resource_path(pipeline_name=None, resource_type=RESOURCES_SO_DIR_NAME, arch=self.arch, model=ALL_DETECTIONS_CROPPER_POSTPROCESS_SO_FILENAME)
+        self.post_process_so_scrfd_detection = get_resource_path(pipeline_name=None, resource_type=RESOURCES_SO_DIR_NAME, arch=self.arch, model=FACE_DETECTION_POSTPROCESS_SO_FILENAME)
+        self.post_process_so_arcface_mobilefacenet_recognition = get_resource_path(pipeline_name=None, resource_type=RESOURCES_SO_DIR_NAME, arch=self.arch, model=FACE_RECOGNITION_POSTPROCESS_SO_FILENAME)
+        self.post_process_so_face_align = get_resource_path(pipeline_name=None, resource_type=RESOURCES_SO_DIR_NAME, arch=self.arch, model=FACE_ALIGN_POSTPROCESS_SO_FILENAME)
+        self.post_process_so_vms_cropper = get_resource_path(pipeline_name=None, resource_type=RESOURCES_SO_DIR_NAME, arch=self.arch, model=FACE_CROP_POSTPROCESS_SO_FILENAME)
         # functions
         if self.arch == HAILO8_ARCH:
             self.post_function_scrfd_detection = SCRFD_8_POSTPROCESS_FUNCTION
@@ -106,6 +107,10 @@ class GStreamerREIDMultisourceApp(GStreamerApp):
         self.post_function_vms_cropper = VMS_CROPPER_POSTPROCESS_FUNCTION
         self.post_function_repvgg_reid = REID_POSTPROCESS_FUNCTION
         self.post_function_cropper = REID_CROPPER_POSTPROCESS_FUNCTION
+
+        # Use face recognition video as default instead of base video
+        if self.options_menu.input is None:
+            self.video_source = get_resource_path(pipeline_name=None, resource_type=RESOURCES_VIDEOS_DIR_NAME, arch=self.arch, model=FACE_RECOGNITION_VIDEO_NAME)
 
         self.video_sources_types = [(video_source, get_source_type(video_source)) for video_source in (self.options_menu.sources.split(',') if self.options_menu.sources else [self.video_source, self.video_source])]  # Default to 2 sources if none specified
         self.num_sources = len(self.video_sources_types)
@@ -151,7 +156,7 @@ class GStreamerREIDMultisourceApp(GStreamerApp):
             sources_string += f"! robin.sink_{id} "
             router_string += f"router.src_{id} ! {USER_CALLBACK_PIPELINE(name=f'src_{id}_callback')} ! {QUEUE(name=f'callback_q_{id}')} ! {DISPLAY_PIPELINE(video_sink=self.video_sink, sync=self.sync, show_fps=self.show_fps, name=f'hailo_display_{id}')} "
 
-        detection_pipeline = INFERENCE_PIPELINE(hef_path=self.hef_path_scrfd_detection, post_process_so=self.post_process_so_scrfd_detection, post_function_name=self.post_function_scrfd_detection, batch_size=self.batch_size, config_json=get_resource_path(pipeline_name=None, resource_type=RESOURCES_JSON_DIR_NAME, model=FACE_DETECTION_JSON_NAME))
+        detection_pipeline = INFERENCE_PIPELINE(hef_path=self.hef_path_scrfd_detection, post_process_so=self.post_process_so_scrfd_detection, post_function_name=self.post_function_scrfd_detection, batch_size=self.batch_size, config_json=get_resource_path(pipeline_name=None, resource_type=RESOURCES_JSON_DIR_NAME, arch=self.arch, model=FACE_DETECTION_JSON_NAME))
         tracker_pipeline = TRACKER_PIPELINE(class_id=-1, name='hailo_face_tracker')
         id_pipeline = INFERENCE_PIPELINE(hef_path=self.hef_path_arcface_mobilefacenet_recognition, post_process_so=self.post_process_so_arcface_mobilefacenet_recognition, post_function_name=self.post_function_arcface_mobilefacenet_recognition, batch_size=self.batch_size, config_json=None, name='id_inference')
         cropper_pipeline = CROPPER_PIPELINE(inner_pipeline=(f'hailofilter so-path={self.post_process_so_face_align} '

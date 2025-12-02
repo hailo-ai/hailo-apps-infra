@@ -1,6 +1,5 @@
 # region imports
 # Standard library imports
-import os
 from pathlib import Path
 
 # Third-party imports
@@ -71,9 +70,9 @@ class GStreamerDepthApp(GStreamerApp):
         setproctitle.setproctitle(DEPTH_APP_TITLE)  # Set the process title
         hailo_logger.debug("Process title set to %s", DEPTH_APP_TITLE)
 
-        self.hef_path = get_resource_path(DEPTH_PIPELINE, RESOURCES_MODELS_DIR_NAME)
+        self.hef_path = get_resource_path(DEPTH_PIPELINE, RESOURCES_MODELS_DIR_NAME, self.arch)
         self.post_process_so = get_resource_path(
-            DEPTH_PIPELINE, RESOURCES_SO_DIR_NAME, DEPTH_POSTPROCESS_SO_FILENAME
+            DEPTH_PIPELINE, RESOURCES_SO_DIR_NAME, self.arch, DEPTH_POSTPROCESS_SO_FILENAME
         )
         self.post_function_name = DEPTH_POSTPROCESS_FUNCTION
         hailo_logger.debug(

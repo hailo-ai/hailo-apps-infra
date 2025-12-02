@@ -6,16 +6,19 @@ import os
 import sys
 import uuid
 from datetime import datetime
+from typing import Any
 
 # ---- module state (singleton-ish) ----
 _CONFIGURED = False
+
+# Stable run id for this process (not printed by default)
 _RUN_ID = (
     os.getenv("HAILO_RUN_ID")
     or datetime.utcnow().strftime("%Y%m%d-%H%M%S") + "-" + uuid.uuid4().hex[:6]
 )
 
 # Basic string->level map (kept small & obvious)
-_LEVELS = {
+_LEVELS: dict[str, int] = {
     "CRITICAL": logging.CRITICAL,
     "ERROR": logging.ERROR,
     "WARNING": logging.WARNING,
@@ -25,6 +28,7 @@ _LEVELS = {
 
 
 def _coerce_level(level: str | int | None) -> int:
+    """Coerce a string/int/None into a logging level int."""
     if isinstance(level, int):
         return level
     if level is None:
@@ -32,72 +36,73 @@ def _coerce_level(level: str | int | None) -> int:
     return _LEVELS.get(str(level).upper(), logging.INFO)
 
 
+def get_run_id() -> str:
+    """Return the stable run id for this process.
+
+    Not shown in log lines by default, but available for:
+      * experiment tracking
+      * test logs
+      * debugging
+    """
+    return _RUN_ID
+
+
 def init_logging(
     *,
     level: str | int | None = None,
     log_file: str | None = None,
     force: bool = False,
-) -> str:
-    """Configure root logger exactly once (unless force=True).
-    Returns the run_id (stable across the process).
+) -> None:
+    """Configure the root logger exactly once (unless force=True).
 
     Priority for level:
       1) explicit param
       2) env HAILO_LOG_LEVEL
-      3) INFO (default)
+      3) env LOG_LEVEL
+      4) INFO (default)
 
-    You can also pass a file path to duplicate logs to a file.
+    If log_file is provided (or $HAILO_LOG_FILE is set),
+    logs will also be written to that file.
+
+    This is the only place that should touch handlers / root config.
+    All other code just calls get_logger(name).
     """
     global _CONFIGURED
     if _CONFIGURED and not force:
-        return _RUN_ID
+        return
 
     # Resolve level from param or env
-    env_level = os.getenv("HAILO_LOG_LEVEL")
+    env_level = os.getenv("HAILO_LOG_LEVEL") or os.getenv("LOG_LEVEL")
     resolved_level = _coerce_level(level if level is not None else env_level)
 
-    # Clear existing handlers to avoid duplicates (useful in notebooks/tests)
+    # Clear existing handlers to avoid duplicates (tests/notebooks/CLI reuse)
     root = logging.getLogger()
     for h in list(root.handlers):
         root.removeHandler(h)
 
     root.setLevel(resolved_level)
 
-    fmt = "%(asctime)s | %(levelname)s | run=%(run_id)s | %(name)s | %(message)s"
+    # Simple, standard format
+    fmt = "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
     datefmt = "%H:%M:%S"
 
-    # Console handler
+    # Console handler (stderr)
     ch = logging.StreamHandler(sys.stderr)
     ch.setFormatter(logging.Formatter(fmt=fmt, datefmt=datefmt))
-    ch.addFilter(_RunContextFilter(_RUN_ID))
     root.addHandler(ch)
 
     # Optional file handler
+    log_file = log_file or os.getenv("HAILO_LOG_FILE")
     if log_file:
         fh = logging.FileHandler(log_file, encoding="utf-8")
         fh.setFormatter(logging.Formatter(fmt=fmt, datefmt=datefmt))
-        fh.addFilter(_RunContextFilter(_RUN_ID))
         root.addHandler(fh)
 
-    # Be quiet about common noisy deps unless user asked for DEBUG
+    # Be quiet about common noisy deps unless user explicitly wants DEBUG
     logging.getLogger("urllib3").setLevel(max(resolved_level, logging.WARNING))
     logging.getLogger("PIL").setLevel(max(resolved_level, logging.WARNING))
 
     _CONFIGURED = True
-    return _RUN_ID
-
-
-class _RunContextFilter(logging.Filter):
-    """Inject a stable run_id into every record."""
-
-    def __init__(self, run_id: str):
-        super().__init__()
-        self.run_id = run_id
-
-    def filter(self, record: logging.LogRecord) -> bool:
-        if not hasattr(record, "run_id"):
-            record.run_id = self.run_id
-        return True
 
 
 def get_logger(name: str) -> logging.Logger:
@@ -137,7 +142,7 @@ def add_logging_cli_args(parser) -> None:
         "--log-level",
         default=os.getenv("HAILO_LOG_LEVEL", "INFO"),
         choices=[k.lower() for k in _LEVELS.keys()],
-        help="Logging level (default: %(default)s or $HAILO_LOG_LEVEL).",
+        help="Logging level (default: %(default)s or $HAILO_LOG_LEVEL / $LOG_LEVEL).",
     )
     parser.add_argument(
         "--debug",
@@ -151,7 +156,7 @@ def add_logging_cli_args(parser) -> None:
     )
 
 
-def level_from_args(args) -> str:
+def level_from_args(args: Any) -> str:
     """Resolve level string from argparse args."""
     return (
         "DEBUG"
@@ -160,10 +165,10 @@ def level_from_args(args) -> str:
     )
 
 
-# If someone forgets to init, default to INFO console so logs still show up.
+# If someone forgets to init, default to simple INFO console logging.
 if os.getenv("HAILO_LOG_AUTOCONFIG", "1") == "1":
     try:
-        init_logging(level=os.getenv("HAILO_LOG_LEVEL"), log_file=os.getenv("HAILO_LOG_FILE"))
+        init_logging()
     except Exception:
         # Avoid crashing on import due to logging config issues
         pass

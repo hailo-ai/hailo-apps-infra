@@ -52,10 +52,7 @@ The installation script will:
 
 For more options, such as using a custom virtual environment name:
 ```bash
-# Use a custom virtual environment name
-sudo ./install.sh --venv-name my_custom_env
-
-# Download all available models (not just the default ones)
+# Download additional recommended models (not just the default ones)
 sudo ./install.sh --all
 ```
 
@@ -194,8 +191,6 @@ sudo ./scripts/hailo_installer.sh [options]
 | Option                      | Description                                                                       |                                     |
 | --------------------------- | --------------------------------------------------------------------------------- | ----------------------------------- |
 | `--hw-arch=`           | hailo10,hailo8                                                                          | Target hardware platform. Required. |
-| `--hailort-version=VER`     | Override HailoRT version (default: 4.23.0 for H8, 5.1.0 for H10).                 |                                     |
-| `--tappas-core-version=VER` | Override TAPPAS Core version.                                                     |                                     |
 | `--venv-name=NAME`          | Name of the Python virtual environment (default: `hailo_venv`).                   |                                     |
 | `--download-only`           | Only download the packages without installing them.                               |                                     |
 | `--output-dir=DIR`          | Change where packages are saved (default: `/usr/local/hailo/resources/packages`). |                                     |

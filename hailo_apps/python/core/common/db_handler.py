@@ -15,7 +15,9 @@ from lancedb.pydantic import LanceModel, Vector
 from hailo_apps.python.core.common.defines import (
     FACE_RECON_DATABASE_DIR_NAME,
     FACE_RECON_SAMPLES_DIR_NAME
+    HAILO_ARCH_KEY,
 )
+from hailo_apps.hailo_app_python.core.common.installation_utils import detect_hailo_arch
 # endregion
 
 
@@ -273,6 +275,13 @@ class DatabaseHandler:
             [f"'{record['global_id']}'" for record in self.tbl_records.search().to_list()]
         )  # Get all records
         self.tbl_records.delete(f"global_id IN ({to_delete})")
+        # Clear all files from the 'resources/samples' folder
+        samples_dir = get_resource_path(
+            pipeline_name=None, resource_type=FACE_RECON_DIR_NAME, arch=os.getenv(HAILO_ARCH_KEY, detect_hailo_arch() or "hailo8"), model=FACE_RECON_SAMPLES_DIR_NAME
+        )
+        if os.path.exists(samples_dir):
+            for filename in os.listdir(samples_dir):
+                file_path = os.path.join(samples_dir, filename)
         # Clear all files from the self.samples_dir folder
         if os.path.exists(self.samples_dir):
             for filename in os.listdir(self.samples_dir):

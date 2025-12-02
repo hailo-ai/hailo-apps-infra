@@ -7,7 +7,7 @@ name = "hailo-apps"
 version = "25.10.0"
 description = "Hailo AI applications and pipelines package"
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.10"
 authors = [
     {name = "Hailo"},
 ]

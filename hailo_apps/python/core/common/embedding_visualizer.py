@@ -23,7 +23,9 @@ from db_handler import DatabaseHandler, Record
 from hailo_apps.python.core.common.defines import (
     FACE_RECON_DATABASE_DIR_NAME,
     FACE_RECON_SAMPLES_DIR_NAME
+    HAILO_ARCH_KEY,
 )
+from hailo_apps.hailo_app_python.core.common.installation_utils import detect_hailo_arch
 
 
 def visualize_embeddings(db_handler):

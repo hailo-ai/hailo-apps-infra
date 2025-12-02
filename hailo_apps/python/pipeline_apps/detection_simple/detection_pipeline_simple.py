@@ -1,6 +1,5 @@
 # region imports
 # Standard library imports
-import os
 import setproctitle
 
 from hailo_apps.python.core.common.core import get_pipeline_parser, get_resource_path
@@ -71,6 +70,7 @@ class GStreamerDetectionApp(GStreamerApp):
             self.video_source = get_resource_path(
                 pipeline_name=SIMPLE_DETECTION_PIPELINE,
                 resource_type=RESOURCES_VIDEOS_DIR_NAME,
+                arch=self.arch,
                 model=SIMPLE_DETECTION_VIDEO_NAME,
             )
         # Architecture is already handled by GStreamerApp parent class
@@ -81,6 +81,7 @@ class GStreamerDetectionApp(GStreamerApp):
             self.hef_path = get_resource_path(
                 pipeline_name=SIMPLE_DETECTION_PIPELINE,
                 resource_type=RESOURCES_MODELS_DIR_NAME,
+                arch=self.arch,
             )
 
         hailo_logger.info(f"Using HEF path: {self.hef_path}")
@@ -88,6 +89,7 @@ class GStreamerDetectionApp(GStreamerApp):
         self.post_process_so = get_resource_path(
             pipeline_name=SIMPLE_DETECTION_PIPELINE,
             resource_type=RESOURCES_SO_DIR_NAME,
+            arch=self.arch,
             model=SIMPLE_DETECTION_POSTPROCESS_SO_FILENAME,
         )
         hailo_logger.info(f"Using post-process shared object: {self.post_process_so}")

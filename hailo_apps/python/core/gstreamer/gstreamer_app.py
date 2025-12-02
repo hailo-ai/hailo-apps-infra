@@ -52,6 +52,7 @@ from hailo_apps.python.core.common.installation_utils import detect_hailo_arch
 from hailo_apps.python.core.common.defines import (
     BASIC_PIPELINES_VIDEO_EXAMPLE_NAME,
     GST_VIDEO_SINK,
+    HAILO_ARCH_KEY,
     HAILO_RGB_VIDEO_FORMAT,
     RESOURCES_ROOT_PATH_DEFAULT,
     RESOURCES_VIDEOS_DIR_NAME,
@@ -72,8 +73,7 @@ hailo_logger = get_logger(__name__)
 try:
     from picamera2 import Picamera2
 except ImportError:
-    hailo_logger.warning("Picamera2 not available; skipping import (likely non-Pi OS).")
-
+    pass
 
 # -----------------------------------------------------------------------------------------------
 # User-defined class to be used in the callback function
@@ -143,6 +143,20 @@ class GStreamerApp:
         env_file = os.environ.get("HAILO_ENV_FILE")
         hailo_logger.debug(f"Loading environment from {env_file}")
         load_environment(env_file)
+
+        # Determine the architecture if not specified
+        if self.options_menu.arch is None:
+            arch = os.getenv(HAILO_ARCH_KEY, detect_hailo_arch())
+            if not arch:
+                hailo_logger.error("Could not detect Hailo architecture.")
+                raise ValueError(
+                    "Could not auto-detect Hailo architecture. Please specify --arch manually."
+                )
+            self.arch = arch
+            hailo_logger.debug(f"Auto-detected Hailo architecture: {self.arch}")
+        else:
+            self.arch = self.options_menu.arch
+            hailo_logger.debug("Using user-specified arch: %s", self.arch)
 
         tappas_post_process_dir = Path(os.environ.get(TAPPAS_POSTPROC_PATH_KEY, ""))
         if tappas_post_process_dir == "":

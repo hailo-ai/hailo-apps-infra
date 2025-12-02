@@ -87,7 +87,7 @@ public:
         NMS output decode method
         ------------------------
 
-        decodes the nms buffer received from the output tensor of the network.https://chatgpt.com/c/686e7b9e-0224-8004-9233-01af3352a9aa
+        decodes the nms buffer received from the output tensor of the network.
         returns a vector of DetectonObject filtered by the detection threshold.
 
         The data is sorted by the number of the classes.

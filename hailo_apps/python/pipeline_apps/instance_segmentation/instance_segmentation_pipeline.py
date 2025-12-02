@@ -1,6 +1,5 @@
 # region imports
 # Standard library imports
-import os
 from pathlib import Path
 
 import setproctitle
@@ -84,6 +83,7 @@ class GStreamerInstanceSegmentationApp(GStreamerApp):
                 get_resource_path(
                     pipeline_name=INSTANCE_SEGMENTATION_PIPELINE,
                     resource_type=RESOURCES_MODELS_DIR_NAME,
+                    arch=self.arch,
                 )
             )
         else:
@@ -96,6 +96,7 @@ class GStreamerInstanceSegmentationApp(GStreamerApp):
             self.config_file = get_resource_path(
                 INSTANCE_SEGMENTATION_PIPELINE,
                 RESOURCES_JSON_DIR_NAME,
+                self.arch,
                 INSTANCE_SEGMENTATION_MODEL_NAME_H8 + JSON_FILE_EXTENSION,
             )
             hailo_logger.info("Using config file for H8: %s", self.config_file)
@@ -103,6 +104,7 @@ class GStreamerInstanceSegmentationApp(GStreamerApp):
             self.config_file = get_resource_path(
                 INSTANCE_SEGMENTATION_PIPELINE,
                 RESOURCES_JSON_DIR_NAME,
+                self.arch,
                 INSTANCE_SEGMENTATION_MODEL_NAME_H8L + JSON_FILE_EXTENSION,
             )
             hailo_logger.info("Using config file for H8L: %s", self.config_file)
@@ -116,6 +118,7 @@ class GStreamerInstanceSegmentationApp(GStreamerApp):
         self.post_process_so = get_resource_path(
             INSTANCE_SEGMENTATION_PIPELINE,
             RESOURCES_SO_DIR_NAME,
+            self.arch,
             INSTANCE_SEGMENTATION_POSTPROCESS_SO_FILENAME,
         )
         self.post_function_name = INSTANCE_SEGMENTATION_POSTPROCESS_FUNCTION

@@ -1,4 +1,4 @@
-# Tiling Application
+# Tiling Application (Beta Version)
 
 ![Tiling Example](../../../../local_resources/tiling.gif)
 
@@ -228,6 +228,11 @@ This helps you understand:
 - More tiles = better small object detection
 - More tiles = higher processing time (scales with batch size)
 - Balance based on your hardware and requirements
+- Batch processing helps optimize throughput
+
+**Hailo8L Performance:**
+- For Hailo8L with the default `ssd_mobilenet_visdrone` model, the frame rate is automatically set to 19 fps to support Hailo8L's lower performance
+- This adjustment is applied automatically when using the default MobileNetSSD model with batch size 15 on Hailo8L devices
 
 **Experiment:** Try different tile counts and overlap values to find the best balance for your use case. The "auto mode" is a good starting point but probably an overkill for your use case. Note that you might get better results by using less tiles and a stronger model.
 

@@ -1,7 +1,5 @@
 # region imports
 # Standard library imports
-import os
-
 import setproctitle
 
 from hailo_apps.python.core.common.core import get_pipeline_parser, get_resource_path
@@ -66,6 +64,7 @@ class GStreamerPoseEstimationApp(GStreamerApp):
             self.hef_path = get_resource_path(
                 pipeline_name=POSE_ESTIMATION_PIPELINE,
                 resource_type=RESOURCES_MODELS_DIR_NAME,
+                arch=self.arch,
             )
             hailo_logger.debug("Using default HEF path: %s", self.hef_path)
         else:
@@ -73,7 +72,7 @@ class GStreamerPoseEstimationApp(GStreamerApp):
 
         self.app_callback = app_callback
         self.post_process_so = get_resource_path(
-            POSE_ESTIMATION_PIPELINE, RESOURCES_SO_DIR_NAME, POSE_ESTIMATION_POSTPROCESS_SO_FILENAME
+            POSE_ESTIMATION_PIPELINE, RESOURCES_SO_DIR_NAME, self.arch, POSE_ESTIMATION_POSTPROCESS_SO_FILENAME
         )
         self.post_process_function = POSE_ESTIMATION_POSTPROCESS_FUNCTION
         hailo_logger.debug(

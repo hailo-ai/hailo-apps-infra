@@ -113,6 +113,16 @@ class TilingConfiguration:
         if self.options_menu.hef_path is not None:
             self.hef_path = self.options_menu.hef_path
             hailo_logger.info(f"Using user-specified HEF: {self.hef_path}")
+        elif self.options_menu.general_detection:
+            # Use YOLO model for general detection
+            default_model_name = TILING_YOLO_MODEL_NAME_H8 if self.arch == "hailo8" else TILING_YOLO_MODEL_NAME_H8L
+            self.hef_path = get_resource_path(
+                pipeline_name=None,
+                resource_type=RESOURCES_MODELS_DIR_NAME,
+                arch=self.arch,
+                model=default_model_name
+            )
+            hailo_logger.info(f"Using YOLO model for general detection: {self.hef_path}")
         else:
             self.hef_path = get_resource_path(
                 pipeline_name=None,

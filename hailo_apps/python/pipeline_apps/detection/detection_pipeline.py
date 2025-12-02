@@ -1,6 +1,5 @@
 # region imports
 # Standard library imports
-import os
 from pathlib import Path
 
 import setproctitle
@@ -80,7 +79,7 @@ class GStreamerDetectionApp(GStreamerApp):
 
             # Set the post-processing shared object file
         self.post_process_so = get_resource_path(
-            DETECTION_PIPELINE, RESOURCES_SO_DIR_NAME, DETECTION_POSTPROCESS_SO_FILENAME
+            DETECTION_PIPELINE, RESOURCES_SO_DIR_NAME, self.arch, DETECTION_POSTPROCESS_SO_FILENAME
         )
 
         self.post_function_name = DETECTION_POSTPROCESS_FUNCTION
